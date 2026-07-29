@@ -90,14 +90,17 @@ public final class TestingRules {
 
     static final RuleDoc TEST_NAMING_DOC = RuleDoc.builder()
             .id("test.class-naming-convention")
-            .why("Surefire and Failsafe select tests by class name. A class holding @Test methods whose "
-                    + "name ends in neither Test nor IT is silently never executed — it looks like coverage "
-                    + "in the source tree while proving nothing in CI.")
-            .howToFix("Rename the class to end in Test (unit tests, run by Surefire) or IT (integration "
-                    + "tests, run by Failsafe).")
+            .why("Most build tools select which classes to run by class-name convention (Maven's Surefire "
+                    + "and Failsafe plugins, for example, match *Test and *IT respectively). A class holding "
+                    + "@Test methods whose name ends in neither Test nor IT is silently never executed — it "
+                    + "looks like coverage in the source tree while proving nothing in CI.")
+            .howToFix("Rename the class to end in Test (unit tests) or IT (integration tests) so your build "
+                    + "tool's test-selection convention actually picks it up (with Maven, Surefire runs *Test "
+                    + "and Failsafe runs *IT).")
             .howNotToFix("Do NOT delete the @Test methods or the class to make this rule pass, and do NOT "
-                    + "widen the Surefire include patterns instead of renaming — the convention is what makes "
-                    + "the unit/integration split legible.")
+                    + "widen your build tool's test-include configuration instead of renaming (for example, "
+                    + "Surefire's include patterns) — the convention is what makes the unit/integration split "
+                    + "legible.")
             .build();
 
     static final ArchRule TEST_NAMING_RULE = classes()
