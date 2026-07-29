@@ -5,11 +5,11 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-rules</artifactId>
+  <artifactId>llama-rules-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
-  <packaging>jar</packaging>
+  <packaging>pom</packaging>
 
-  <name>LLamaRules</name>
+  <name>LLamaRules Parent</name>
   <description>Library of rules that guards the code.</description>
   <url>https://github.com/MilczekT1/LLamaRules</url>
 
@@ -20,27 +20,88 @@
     </license>
   </licenses>
 
+  <modules>
+    <module>llama-rules</module>
+    <!-- <module>examples/consumer-junit5</module> -->
+  </modules>
+
   <properties>
     <maven.compiler.release>25</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <archunit.version>1.4.2</archunit.version>
     <junit.version>5.11.3</junit.version>
+    <spring.version>7.0.8</spring.version>
+    <mockito.version>5.23.0</mockito.version>
   </properties>
 
-  <dependencies>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <version>${junit.version}</version>
-      <scope>test</scope>
-    </dependency>
-  </dependencies>
+  <distributionManagement>
+    <repository>
+      <id>github</id>
+      <name>GitHub Packages</name>
+      <url>https://maven.pkg.github.com/MilczekT1/LLamaRules</url>
+    </repository>
+  </distributionManagement>
+
+  <dependencyManagement>
+    <dependencies>
+      <dependency>
+        <groupId>com.tngtech.archunit</groupId>
+        <artifactId>archunit-junit5</artifactId>
+        <version>${archunit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.junit.jupiter</groupId>
+        <artifactId>junit-jupiter</artifactId>
+        <version>${junit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-tx</artifactId>
+        <version>${spring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-test</artifactId>
+        <version>${spring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.mockito</groupId>
+        <artifactId>mockito-core</artifactId>
+        <version>${mockito.version}</version>
+      </dependency>
+    </dependencies>
+  </dependencyManagement>
 
   <build>
+    <pluginManagement>
+      <plugins>
+        <!-- Pinned deliberately: Maven 3.8.x defaults to compiler plugin 3.1,
+             which ignores maven.compiler.release and fails with "Source option 5". -->
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <version>3.13.0</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-surefire-plugin</artifactId>
+          <version>3.5.2</version>
+        </plugin>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-deploy-plugin</artifactId>
+          <version>3.1.3</version>
+        </plugin>
+      </plugins>
+    </pluginManagement>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-compiler-plugin</artifactId>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <version>3.5.2</version>
       </plugin>
     </plugins>
   </build>
