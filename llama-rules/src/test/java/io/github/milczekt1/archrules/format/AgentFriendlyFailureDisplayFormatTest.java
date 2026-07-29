@@ -1,10 +1,13 @@
 package io.github.milczekt1.archrules.format;
 
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.lang.Priority;
 import io.github.milczekt1.archrules.RuleDoc;
+import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 
@@ -102,7 +105,7 @@ class AgentFriendlyFailureDisplayFormatTest {
 
     @Test
     void neverThrowsWhenTheRuleDescriptionBlowsUp() {
-        com.tngtech.archunit.base.HasDescription hostile = () -> {
+        HasDescription hostile = () -> {
             throw new IllegalStateException("boom");
         };
 
@@ -111,5 +114,56 @@ class AgentFriendlyFailureDisplayFormatTest {
         String out = FORMAT.describeSafely(hostile);
 
         assertTrue(out.contains("unknown rule"), "must degrade gracefully, got: " + out);
+    }
+
+    @Test
+    void describeSafelyNeverThrowsOnANullRule() {
+        String out = assertDoesNotThrow(() -> FORMAT.describeSafely(null));
+
+        assertTrue(out.contains("unknown rule"), "must degrade gracefully, got: " + out);
+    }
+
+    @Test
+    void renderNeverThrowsOnAdversarialInputs() {
+        String withNullList = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, null, Priority.MEDIUM));
+        assertTrue(withNullList.contains("Offending locations:"), withNullList);
+
+        String withNullPriority = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, VIOLATIONS, null));
+        assertTrue(withNullPriority.contains("Architecture Violation"), withNullPriority);
+
+        List<String> withNullElement = new ArrayList<>(VIOLATIONS);
+        withNullElement.add(null);
+        String withNullEntry = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, withNullElement, Priority.MEDIUM));
+        assertTrue(withNullEntry.contains("Offending locations:"), withNullEntry);
+    }
+
+    @Test
+    void defaultFormatNeverThrowsOnAdversarialInputs() {
+        String withNullList =
+                assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", null, "2 times", Priority.HIGH));
+        assertTrue(withNullList.contains("Architecture Violation"), withNullList);
+
+        String withNullPriority =
+                assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", VIOLATIONS, "2 times", null));
+        assertTrue(withNullPriority.contains("Architecture Violation"), withNullPriority);
+
+        List<String> withNullElement = new ArrayList<>(VIOLATIONS);
+        withNullElement.add(null);
+        String withNullEntry = assertDoesNotThrow(
+                () -> FORMAT.defaultFormat("some.rule", withNullElement, "2 times", Priority.HIGH));
+        assertTrue(withNullEntry.contains("Architecture Violation"), withNullEntry);
+    }
+
+    @Test
+    void lastResortFormatNeverThrowsEvenWhenEverythingIsHostileOrNull() {
+        HasDescription hostile = () -> {
+            throw new IllegalStateException("boom");
+        };
+
+        String withHostileRule = assertDoesNotThrow(() -> FORMAT.lastResortFormat(hostile, null, null));
+        assertTrue(withHostileRule.contains("Architecture Violation"), withHostileRule);
+
+        String allNull = assertDoesNotThrow(() -> FORMAT.lastResortFormat(null, null, null));
+        assertTrue(allNull.contains("Architecture Violation"), allNull);
     }
 }

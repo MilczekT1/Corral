@@ -6,6 +6,7 @@ import com.tngtech.archunit.lang.FailureMessages;
 import com.tngtech.archunit.lang.Priority;
 import io.github.milczekt1.archrules.RuleDoc;
 import io.github.milczekt1.archrules.RuleRegistry;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,9 +32,17 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
 
     @Override
     public String formatFailure(HasDescription rule, FailureMessages failureMessages, Priority priority) {
+        try {
+            return formatFailureUnsafe(rule, failureMessages, priority);
+        } catch (RuntimeException e) {
+            return lastResortFormat(rule, failureMessages, priority);
+        }
+    }
+
+    private String formatFailureUnsafe(HasDescription rule, FailureMessages failureMessages, Priority priority) {
         String description = describeSafely(rule);
         String countInfo = countInfoSafely(failureMessages);
-        List<String> lines = failureMessages == null ? List.of() : List.copyOf(failureMessages);
+        List<String> lines = linesSafely(failureMessages);
         try {
             Optional<RuleDoc> doc = RuleRegistry.find(description);
             return doc.isPresent()
@@ -44,38 +53,64 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
+    /**
+     * Provably non-throwing backstop for {@link #formatFailure}, reached only if every guarded
+     * path above still failed — e.g. a corrupted {@link RuleDoc}, or {@link #defaultFormat} itself
+     * throwing on a null {@link Priority} while it was already handling another exception. Every
+     * value here comes from {@code String.valueOf} or {@code getClass().getName()} — never from a
+     * caller-controlled accessor or {@code toString()} that could itself throw or be null. Package
+     * -private so the guarantee is directly testable without needing a real {@link FailureMessages}.
+     */
+    String lastResortFormat(HasDescription rule, FailureMessages failureMessages, Priority priority) {
+        return "Architecture Violation [Priority: " + String.valueOf(priority) + "] - " + UNKNOWN_RULE
+                + " (failed to render failure details; rule type=" + safeClassName(rule)
+                + ", failureMessages type=" + safeClassName(failureMessages) + ")";
+    }
+
     /** Package-private seam: rendering a documented rule, testable with a plain list. */
     String render(RuleDoc doc, List<String> violationLines, Priority priority) {
-        String nl = System.lineSeparator();
-        StringBuilder out = new StringBuilder();
+        try {
+            String nl = System.lineSeparator();
+            List<String> lines = violationLines == null ? List.of() : violationLines;
+            String priorityLabel = priority == null ? "UNKNOWN" : priority.asString();
+            StringBuilder out = new StringBuilder();
 
-        out.append("Architecture Violation [").append(doc.id()).append(']')
-                .append(" [Priority: ").append(priority.asString()).append(']').append(nl).append(nl);
+            out.append("Architecture Violation [").append(doc.id()).append(']')
+                    .append(" [Priority: ").append(priorityLabel).append(']').append(nl).append(nl);
 
-        out.append("WHY:").append(nl).append(indent(doc.why())).append(nl).append(nl);
-        out.append("HOW TO FIX:").append(nl).append(indent(doc.howToFix())).append(nl).append(nl);
+            out.append("WHY:").append(nl).append(indent(doc.why())).append(nl).append(nl);
+            out.append("HOW TO FIX:").append(nl).append(indent(doc.howToFix())).append(nl).append(nl);
 
-        doc.howNotToFix().ifPresent(text ->
-                out.append("HOW NOT TO FIX (this rule):").append(nl).append(indent(text)).append(nl).append(nl));
+            doc.howNotToFix().ifPresent(text -> out.append("HOW NOT TO FIX (this rule):").append(nl)
+                    .append(indent(text)).append(nl).append(nl));
 
-        out.append("HOW NOT TO FIX (always):").append(nl);
-        for (String clause : AntiFixPolicy.clauses()) {
-            out.append(INDENT).append("- ").append(clause).append(nl);
+            out.append("HOW NOT TO FIX (always):").append(nl);
+            for (String clause : AntiFixPolicy.clauses()) {
+                out.append(INDENT).append("- ").append(clause).append(nl);
+            }
+            out.append(nl);
+
+            out.append("Offending locations:").append(nl);
+            for (String line : lines) {
+                out.append(INDENT).append(line).append(nl);
+            }
+            return out.toString();
+        } catch (RuntimeException e) {
+            return lastResortFormat(null, null, priority);
         }
-        out.append(nl);
-
-        out.append("Offending locations:").append(nl);
-        for (String line : violationLines) {
-            out.append(INDENT).append(line).append(nl);
-        }
-        return out.toString();
     }
 
     /** Package-private seam: byte-for-byte ArchUnit's default rendering, so foreign rules look untouched. */
     String defaultFormat(String description, List<String> violationLines, String countInfo, Priority priority) {
-        String violationTexts = String.join(System.lineSeparator(), violationLines);
-        return String.format("Architecture Violation [Priority: %s] - Rule '%s' was violated (%s):%n%s",
-                priority.asString(), description, countInfo, violationTexts);
+        try {
+            List<String> lines = violationLines == null ? List.of() : violationLines;
+            String violationTexts = String.join(System.lineSeparator(), lines);
+            String priorityLabel = priority == null ? "UNKNOWN" : priority.asString();
+            return String.format("Architecture Violation [Priority: %s] - Rule '%s' was violated (%s):%n%s",
+                    priorityLabel, description, countInfo, violationTexts);
+        } catch (RuntimeException e) {
+            return lastResortFormat(null, null, priority);
+        }
     }
 
     /** Package-private seam: a hostile or half-built rule must not break failure reporting. */
@@ -94,6 +129,27 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         } catch (RuntimeException e) {
             return "unknown number of times";
         }
+    }
+
+    /** Guards against a null {@code FailureMessages}, a throwing iterator, and null elements. */
+    private static List<String> linesSafely(FailureMessages messages) {
+        if (messages == null) {
+            return List.of();
+        }
+        try {
+            List<String> copy = new ArrayList<>();
+            for (String line : messages) {
+                copy.add(line == null ? "" : line);
+            }
+            return List.copyOf(copy);
+        } catch (RuntimeException e) {
+            return List.of();
+        }
+    }
+
+    /** {@code getClass()} is final and {@code getName()} runs no caller code, so this cannot throw. */
+    private static String safeClassName(Object value) {
+        return value == null ? "null" : value.getClass().getName();
     }
 
     private static String indent(String text) {
