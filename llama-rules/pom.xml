@@ -54,4 +54,20 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-surefire-plugin</artifactId>
+        <configuration>
+          <!-- Fixtures are inputs to the architecture rules, not tests. Some are named
+               *Test / *TestCase / *IT on purpose and would otherwise be executed. -->
+          <excludes>
+            <exclude>**/fixtures/**</exclude>
+          </excludes>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 </project>
