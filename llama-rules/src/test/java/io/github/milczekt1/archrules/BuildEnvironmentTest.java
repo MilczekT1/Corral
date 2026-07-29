@@ -1,6 +1,7 @@
 package io.github.milczekt1.archrules;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -18,8 +19,9 @@ class BuildEnvironmentTest {
     @Test
     void compilesToJava25Bytecode() throws IOException {
         String resource = "/" + BuildEnvironmentTest.class.getName().replace('.', '/') + ".class";
-        try (InputStream in = BuildEnvironmentTest.class.getResourceAsStream(resource);
-             DataInputStream data = new DataInputStream(in)) {
+        InputStream in = BuildEnvironmentTest.class.getResourceAsStream(resource);
+        assertNotNull(in, "class file resource not found on classpath: " + resource);
+        try (DataInputStream data = new DataInputStream(in)) {
             assertEquals(0xCAFEBABE, data.readInt(), "not a class file");
             data.readUnsignedShort(); // minor version
             assertEquals(69, data.readUnsignedShort(), "expected Java 25 (major 69) bytecode");

@@ -46,5 +46,12 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- test-only: silences ArchUnit's internal SLF4J "no providers found" warning.
+         Deliberately test-scoped so this library never pushes a logging binding onto consumers. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-nop</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
