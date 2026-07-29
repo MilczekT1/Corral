@@ -4,10 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.List;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class AntiFixPolicyTest {
+
+    private static List<String> baselineSnapshot;
+
+    @BeforeAll
+    static void captureBaseline() {
+        baselineSnapshot = new ArrayList<>(AntiFixPolicy.clauses());
+    }
 
     @Test
     void baselineCoversEveryDocumentedCheat() {
@@ -24,8 +33,7 @@ class AntiFixPolicyTest {
 
     @Test
     void baselineEndsWithTheOnlyAcceptableResolution() {
-        List<String> clauses = AntiFixPolicy.clauses();
-        String last = clauses.get(clauses.size() - 1).toLowerCase();
+        String last = baselineSnapshot.get(baselineSnapshot.size() - 1).toLowerCase();
 
         assertTrue(last.contains("only"), "final clause must state the only acceptable resolution");
         assertTrue(last.contains("genuinely passes"), "final clause: " + last);
