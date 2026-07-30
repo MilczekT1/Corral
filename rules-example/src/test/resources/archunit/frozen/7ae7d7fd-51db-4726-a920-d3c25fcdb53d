@@ -1,4 +1,0 @@
-Method <com.example.consumer.service.ReportService.render(java.sql.Connection)> calls method <java.sql.Connection.createStatement()> in (ReportService.java:15)
-Method <com.example.consumer.service.ReportService.render(java.sql.Connection)> calls method <java.sql.Statement.execute(java.lang.String)> in (ReportService.java:15)
-Method <com.example.consumer.service.ReportService.render(java.sql.Connection)> has parameter of type <java.sql.Connection> in (ReportService.java:0)
-Method <com.example.consumer.service.ReportService.render(java.sql.Connection)> throws type <java.sql.SQLException> in (ReportService.java:0)

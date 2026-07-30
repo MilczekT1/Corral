@@ -108,9 +108,6 @@ standard output for any rule it does not own, so your own ArchUnit tests are una
 
 | Rule id | Group | What it enforces |
 |---|---|---|
-| `db.no-spring-transactional-on-classes` | `DatabaseRules` | No class annotated `@org.springframework.transaction.annotation.Transactional`. |
-| `db.no-spring-transactional-on-methods` | `DatabaseRules` | No method annotated `@Transactional` either — it is banned in every position. |
-| `db.no-raw-jdbc-outside-repositories` | `DatabaseRules` | `java.sql` / `javax.sql` / `JdbcTemplate` only inside `..repository..`, `..repositories..`, `..dao..`, `..jdbc..`, `..persistence..`. |
 | `test.no-mocked-repository-in-integration-test` | `TestingRules` | A `*IntegrationTest` / `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
 | `test.class-naming-convention` | `TestingRules` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test` or `IT`, so Surefire/Failsafe actually run it. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 

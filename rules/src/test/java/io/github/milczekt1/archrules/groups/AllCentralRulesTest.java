@@ -67,6 +67,6 @@ class AllCentralRulesTest {
 
     @Test
     void groupsAreListedInDocumentationOrder() {
-        assertEquals(List.of(DatabaseRules.class, TestingRules.class), AllCentralRules.groups());
+        assertEquals(List.of(TestingRules.class), AllCentralRules.groups());
     }
 }

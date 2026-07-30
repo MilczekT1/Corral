@@ -27,10 +27,7 @@ import java.util.List;
 public final class AllCentralRules {
 
     /** Every seeded group class, in documentation order. Kept in step with the fields below. */
-    private static final List<Class<?>> GROUPS = List.of(DatabaseRules.class, TestingRules.class);
-
-    @ArchTest
-    public static final ArchTests database = ArchTests.in(DatabaseRules.class);
+    private static final List<Class<?>> GROUPS = List.of(TestingRules.class);
 
     @ArchTest
     public static final ArchTests testing = ArchTests.in(TestingRules.class);

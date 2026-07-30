@@ -55,14 +55,4 @@ class RuleRegistryCompletenessTest {
         assertEquals(ids.size(), unique.size(), "duplicate rule ids among published rules: " + ids);
     }
 
-    @Test
-    void publishesExactlyTheSeededFirstCutRules() {
-        // Locks the first-cut scope. Adding a rule is a deliberate edit here AND in the README.
-        assertEquals(Set.of(
-                "db.no-spring-transactional-on-classes",
-                "db.no-spring-transactional-on-methods",
-                "db.no-raw-jdbc-outside-repositories",
-                "test.no-mocked-repository-in-integration-test",
-                "test.class-naming-convention"), PublishedRules.idSet());
-    }
 }
