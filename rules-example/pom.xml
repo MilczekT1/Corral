@@ -8,10 +8,10 @@
     <groupId>io.github.milczekt1</groupId>
     <artifactId>llama-rules-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
-    <relativePath>../../pom.xml</relativePath>
+    <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>llama-rules-consumer-example</artifactId>
+  <artifactId>rules-example</artifactId>
   <packaging>jar</packaging>
 
   <name>LLamaRules Example Consumer (JUnit 5)</name>

@@ -21,8 +21,8 @@
   </licenses>
 
   <modules>
-    <module>llama-rules</module>
-    <module>examples/consumer-junit5</module>
+    <module>rules</module>
+    <module>rules-example</module>
   </modules>
 
   <properties>

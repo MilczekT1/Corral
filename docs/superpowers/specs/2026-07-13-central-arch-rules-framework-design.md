@@ -92,7 +92,7 @@ central-arch-rules-framework/
       AllCentralRules.java     # aggregates all seeded groups
       # Java17Rules / JakartaMigrationRules / SpringRules — deferred, NOT created in first cut
   src/test/java/...            # framework's own tests (see § Testing the framework)
-  examples/consumer-junit5/
+  examples/llama-rules-example/
     pom.xml
     src/test/java/.../CentralArchitectureTest.java
     src/test/resources/archunit.properties
@@ -321,7 +321,7 @@ The framework is a library; **its own tests** verify the plumbing (TDD applies h
   a *new* violation fails; the seeded one stays green (using a temp store dir).
 - **Rule correctness** — each seeded rule checked against a small `@AnalyzeClasses` fixture
   containing both a compliant and a violating sample class.
-- **Example consumer** (`examples/consumer-junit5`) doubles as an integration smoke test: it
+- **Example consumer** (`examples/llama-rules-example`) doubles as an integration smoke test: it
   wires `CentralArchitectureTest`, commits a frozen store, and its build stays green.
 
 ### Error handling / graceful degradation
@@ -361,7 +361,7 @@ The framework is a library; **its own tests** verify the plumbing (TDD applies h
 
 1. `./mvnw -pl central-arch-rules-framework verify` — framework unit tests green
    (registry completeness, formatter, freezing behavior, rule correctness).
-2. `examples/consumer-junit5` build green — `CentralArchitectureTest` runs, frozen store seeds,
+2. `examples/llama-rules-example` build green — `CentralArchitectureTest` runs, frozen store seeds,
    no new violations.
 3. Manual: introduce a deliberate `@Transactional` in the example consumer → the build fails
    with the full `WHY` / `HOW TO FIX` / anti-fix message; remove it → green again.

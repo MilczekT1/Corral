@@ -82,7 +82,7 @@ llama-rules/
     ReadmeRulesTableTest.java             # docs-drift guard
     fixtures/database/...                 # compliant + violating samples
     fixtures/testing/...                  # compliant + violating samples
-examples/consumer-junit5/
+examples/llama-rules-example/
   pom.xml                                 # CREATE: not deployed
   src/main/java/com/example/consumer/...  # one compliant class, one deliberate violation
   src/test/java/com/example/consumer/CentralArchitectureTest.java
@@ -187,7 +187,7 @@ Replace the entire contents of `pom.xml`:
 
   <modules>
     <module>llama-rules</module>
-    <module>examples/consumer-junit5</module>
+    <module>examples/llama-rules-example</module>
   </modules>
 
   <properties>
@@ -273,7 +273,7 @@ Replace the entire contents of `pom.xml`:
 </project>
 ```
 
-> The `examples/consumer-junit5` module is listed now but created in Task 11. Until then the reactor will not resolve. **Comment that `<module>` line out** while working through Tasks 1–10 and uncomment it in Task 11.
+> The `examples/llama-rules-example` module is listed now but created in Task 11. Until then the reactor will not resolve. **Comment that `<module>` line out** while working through Tasks 1–10 and uncomment it in Task 11.
 
 - [ ] **Step 4: Create the library module pom**
 
@@ -2392,17 +2392,17 @@ git commit -m "test: cover freeze seeding, new-violation failure and agent-frien
 
 ---
 
-## Task 11: `examples/consumer-junit5` — the integration smoke test
+## Task 11: `examples/llama-rules-example` — the integration smoke test
 
 **Files:**
-- Modify: `pom.xml` (uncomment the `examples/consumer-junit5` module from Task 1)
-- Create: `examples/consumer-junit5/pom.xml`
-- Create: `examples/consumer-junit5/src/main/java/com/example/consumer/repository/CustomerRepository.java`
-- Create: `examples/consumer-junit5/src/main/java/com/example/consumer/service/ReportService.java`
-- Create: `examples/consumer-junit5/src/main/java/com/example/consumer/service/GreetingService.java`
-- Create: `examples/consumer-junit5/src/test/java/com/example/consumer/CentralArchitectureTest.java`
-- Create: `examples/consumer-junit5/src/test/resources/archunit.properties`
-- Create: `examples/consumer-junit5/src/test/resources/archunit/frozen/` (generated on first run, then committed)
+- Modify: `pom.xml` (uncomment the `examples/llama-rules-example` module from Task 1)
+- Create: `examples/llama-rules-example/pom.xml`
+- Create: `examples/llama-rules-example/src/main/java/com/example/consumer/repository/CustomerRepository.java`
+- Create: `examples/llama-rules-example/src/main/java/com/example/consumer/service/ReportService.java`
+- Create: `examples/llama-rules-example/src/main/java/com/example/consumer/service/GreetingService.java`
+- Create: `examples/llama-rules-example/src/test/java/com/example/consumer/CentralArchitectureTest.java`
+- Create: `examples/llama-rules-example/src/test/resources/archunit.properties`
+- Create: `examples/llama-rules-example/src/test/resources/archunit/frozen/` (generated on first run, then committed)
 
 **Interfaces:**
 - Consumes: the published `io.github.milczekt1:llama-rules` artifact (resolved from the reactor), `AllCentralRules` (Task 9), `AgentFriendlyFailureDisplayFormat` (Task 5).
@@ -2417,12 +2417,12 @@ git commit -m "test: cover freeze seeding, new-violation failure and agent-frien
 In the root `pom.xml`, uncomment:
 
 ```xml
-    <module>examples/consumer-junit5</module>
+    <module>examples/llama-rules-example</module>
 ```
 
 - [ ] **Step 2: Create the example pom**
 
-Create `examples/consumer-junit5/pom.xml`:
+Create `examples/llama-rules-example/pom.xml`:
 
 ```xml
 <?xml version="1.0" encoding="UTF-8"?>
@@ -2471,7 +2471,7 @@ Create `examples/consumer-junit5/pom.xml`:
 
 - [ ] **Step 3: Create the example sources**
 
-`examples/consumer-junit5/src/main/java/com/example/consumer/repository/CustomerRepository.java` — compliant:
+`examples/llama-rules-example/src/main/java/com/example/consumer/repository/CustomerRepository.java` — compliant:
 
 ```java
 package com.example.consumer.repository;
@@ -2487,7 +2487,7 @@ public class CustomerRepository {
 }
 ```
 
-`examples/consumer-junit5/src/main/java/com/example/consumer/service/ReportService.java` — the deliberate, *frozen* violation:
+`examples/llama-rules-example/src/main/java/com/example/consumer/service/ReportService.java` — the deliberate, *frozen* violation:
 
 ```java
 package com.example.consumer.service;
@@ -2509,7 +2509,7 @@ public class ReportService {
 }
 ```
 
-`examples/consumer-junit5/src/main/java/com/example/consumer/service/GreetingService.java` — clean:
+`examples/llama-rules-example/src/main/java/com/example/consumer/service/GreetingService.java` — clean:
 
 ```java
 package com.example.consumer.service;
@@ -2523,7 +2523,7 @@ public class GreetingService {
 
 - [ ] **Step 4: Create the thin consumer test class**
 
-`examples/consumer-junit5/src/test/java/com/example/consumer/CentralArchitectureTest.java`:
+`examples/llama-rules-example/src/test/java/com/example/consumer/CentralArchitectureTest.java`:
 
 ```java
 package com.example.consumer;
@@ -2561,7 +2561,7 @@ class CentralArchitectureTest {
 
 - [ ] **Step 5: Configure ArchUnit for the consumer**
 
-`examples/consumer-junit5/src/test/resources/archunit.properties`:
+`examples/llama-rules-example/src/test/resources/archunit.properties`:
 
 ```properties
 # Freeze store: seeded on first run, then committed. Only NEW violations fail the build.
@@ -2578,14 +2578,14 @@ failureDisplayFormat=io.github.milczekt1.archrules.format.AgentFriendlyFailureDi
 Run: `mvn -B test`
 
 (Build the whole reactor: the example resolves `llama-rules` from the reactor, so no `install` is
-needed. Selecting the example alone requires `-pl examples/consumer-junit5 -am`.)
+needed. Selecting the example alone requires `-pl examples/llama-rules-example -am`.)
 
 Expected: PASS. `ReportService`'s raw-JDBC violation is seeded rather than failing the build.
 
 Verify the store was written with the short id as the key:
 
 ```bash
-cat examples/consumer-junit5/src/test/resources/archunit/frozen/stored.rules
+cat examples/llama-rules-example/src/test/resources/archunit/frozen/stored.rules
 ```
 
 Expected: a line `db.no-raw-jdbc-outside-repositories=<uuid>` (plus entries for the other rules).
@@ -2595,7 +2595,7 @@ Expected: a line `db.no-raw-jdbc-outside-repositories=<uuid>` (plus entries for 
 This is the design's manual verification step. Temporarily add a second violating service:
 
 ```bash
-cat > examples/consumer-junit5/src/main/java/com/example/consumer/service/AuditService.java <<'EOF'
+cat > examples/llama-rules-example/src/main/java/com/example/consumer/service/AuditService.java <<'EOF'
 package com.example.consumer.service;
 
 import java.sql.Connection;
@@ -2607,7 +2607,7 @@ public class AuditService {
     }
 }
 EOF
-mvn -B test -pl examples/consumer-junit5 -am
+mvn -B test -pl examples/llama-rules-example -am
 ```
 
 Expected: **FAIL**, and the output contains `Architecture Violation [db.no-raw-jdbc-outside-repositories]`, `WHY:`, `HOW TO FIX:`, `HOW NOT TO FIX (always):`, and names `AuditService` but **not** `ReportService`.
@@ -2615,9 +2615,9 @@ Expected: **FAIL**, and the output contains `Architecture Violation [db.no-raw-j
 Then remove it and confirm green again:
 
 ```bash
-rm examples/consumer-junit5/src/main/java/com/example/consumer/service/AuditService.java
-git checkout -- examples/consumer-junit5/src/test/resources/archunit/frozen
-mvn -B test -pl examples/consumer-junit5 -am
+rm examples/llama-rules-example/src/main/java/com/example/consumer/service/AuditService.java
+git checkout -- examples/llama-rules-example/src/test/resources/archunit/frozen
+mvn -B test -pl examples/llama-rules-example -am
 ```
 
 Expected: PASS.
@@ -2862,7 +2862,7 @@ git commit -m "docs: add rules table with drift guard"
 Run these in order from the repo root; all must pass before the work is considered done.
 
 1. `mvn -B verify` — both modules green.
-2. `cat examples/consumer-junit5/src/test/resources/archunit/frozen/stored.rules` — keys are short rule ids, not English sentences.
+2. `cat examples/llama-rules-example/src/test/resources/archunit/frozen/stored.rules` — keys are short rule ids, not English sentences.
 3. `git status --porcelain` — clean. In particular the freeze store must not be modified by a passing run.
 4. Task 11 Step 7's manual check — a new violation fails with the full `WHY` / `HOW TO FIX` / anti-fix message; removing it returns the build to green.
 
