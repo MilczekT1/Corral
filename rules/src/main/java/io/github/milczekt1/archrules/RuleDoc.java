@@ -2,6 +2,7 @@ package io.github.milczekt1.archrules;
 
 import java.util.Optional;
 import java.util.regex.Pattern;
+import lombok.Builder;
 
 /**
  * Structured, agent-facing documentation for a single architecture rule.
@@ -14,6 +15,7 @@ import java.util.regex.Pattern;
  *
  * <p><strong>Changing an id is a breaking change.</strong>
  */
+@Builder(builderClassName = "Builder")
 public record RuleDoc(String id, String why, String howToFix, Optional<String> howNotToFix) {
 
     /** Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code db.no-spring-transactional}. */
@@ -34,47 +36,30 @@ public record RuleDoc(String id, String why, String howToFix, Optional<String> h
         howNotToFix = howNotToFix.map(String::trim).filter(s -> !s.isEmpty());
     }
 
-    public static Builder builder() {
-        return new Builder();
-    }
-
     private static void requireText(String value, String field) {
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(field + " must not be null or blank");
         }
     }
 
-    public static final class Builder {
-        private String id;
-        private String why;
-        private String howToFix;
-        private String howNotToFix;
+    /**
+     * Partially hand-written on purpose; Lombok generates the rest.
+     *
+     * <p>Two members are carried by hand because Lombok's defaults are wrong for this type: the
+     * field initializer, because an omitted {@code Optional} component would otherwise arrive as
+     * {@code null} and trip the canonical constructor's null check; and the {@code String} setter,
+     * because the generated one would take {@code Optional<String>} and force every rule author to
+     * write {@code .howNotToFix(Optional.of("..."))}. Lombok suppresses generation by method
+     * <em>name</em>, so declaring the {@code String} form means no {@code Optional} overload is
+     * generated at all.
+     */
+    public static class Builder {
 
-        private Builder() {
-        }
-
-        public Builder id(String id) {
-            this.id = id;
-            return this;
-        }
-
-        public Builder why(String why) {
-            this.why = why;
-            return this;
-        }
-
-        public Builder howToFix(String howToFix) {
-            this.howToFix = howToFix;
-            return this;
-        }
+        private Optional<String> howNotToFix = Optional.empty();
 
         public Builder howNotToFix(String howNotToFix) {
-            this.howNotToFix = howNotToFix;
+            this.howNotToFix = Optional.ofNullable(howNotToFix);
             return this;
-        }
-
-        public RuleDoc build() {
-            return new RuleDoc(id, why, howToFix, Optional.ofNullable(howNotToFix));
         }
     }
 }
