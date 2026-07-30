@@ -1,0 +1,7 @@
+#
+#Thu Jul 30 10:26:37 CEST 2026
+db.no-raw-jdbc-outside-repositories=7ae7d7fd-51db-4726-a920-d3c25fcdb53d
+db.no-spring-transactional-on-classes=625a8f39-f971-431d-8126-c4f2bb12621b
+db.no-spring-transactional-on-methods=6387bd6d-170e-4610-b11c-32cd4f66beff
+test.class-naming-convention=56d55a4e-91ac-4e12-8682-030d6f3f746f
+test.no-mocked-repository-in-integration-test=63badc35-2a40-4832-a424-be02d9484d60

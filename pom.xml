@@ -22,7 +22,7 @@
 
   <modules>
     <module>llama-rules</module>
-    <!-- <module>examples/consumer-junit5</module> -->
+    <module>examples/consumer-junit5</module>
   </modules>
 
   <properties>
