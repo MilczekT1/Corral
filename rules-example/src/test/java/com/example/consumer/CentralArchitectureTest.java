@@ -21,6 +21,5 @@ class CentralArchitectureTest {
     static final ArchTests all = ArchTests.in(AllCentralRules.class);
 
     // Equivalent, if you prefer to opt in group by group:
-    // @ArchTest static final ArchTests database = ArchTests.in(DatabaseRules.class);
-    // @ArchTest static final ArchTests testing  = ArchTests.in(TestingRules.class);
+    // @ArchTest static final ArchTests testing = ArchTests.in(TestingRules.class);
 }

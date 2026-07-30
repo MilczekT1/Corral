@@ -19,8 +19,9 @@ import java.util.List;
 /**
  * Rules about test hygiene.
  *
- * <p>Like {@link DatabaseRules}, each rule exists as a package-private raw {@code *_RULE} constant
- * for unit testing plus a public frozen {@code @ArchTest} field for consumers.
+ * <p>Each rule exists twice: a package-private raw {@code *_RULE} constant for unit testing, plus a
+ * public frozen {@code @ArchTest} field for consumers. Tests exercise the raw rules, because a
+ * frozen rule seeds its violations and passes — which would make rule-correctness tests meaningless.
  *
  * <p>These rules inspect <em>test</em> classes, which is why consumers must not configure
  * {@code ImportOption.DoNotIncludeTests} — doing so makes them pass vacuously.

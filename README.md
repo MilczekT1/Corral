@@ -65,7 +65,7 @@ class CentralArchitectureTest {
 }
 ```
 
-Opt in group by group instead with `ArchTests.in(DatabaseRules.class)` / `ArchTests.in(TestingRules.class)`.
+Opt in group by group instead with `ArchTests.in(TestingRules.class)`.
 
 > Do **not** add `ImportOption.DoNotIncludeTests`. The testing rules inspect your test classes;
 > excluding them makes those rules pass vacuously.
