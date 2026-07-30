@@ -2,6 +2,7 @@ package io.github.milczekt1.archrules;
 
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import lombok.experimental.UtilityClass;
 
 /**
  * Turns a raw {@link ArchRule} into the shape every central rule must have.
@@ -18,10 +19,8 @@ import com.tngtech.archunit.library.freeze.FreezingArchRule;
  * Only then is the rule wrapped in a {@link FreezingArchRule}, so that adopting a new rule records
  * existing debt rather than blocking in-flight work.
  */
-public final class FrozenRules {
-
-    private FrozenRules() {
-    }
+@UtilityClass
+public class FrozenRules {
 
     public static ArchRule freeze(ArchRule rule, RuleDoc doc) {
         RuleRegistry.register(doc);

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import lombok.experimental.UtilityClass;
 
 /**
  * The global "how NOT to fix this" policy rendered at the bottom of <em>every</em> framework
@@ -13,7 +14,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * intentionally no API to remove or replace the baseline: the whole point is that the anti-cheat
  * guidance cannot be forgotten, weakened, or quietly dropped per rule.
  */
-public final class AntiFixPolicy {
+@UtilityClass
+public class AntiFixPolicy {
 
     private static final List<String> BASELINE = List.of(
             "Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation"
@@ -27,9 +29,6 @@ public final class AntiFixPolicy {
                     + " passes — then follow this rule's HOW TO FIX.");
 
     private static final List<String> ADDITIONAL = new CopyOnWriteArrayList<>();
-
-    private AntiFixPolicy() {
-    }
 
     /** Baseline clauses first, then any appended clauses, in insertion order. */
     public static List<String> clauses() {

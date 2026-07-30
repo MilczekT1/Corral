@@ -17,6 +17,14 @@
   <description>Centralized, freezable ArchUnit rules with agent-friendly failure messages.</description>
 
   <dependencies>
+    <!-- Compile-time only: an annotation processor. `provided` keeps it off every consumer's
+         classpath. The processor itself is wired via annotationProcessorPaths in the parent. -->
+    <dependency>
+      <groupId>org.projectlombok</groupId>
+      <artifactId>lombok</artifactId>
+      <scope>provided</scope>
+    </dependency>
+
     <!-- compile scope on purpose: consumers add ONE test-scoped dependency on llama-rules
          and inherit the archunit-junit5 engine transitively. -->
     <dependency>
