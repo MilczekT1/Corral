@@ -3,7 +3,7 @@ package io.github.milczekt1.archrules;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.milczekt1.archrules.groups.AllCentralRules;
+import io.github.milczekt1.archrules.testsupport.PublishedRules;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -14,7 +14,14 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-/** The README rules table is documentation that must not drift from the registry. */
+/**
+ * The README rules table is documentation that must not drift from the rules consumers run.
+ *
+ * <p>Compared against {@link PublishedRules}, <em>not</em> {@code RuleRegistry.all()}: the registry
+ * is process-wide static state in a JVM that Surefire reuses, so sibling tests which register
+ * throwaway docs (see {@code RuleRegistryTest}, {@code FrozenRulesTest}) would otherwise make this
+ * class pass or fail depending on run order.
+ */
 class ReadmeRulesTableTest {
 
     /** Matches a leading table cell holding a backticked rule id, e.g. {@code | `db.foo` |}. */
@@ -23,8 +30,7 @@ class ReadmeRulesTableTest {
     private static String readme;
 
     @BeforeAll
-    static void loadEverything() throws IOException {
-        AllCentralRules.loadAll();
+    static void loadReadme() throws IOException {
         readme = Files.readString(readmePath());
     }
 
@@ -45,25 +51,25 @@ class ReadmeRulesTableTest {
 
     @Test
     void everyRuleIsDocumented() {
-        Set<String> registered = new LinkedHashSet<>(RuleRegistry.all().stream().map(RuleDoc::id).toList());
+        Set<String> published = PublishedRules.idSet();
 
-        assertTrue(documentedIds().containsAll(registered),
-                "README is missing rows for: " + minus(registered, documentedIds()));
+        assertTrue(documentedIds().containsAll(published),
+                "README is missing rows for: " + minus(published, documentedIds()));
     }
 
     @Test
     void noStaleRowsSurviveARemovedRule() {
-        Set<String> registered = new LinkedHashSet<>(RuleRegistry.all().stream().map(RuleDoc::id).toList());
+        Set<String> published = PublishedRules.idSet();
 
-        assertTrue(registered.containsAll(documentedIds()),
-                "README documents rules that no longer exist: " + minus(documentedIds(), registered));
+        assertTrue(published.containsAll(documentedIds()),
+                "README documents rules that no longer exist: " + minus(documentedIds(), published));
     }
 
     @Test
-    void tableAndRegistryMatchExactly() {
-        Set<String> registered = new LinkedHashSet<>(RuleRegistry.all().stream().map(RuleDoc::id).toList());
+    void tableAndPublishedRulesMatchExactly() {
+        Set<String> published = PublishedRules.idSet();
 
-        assertEquals(registered.stream().sorted().toList(), documentedIds().stream().sorted().toList());
+        assertEquals(published.stream().sorted().toList(), documentedIds().stream().sorted().toList());
     }
 
     @Test
@@ -72,6 +78,35 @@ class ReadmeRulesTableTest {
         assertTrue(readme.contains("failureDisplayFormat"), "README must show how to enable rich failures");
         assertTrue(readme.contains("DoNotIncludeTests"),
                 "README must warn against excluding test classes");
+    }
+
+    @Test
+    void readmeShowsHowToResolveTheArtifact() {
+        // The Install block is useless if it cannot resolve: GitHub Packages needs an explicit
+        // <repositories> entry plus authenticated credentials, even for public reads.
+        assertTrue(readme.contains("https://maven.pkg.github.com/MilczekT1/LLamaRules"),
+                "README must show the GitHub Packages repository the artifact is published to");
+        assertTrue(readme.contains("settings.xml"),
+                "README must point at the settings.xml server/token requirement");
+    }
+
+    @Test
+    void readmeDocumentsSeedingAsADeliberateOneOffRatherThanAPermanentFlag() {
+        assertTrue(readme.contains("-Darchunit.freeze.store.default.allowStoreCreation=true"),
+                "README must show seeding as a one-time command-line override");
+        assertTrue(readme.lines().noneMatch(line -> line.strip().equals("freeze.store.default.allowStoreCreation=true")),
+                "README must not tell consumers to commit allowStoreCreation=true — that turns a missing "
+                        + "store into a silent re-seed instead of a loud failure");
+    }
+
+    @Test
+    void readmeGrowthPathCoversTheStepsThatSilentlyBreakEnforcementIfSkipped() {
+        assertTrue(readme.contains("AllCentralRules.groups()"), "growth path must mention groups()");
+        assertTrue(readme.contains("@ArchTest ArchTests"),
+                "growth path must mention the @ArchTest ArchTests field — a group registered only in "
+                        + "groups() is never evaluated by any consumer");
+        assertTrue(readme.contains("publishesExactlyTheSeededFirstCutRules"),
+                "growth path must mention the test that pins the published id set");
     }
 
     private static Set<String> minus(Set<String> a, Set<String> b) {
