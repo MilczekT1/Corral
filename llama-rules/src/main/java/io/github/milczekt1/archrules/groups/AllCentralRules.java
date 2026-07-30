@@ -16,9 +16,18 @@ import java.util.List;
  * }</pre>
  *
  * <p>Growth path — add a group class here once it is seeded:
- * {@code Java17Rules}, {@code JakartaMigrationRules}, {@code SpringRules}.
+ * {@code Java17Rules}, {@code JakartaMigrationRules}, {@code SpringRules}. Every group needs
+ * <strong>both</strong> an {@code @ArchTest ArchTests} field (the only members
+ * {@code ArchTests.in(AllCentralRules.class)} descends into, so this is what consumers actually
+ * evaluate) <strong>and</strong> an entry in {@link #groups()} (what the completeness and README
+ * tooling reads). Registering only one of the two leaves the build green while nobody enforces the
+ * new rules; {@code AllCentralRulesTest} fails if they diverge. The README growth path is the full
+ * checklist.
  */
 public final class AllCentralRules {
+
+    /** Every seeded group class, in documentation order. Kept in step with the fields below. */
+    private static final List<Class<?>> GROUPS = List.of(DatabaseRules.class, TestingRules.class);
 
     @ArchTest
     public static final ArchTests database = ArchTests.in(DatabaseRules.class);
@@ -29,9 +38,9 @@ public final class AllCentralRules {
     private AllCentralRules() {
     }
 
-    /** Every seeded group class, in documentation order. */
+    /** @see #GROUPS */
     public static List<Class<?>> groups() {
-        return List.of(DatabaseRules.class, TestingRules.class);
+        return GROUPS;
     }
 
     /**

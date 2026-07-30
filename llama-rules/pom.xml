@@ -24,6 +24,15 @@
       <artifactId>archunit-junit5</artifactId>
     </dependency>
 
+    <!-- The logging FACADE only, used by AgentFriendlyFailureDisplayFormat to record why the rich
+         failure format degraded. Already on the classpath transitively via ArchUnit; declared
+         because we now compile against it. No binding is ever added at compile scope — choosing a
+         logging implementation stays the consumer's decision. -->
+    <dependency>
+      <groupId>org.slf4j</groupId>
+      <artifactId>slf4j-api</artifactId>
+    </dependency>
+
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter</artifactId>

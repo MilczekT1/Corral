@@ -9,6 +9,8 @@ import io.github.milczekt1.archrules.RuleRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Renders framework rule failures as agent- and human-readable guidance: WHY the rule exists,
@@ -27,6 +29,14 @@ import java.util.Optional;
  */
 public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
 
+    /**
+     * {@code slf4j-api} only — it is already on the compile classpath transitively via ArchUnit, and
+     * this library deliberately ships no binding, so a consumer's own logging setup decides whether
+     * these messages surface. Every degradation below is logged at DEBUG: silently falling back is
+     * what made this class undiagnosable in a consumer's CI.
+     */
+    private static final Logger log = LoggerFactory.getLogger(AgentFriendlyFailureDisplayFormat.class);
+
     private static final String INDENT = "  ";
     private static final String UNKNOWN_RULE = "<unknown rule>";
 
@@ -35,7 +45,21 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         try {
             return formatFailureUnsafe(rule, failureMessages, priority);
         } catch (RuntimeException e) {
+            debug("Falling back to the last-resort failure format", e);
             return lastResortFormat(rule, failureMessages, priority);
+        }
+    }
+
+    /**
+     * Logging must never widen this class's never-throw contract, so the call itself is guarded:
+     * a broken or misconfigured binding would otherwise turn a formatting fallback into a thrown
+     * exception that masks the real architecture violation.
+     */
+    private static void debug(String message, Throwable cause) {
+        try {
+            log.debug(message, cause);
+        } catch (RuntimeException ignored) {
+            // Nothing left to do: there is no channel to report a failure of the reporting channel.
         }
     }
 
@@ -49,6 +73,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
                     ? render(doc.get(), lines, priority)
                     : defaultFormat(description, lines, countInfo, priority);
         } catch (RuntimeException e) {
+            debug("Registry lookup or rich rendering failed; using ArchUnit's default format", e);
             return defaultFormat(description, lines, countInfo, priority);
         }
     }
@@ -96,6 +121,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             }
             return out.toString();
         } catch (RuntimeException e) {
+            debug("Rich rendering of a documented rule failed; using the last-resort format", e);
             return lastResortFormat(null, null, priority);
         }
     }
@@ -109,6 +135,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             return String.format("Architecture Violation [Priority: %s] - Rule '%s' was violated (%s):%n%s",
                     priorityLabel, description, countInfo, violationTexts);
         } catch (RuntimeException e) {
+            debug("ArchUnit's default rendering failed; using the last-resort format", e);
             return lastResortFormat(null, null, priority);
         }
     }
@@ -119,6 +146,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             String description = rule == null ? null : rule.getDescription();
             return description == null ? UNKNOWN_RULE : description;
         } catch (RuntimeException e) {
+            debug("rule.getDescription() threw; reporting the rule as " + UNKNOWN_RULE, e);
             return UNKNOWN_RULE;
         }
     }
@@ -127,6 +155,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         try {
             return messages == null ? "0 times" : messages.getInformationAboutNumberOfViolations();
         } catch (RuntimeException e) {
+            debug("FailureMessages.getInformationAboutNumberOfViolations() threw", e);
             return "unknown number of times";
         }
     }
@@ -143,6 +172,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             }
             return List.copyOf(copy);
         } catch (RuntimeException e) {
+            debug("Iterating FailureMessages threw; reporting no offending locations", e);
             return List.of();
         }
     }

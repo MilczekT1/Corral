@@ -34,7 +34,22 @@ public final class TestingRules {
             // Removed in Spring Boot 4; retained for consumers still on Boot 3.
             "org.springframework.boot.test.mock.mockito.MockBean");
 
-    private static final String JUNIT_TEST = "org.junit.jupiter.api.Test";
+    /**
+     * Every JUnit 5 annotation that turns a method into an executable test, matched by FQN string
+     * so a consumer without {@code junit-jupiter-params} still works.
+     *
+     * <p>All of them are listed explicitly because ArchUnit's {@code isAnnotatedWith} looks at
+     * direct annotations only: {@code @ParameterizedTest} and {@code @RepeatedTest} are
+     * meta-annotated with {@code @TestTemplate}, but that is invisible here. Missing one is a
+     * false negative of exactly the kind this rule exists to catch — a class whose tests all use
+     * {@code @ParameterizedTest} is just as silently unexecuted as one using {@code @Test}.
+     */
+    static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
+            "org.junit.jupiter.api.Test",
+            "org.junit.jupiter.api.RepeatedTest",
+            "org.junit.jupiter.api.TestFactory",
+            "org.junit.jupiter.api.TestTemplate",
+            "org.junit.jupiter.params.ParameterizedTest");
 
     private TestingRules() {
     }
@@ -90,22 +105,36 @@ public final class TestingRules {
 
     static final RuleDoc TEST_NAMING_DOC = RuleDoc.builder()
             .id("test.class-naming-convention")
-            .why("Most build tools select which classes to run by class-name convention (Maven's Surefire "
-                    + "and Failsafe plugins, for example, match *Test and *IT respectively). A class holding "
-                    + "@Test methods whose name ends in neither Test nor IT is silently never executed — it "
-                    + "looks like coverage in the source tree while proving nothing in CI.")
-            .howToFix("Rename the class to end in Test (unit tests) or IT (integration tests) so your build "
-                    + "tool's test-selection convention actually picks it up (with Maven, Surefire runs *Test "
-                    + "and Failsafe runs *IT).")
-            .howNotToFix("Do NOT delete the @Test methods or the class to make this rule pass, and do NOT "
+            .why("Most build tools select which top-level classes to run by class-name convention (Maven's "
+                    + "Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A "
+                    + "top-level class holding JUnit test methods — @Test, @ParameterizedTest, @RepeatedTest, "
+                    + "@TestFactory or @TestTemplate — whose name ends in neither Test nor IT is silently "
+                    + "never executed: it looks like coverage in the source tree while proving nothing in CI.")
+            .howToFix("Rename the reported top-level class to end in Test (unit tests) or IT (integration "
+                    + "tests) so your build tool's test-selection convention picks it up (with Maven, Surefire "
+                    + "runs *Test and Failsafe runs *IT). Nested classes are never reported by this rule and "
+                    + "must not be renamed: a JUnit 5 @Nested group is executed through its enclosing class, "
+                    + "whose name is the only one the build tool ever looks at.")
+            .howNotToFix("Do NOT delete the test methods or the class to make this rule pass, and do NOT "
                     + "widen your build tool's test-include configuration instead of renaming (for example, "
                     + "Surefire's include patterns) — the convention is what makes the unit/integration split "
-                    + "legible.")
+                    + "legible. Do NOT swap @Test for @ParameterizedTest or any other JUnit test annotation "
+                    + "either; every one of them counts.")
             .build();
 
+    /**
+     * Nested classes are excluded because no build tool selects them by name — the enclosing class
+     * is what gets selected, so a JUnit 5 {@code @Nested} group (imported by ArchUnit as its own
+     * {@code JavaClass} named e.g. {@code WhenEmpty}) is a guaranteed false positive whose only
+     * "fix" would be a rename that changes nothing. {@code areNotMemberClasses()} also drops static
+     * nested test-holders, which are genuinely unexecuted; that trade is accepted, because a rule
+     * that fires on every {@code @Nested} class a consumer writes is unusable.
+     */
     static final ArchRule TEST_NAMING_RULE = classes()
-            .that().containAnyMethodsThat(
-                    describe("annotated with @Test", (JavaMethod method) -> method.isAnnotatedWith(JUNIT_TEST)))
+            .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
+                    (JavaMethod method) ->
+                            JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isAnnotatedWith)))
+            .and().areNotMemberClasses()
             .should().haveSimpleNameEndingWith("Test")
             .orShould().haveSimpleNameEndingWith("IT");
 
