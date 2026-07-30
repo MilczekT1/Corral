@@ -9,8 +9,7 @@ import io.github.milczekt1.archrules.RuleRegistry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Renders framework rule failures as agent- and human-readable guidance: WHY the rule exists,
@@ -26,16 +25,14 @@ import org.slf4j.LoggerFactory;
  *
  * <p>Must stay {@code public} with a {@code public} no-arg constructor — ArchUnit instantiates it
  * reflectively from the configured class name.
+ *
+ * <p>Logging uses {@code slf4j-api} only — already on the compile classpath transitively via
+ * ArchUnit — and this library deliberately ships no binding, so a consumer's own logging setup
+ * decides whether these messages surface. Every degradation below is logged at DEBUG: silently
+ * falling back is what made this class undiagnosable in a consumer's CI.
  */
+@Slf4j
 public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
-
-    /**
-     * {@code slf4j-api} only — it is already on the compile classpath transitively via ArchUnit, and
-     * this library deliberately ships no binding, so a consumer's own logging setup decides whether
-     * these messages surface. Every degradation below is logged at DEBUG: silently falling back is
-     * what made this class undiagnosable in a consumer's CI.
-     */
-    private static final Logger log = LoggerFactory.getLogger(AgentFriendlyFailureDisplayFormat.class);
 
     private static final String INDENT = "  ";
     private static final String UNKNOWN_RULE = "<unknown rule>";
