@@ -1,12 +1,18 @@
 package io.github.milczekt1.archrules.freeze;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.ArchConfiguration;
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.Files;
@@ -20,9 +26,12 @@ import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Drives {@link EmptyOmittingViolationStore} directly rather than through {@code FreezingArchRule},
- * so each behaviour is isolated. None of these tests touch {@code ArchConfiguration}'s global
+ * so each behaviour is isolated. Most of these tests do not touch {@code ArchConfiguration}'s global
  * properties: the store under test is constructed and initialized with a local {@link Properties}
- * instance, so there is nothing global to reset in {@code @AfterEach}.
+ * instance, so there is nothing global to reset in {@code @AfterEach}. The exception is
+ * {@link #freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze()}, which drives the decorator
+ * through {@code FreezingArchRule} itself and therefore must configure and reset
+ * {@code ArchConfiguration} on its own, in a {@code finally} block.
  */
 class EmptyOmittingViolationStoreTest {
 
@@ -104,6 +113,42 @@ class EmptyOmittingViolationStoreTest {
         assertNotNull(fileName, "stored.rules must key violations by rule description");
         assertTrue(Files.exists(storeDir.resolve(fileName)),
                 "stored.rules value must name a file in the store directory");
+    }
+
+    @Test
+    void aRuleFrozenCleanIsStillContainedSoItsFirstViolationFails() {
+        // No file must not mean "unknown rule". FreezingArchRule seeds-and-passes anything the store
+        // does not contain, so if this ever returns false a clean rule's first real violation would
+        // be absorbed as debt and the build would stay green.
+        ArchRule rule = ruleNamed("test.clean-then-dirty");
+        store.save(rule, List.of());
+
+        assertTrue(store.contains(rule),
+                "a clean rule with no file must still be contained");
+        assertEquals(List.of(), store.getViolations(rule));
+    }
+
+    @Test
+    void freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze() {
+        ArchConfiguration.get().setProperty("freeze.store.default.path", storeDir.toString());
+        ArchConfiguration.get().setProperty("freeze.store.default.allowStoreCreation", "true");
+        ArchConfiguration.get().setProperty("freeze.store", EmptyOmittingViolationStore.class.getName());
+        try {
+            JavaClasses clean = new ClassFileImporter().importClasses(String.class);
+            JavaClasses dirty = new ClassFileImporter().importClasses(String.class, Integer.class);
+
+            ArchRule rule = FreezingArchRule.freeze(
+                    noClasses().that().haveSimpleName("Integer")
+                            .should().haveSimpleName("Integer")
+                            .as("test.freeze-roundtrip").allowEmptyShould(true));
+
+            rule.check(clean);   // seeds clean: entry written, no file
+
+            assertThrows(AssertionError.class, () -> rule.check(dirty),
+                    "a violation appearing after a clean freeze must FAIL, not be seeded as debt");
+        } finally {
+            ArchConfiguration.get().reset();
+        }
     }
 
     @Test
