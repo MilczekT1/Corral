@@ -123,7 +123,7 @@ single rule leaf from your IDE gutter or via `-Dtest=`.
 `Java17Rules`, `JakartaMigrationRules`, and `SpringRules` are intentionally **not** in the first
 cut. Adding a group means all nine steps below, in order. Skipping step 5 in particular leaves the
 build green while **no consumer ever evaluates the new group** — `ArchTests.in(AllCentralRules.class)`
-descends into `@ArchTest` fields only, never into `groups()`.
+descends into `@ArchTest` fields only, never into `members()`.
 
 1. Create the group class under `groups/`.
 2. Give each rule a `RuleDoc` with a unique id (`<group>.<kebab-case-rule>`).
@@ -132,7 +132,7 @@ descends into `@ArchTest` fields only, never into `groups()`.
    raw `*_RULE` constant for unit testing.
 5. Add an `@ArchTest ArchTests` field (`public static final`) for the group on `AllCentralRules` —
    this, and only this, is what consumers run.
-6. Add the group class to `AllCentralRules.groups()` — what the completeness and README tooling
+6. Add the group class to `AllCentralRules.members()` — what the completeness and README tooling
    reads. `AllCentralRulesTest` fails if steps 5 and 6 disagree.
 7. Extend the expected id set in `RuleRegistryCompletenessTest.publishesExactlyTheSeededFirstCutRules`.
 8. Add a row to the [Rules](#rules) table above; `ReadmeRulesTableTest` fails otherwise.

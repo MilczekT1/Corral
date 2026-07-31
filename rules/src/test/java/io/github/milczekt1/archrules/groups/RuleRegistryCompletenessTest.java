@@ -55,4 +55,34 @@ class RuleRegistryCompletenessTest {
         assertEquals(ids.size(), unique.size(), "duplicate rule ids among published rules: " + ids);
     }
 
+    // ---------------------------------------------------------------------------------------------
+    // Evidence for the loadAll()/rulesReachableFrom recursion, using NestedFixtureGroup /
+    // NestedFixtureLeaf — a throwaway two-level arrangement (group -> ArchTests -> rule class ->
+    // ArchRule), the shape real rules will have after the rule-per-class move. Neither fixture is
+    // reachable from AllCentralRules, wired to run under any @AnalyzeClasses test class, or
+    // referenced by the published id set — they exist purely to prove the tooling generalises,
+    // without moving or touching a real rule. They are separate top-level public classes (not
+    // nested in this package-private test class) because reflective Field.get requires the
+    // declaring class itself to be accessible from PublishedRules' package.
+
+    @Test
+    void loadAllAndRulesReachableFromBothDescendThroughNestedArchTestsFields() {
+        // AllCentralRules.loadAll(List<Class<?>>) is package-private specifically so this test can
+        // drive it directly against the fixture, independent of the real MEMBERS/TestingRules. A
+        // flat, single-level Class.forName over just NestedFixtureGroup would NOT initialise
+        // NestedFixtureLeaf: ArchTests.in(X.class) only stores the Class object, it never touches
+        // X (see AllCentralRules.nestedMembersOf's Javadoc for the full evidence). This is
+        // therefore a genuine test of loadAll()'s own explicit recursion.
+        AllCentralRules.loadAll(List.of(NestedFixtureGroup.class));
+
+        assertTrue(RuleRegistry.find(NestedFixtureLeaf.DOC.id()).isPresent(),
+                "AllCentralRules.loadAll() must recurse into nested @ArchTest ArchTests fields, not "
+                        + "just the members passed to it directly");
+
+        // Same fixture, now proving PublishedRules' own recursive walk (Step 3) also reaches the
+        // leaf rule and reports its id correctly.
+        List<ArchRule> reached = PublishedRules.rulesReachableFrom(NestedFixtureGroup.class);
+        assertEquals(List.of(NestedFixtureLeaf.DOC.id()),
+                reached.stream().map(ArchRule::getDescription).toList());
+    }
 }

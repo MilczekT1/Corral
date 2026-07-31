@@ -17,7 +17,7 @@ import org.junit.jupiter.api.Test;
  * <ul>
  *   <li>the {@code @ArchTest ArchTests} fields are the <em>only</em> members
  *       {@code ArchTests.in(AllCentralRules.class)} descends into — i.e. what consumers evaluate;</li>
- *   <li>{@link AllCentralRules#groups()} is what the completeness and README tooling reads.</li>
+ *   <li>{@link AllCentralRules#members()} is what the completeness and README tooling reads.</li>
  * </ul>
  *
  * <p>Diverge them and the build stays green while nobody ever runs the new group's rules. These
@@ -40,33 +40,45 @@ class AllCentralRulesTest {
 
     @Test
     void everyGroupInGroupsIsAlsoExposedAsAnArchTestsField() {
-        // A group present only in groups() is documented and completeness-checked but never
+        // A member present only in members() is documented and completeness-checked but never
         // evaluated by any consumer — the worst possible failure mode: silent non-enforcement.
-        assertEquals(Set.copyOf(AllCentralRules.groups()), classesExposedToConsumers(),
-                "AllCentralRules.groups() and its @ArchTest ArchTests fields have diverged; every "
-                        + "group needs BOTH an `@ArchTest public static final ArchTests` field and an "
-                        + "entry in groups()");
+        assertEquals(Set.copyOf(AllCentralRules.members()), classesExposedToConsumers(),
+                "AllCentralRules.members() and its @ArchTest ArchTests fields have diverged; every "
+                        + "member needs BOTH an `@ArchTest public static final ArchTests` field and an "
+                        + "entry in members()");
     }
 
     @Test
     void thereIsExactlyOneArchTestsFieldPerGroup() {
-        // Set equality above would tolerate two fields pointing at the same group.
-        assertEquals(AllCentralRules.groups().size(),
+        // Set equality above would tolerate two fields pointing at the same member.
+        assertEquals(AllCentralRules.members().size(),
                 PublishedRules.archTestsFieldsOf(AllCentralRules.class).size(),
-                "one @ArchTest ArchTests field per group, no duplicates");
+                "one @ArchTest ArchTests field per member, no duplicates");
     }
 
     @Test
-    void everyExposedGroupContributesAtLeastOneRule() {
-        for (Class<?> group : classesExposedToConsumers()) {
-            assertFalse(PublishedRules.archRuleFieldsOf(group).isEmpty(),
-                    group.getSimpleName() + " is aggregated but publishes no @ArchTest ArchRule field, "
-                            + "so consumers evaluate an empty node");
+    void everyExposedMemberContributesAtLeastOneRule() {
+        for (Class<?> member : classesExposedToConsumers()) {
+            assertFalse(PublishedRules.rulesReachableFrom(member).isEmpty(),
+                    member.getSimpleName() + " is aggregated but publishes no rule, so consumers "
+                            + "evaluate an empty node");
         }
     }
 
     @Test
     void groupsAreListedInDocumentationOrder() {
-        assertEquals(List.of(TestingRules.class), AllCentralRules.groups());
+        assertEquals(List.of(TestingRules.class), AllCentralRules.members());
+    }
+
+    @Test
+    void ruleDiscoveryDescendsThroughNestedGroups() {
+        // A group whose members are themselves groups (or rule classes reached via ArchTests) must
+        // still yield its rules. Before nesting support this returns empty for anything but a group
+        // that declares @ArchTest ArchRule fields directly.
+        Set<String> ids = PublishedRules.idSet();
+
+        assertEquals(Set.of(
+                "test.class-naming-convention",
+                "test.no-mocked-repository-in-integration-test"), ids);
     }
 }
