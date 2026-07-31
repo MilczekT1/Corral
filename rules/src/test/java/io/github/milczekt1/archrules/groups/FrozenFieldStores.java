@@ -1,5 +1,3 @@
-// Lives in the `groups` package so the pairing tests can read the package-private raw-rule and
-// doc constants they pin.
 package io.github.milczekt1.archrules.groups;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -21,20 +19,24 @@ import java.util.Properties;
 import org.junit.jupiter.api.Assertions;
 
 /**
- * Shared machinery for the per-group tests that pin each public {@code @ArchTest} field to the raw
+ * Shared machinery for the per-rule tests that pin each public {@code @ArchTest} field to the raw
  * rule it is supposed to wrap.
  *
  * <p>Without this, {@code FrozenRules.freeze(NO_TX_ON_CLASSES_RULE, NO_TX_ON_METHODS_DOC)} — one
- * copy-paste slip — would pass every other test in the suite: the group tests exercise only the raw
- * constants, the id-pinning assertions look at {@code getDescription()} alone, and
+ * copy-paste slip — would pass every other test in the suite: the rule-class tests exercise only the
+ * raw constants, the id-pinning assertions look at {@code getDescription()} alone, and
  * {@code FreezingBehaviourTest} re-freezes the raw rule itself. The rule would be silently wrong in
  * every consumer forever.
  *
  * <p>The check seeds a throwaway freeze store from the public field and reads back what landed in
  * it. That pins two things at once: the store key really is the doc id (ArchUnit derives it from the
  * rule description), and the violations recorded under it really are the raw rule's.
+ *
+ * <p>Public because callers live one package per rule (e.g. {@code rules.testing}) and need this
+ * helper from outside {@code groups}; it does not itself need package-private access to anything —
+ * only its callers do, to the rule classes' package-private {@code RULE}/{@code DOC} constants.
  */
-final class FrozenFieldStores {
+public final class FrozenFieldStores {
 
     private static final String STORE_INDEX = "stored.rules";
 
@@ -48,13 +50,13 @@ final class FrozenFieldStores {
      * caller must {@link #resetConfiguration()} afterwards — a leaked
      * {@code freeze.store.default.path} would corrupt unrelated test classes.
      */
-    static void useTemporaryStore(Path store) {
+    public static void useTemporaryStore(Path store) {
         ArchConfiguration.get().setProperty("freeze.store.default.path", store.toString());
         ArchConfiguration.get().setProperty("freeze.store.default.allowStoreCreation", "true");
         ArchConfiguration.get().setProperty("freeze.store.default.allowStoreUpdate", "true");
     }
 
-    static void resetConfiguration() {
+    public static void resetConfiguration() {
         ArchConfiguration.get().reset();
     }
 
@@ -62,7 +64,7 @@ final class FrozenFieldStores {
      * Asserts that {@code publicField} is a {@link FreezingArchRule} which freezes exactly
      * {@code rawRule} under {@code doc}'s id.
      */
-    static void assertFreezes(ArchRule publicField, ArchRule rawRule, RuleDoc doc,
+    public static void assertFreezes(ArchRule publicField, ArchRule rawRule, RuleDoc doc,
             JavaClasses fixtures, Path store) {
         Assertions.assertInstanceOf(FreezingArchRule.class, publicField,
                 doc.id() + " must be wrapped by FrozenRules.freeze so adoption records debt "

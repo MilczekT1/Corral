@@ -39,21 +39,10 @@ class AllCentralRulesTest {
     }
 
     @Test
-    void everyGroupInGroupsIsAlsoExposedAsAnArchTestsField() {
+    void membersMatchArchTestsFields() {
         // A member present only in members() is documented and completeness-checked but never
         // evaluated by any consumer — the worst possible failure mode: silent non-enforcement.
-        assertEquals(Set.copyOf(AllCentralRules.members()), classesExposedToConsumers(),
-                "AllCentralRules.members() and its @ArchTest ArchTests fields have diverged; every "
-                        + "member needs BOTH an `@ArchTest public static final ArchTests` field and an "
-                        + "entry in members()");
-    }
-
-    @Test
-    void thereIsExactlyOneArchTestsFieldPerGroup() {
-        // Set equality above would tolerate two fields pointing at the same member.
-        assertEquals(AllCentralRules.members().size(),
-                PublishedRules.archTestsFieldsOf(AllCentralRules.class).size(),
-                "one @ArchTest ArchTests field per member, no duplicates");
+        GroupMembership.assertMembersMatchArchTestsFields(AllCentralRules.class, AllCentralRules.members());
     }
 
     @Test
