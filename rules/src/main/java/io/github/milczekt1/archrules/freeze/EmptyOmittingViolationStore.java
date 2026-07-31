@@ -35,7 +35,10 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     @Override
     public void initialize(Properties properties) {
         delegate.initialize(properties);
-        storePath = Path.of(properties.getProperty("default.path"));
+        // "archunit_store" mirrors TextFileBasedViolationStore's own private STORE_PATH_DEFAULT
+        // constant, so a consumer who omits default.path gets the same directory the delegate
+        // itself would use, not an NPE. Check that constant if a future ArchUnit upgrade changes it.
+        storePath = Path.of(properties.getProperty("default.path", "archunit_store"));
     }
 
     @Override

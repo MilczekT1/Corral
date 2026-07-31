@@ -1,14 +1,17 @@
 package io.github.milczekt1.archrules.freeze;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.lang.ArchRule;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
@@ -103,6 +106,30 @@ class EmptyOmittingViolationStoreTest {
                 "stored.rules value must name a file in the store directory");
     }
 
+    @Test
+    void initializeFallsBackToArchUnitsOwnDefaultPathWhenDefaultPathIsOmitted() throws IOException {
+        // Deliberately independent of the storeDir @TempDir fixture used by every other test in this
+        // class: this exercises the fallback that applies when a consumer omits default.path
+        // entirely (the case that used to throw NullPointerException), not the configured path.
+        // TextFileBasedViolationStore.initialize() creates its "archunit_store" directory as a side
+        // effect of resolving the path, regardless of whether store creation later succeeds, so we
+        // only assert that initialize() completes and then remove that directory again rather than
+        // asserting anything about its contents.
+        Path defaultStoreDir = Path.of("archunit_store");
+        try {
+            Properties properties = new Properties();
+            properties.setProperty("default.allowStoreCreation", "true");
+            properties.setProperty("default.allowStoreUpdate", "true");
+            // default.path deliberately omitted.
+
+            EmptyOmittingViolationStore defaultPathStore = new EmptyOmittingViolationStore();
+
+            assertDoesNotThrow(() -> defaultPathStore.initialize(properties));
+        } finally {
+            deleteRecursively(defaultStoreDir);
+        }
+    }
+
     /**
      * Counts rule violation files only, excluding the {@code stored.rules} index itself — chosen
      * over counting the index as a rule-violation file because it lets the assertions read as plain
@@ -111,6 +138,22 @@ class EmptyOmittingViolationStoreTest {
     private long countViolationFiles() throws IOException {
         try (var entries = Files.list(storeDir)) {
             return entries.filter(path -> !path.getFileName().toString().equals("stored.rules")).count();
+        }
+    }
+
+    /** Cleanup for the stray directory ArchUnit's own store creates as a side effect of {@link #initializeFallsBackToArchUnitsOwnDefaultPathWhenDefaultPathIsOmitted}. */
+    private static void deleteRecursively(Path path) throws IOException {
+        if (!Files.exists(path)) {
+            return;
+        }
+        try (var entries = Files.walk(path)) {
+            entries.sorted(Comparator.reverseOrder()).forEach(p -> {
+                try {
+                    Files.delete(p);
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
+                }
+            });
         }
     }
 }
