@@ -31,3 +31,6 @@ target/
 
 # Superpowers SDD scratch
 .superpowers/
+
+# Superpowers working documents (specs, plans) — kept on disk, not shipped
+docs/superpowers/
