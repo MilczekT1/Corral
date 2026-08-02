@@ -76,6 +76,10 @@ Opt in group by group instead with `ArchTests.in(TestingRules.class)`.
 freeze.store.default.path=src/test/resources/archunit/frozen
 
 failureDisplayFormat=io.github.milczekt1.archrules.format.AgentFriendlyFailureDisplayFormat
+
+# Optional. Keeps stored.rules complete but writes no file for a rule with zero violations,
+# so the committed store carries no empty files. See "Empty violation files" below.
+freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore
 ```
 
 Then seed the freeze store **once**, out of band, and commit it:
@@ -104,6 +108,38 @@ Existing violations are now recorded as debt; only new ones fail.
 `failureDisplayFormat` is a global per-run setting, but the formatter falls back to ArchUnit's
 standard output for any rule it does not own, so your own ArchUnit tests are unaffected.
 
+### Empty violation files
+
+A rule that is already clean in your codebase still gets frozen — ArchUnit records the rule in
+`stored.rules` and writes it an empty violation file. That index entry is what keeps the rule
+enforced (a rule the store does *not* contain is seeded-and-passed on its next run, so its first
+real violation would be absorbed as debt instead of failing). The empty file, however, is pure
+noise in a commit.
+
+`freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore` keeps the index
+entry and drops only the file. Three things to know before enabling it:
+
+- **It is opt-in.** Leave the line out and you get ArchUnit's stock `TextFileBasedViolationStore`,
+  empty files included. Nothing else in this library depends on it.
+- **It is global per run.** ArchUnit reads `freeze.store` once and uses that store for *every*
+  `FreezingArchRule` in the run, including your own frozen rules — not just this library's. The
+  behaviour change is narrow (an empty file is not written, or is deleted when a rule becomes
+  clean) and the index entry is always preserved, so a frozen rule of yours stays exactly as
+  enforced as it was.
+- **It does not clean up retroactively.** Switching it on in a project that already has empty files
+  committed leaves them there. `FreezingArchRule` only writes to the store when it has something to
+  change: for a rule that is contained, clean, and stays clean, no violation is solved and no `save`
+  is ever called, so the store never gets a chance to remove the file. Clear them once with
+
+  ```bash
+  mvn test -Darchunit.freeze.refreeze=true
+  ```
+
+  (or just delete the empty files by hand) and commit the result. Run it from a clean tree and
+  review the diff: `refreeze` re-records *every* rule, so any violation currently failing the build
+  gets absorbed as debt too. New rules seeded after that point never produce an empty file in the
+  first place.
+
 ## Rules
 
 | Rule id | Group | What it enforces |
@@ -111,7 +147,9 @@ standard output for any rule it does not own, so your own ArchUnit tests are una
 | `test.no-mocked-repository-in-integration-test` | `TestingRules` | A `*IntegrationTest` / `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
 | `test.class-naming-convention` | `TestingRules` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test` or `IT`, so Surefire/Failsafe actually run it. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 
-This table is verified against the code by `ReadmeRulesTableTest` — a missing or stale row fails the build.
+This table is maintained by hand. Nothing in the build checks it, so a new rule can ship
+undocumented — adding the row is a step in the growth path below, not something a test will remind
+you about.
 
 ## Run granularity
 
@@ -120,25 +158,72 @@ single rule leaf from your IDE gutter or via `-Dtest=`.
 
 ## Growth path
 
-`Java17Rules`, `JakartaMigrationRules`, and `SpringRules` are intentionally **not** in the first
-cut. Adding a group means all nine steps below, in order. Skipping step 5 in particular leaves the
-build green while **no consumer ever evaluates the new group** — `ArchTests.in(AllCentralRules.class)`
-descends into `@ArchTest` fields only, never into `members()`.
+### How the tree is laid out
 
-1. Create the group class under `groups/`.
-2. Give each rule a `RuleDoc` with a unique id (`<group>.<kebab-case-rule>`).
-3. Wrap each raw rule with `FrozenRules.freeze(rawRule, doc)`.
-4. Expose it as a public `@ArchTest ArchRule` field on the group class, keeping the package-private
-   raw `*_RULE` constant for unit testing.
-5. Add an `@ArchTest ArchTests` field (`public static final`) for the group on `AllCentralRules` —
-   this, and only this, is what consumers run.
-6. Add the group class to `AllCentralRules.members()` — what the completeness and README tooling
-   reads. `AllCentralRulesTest` fails if steps 5 and 6 disagree.
-7. Extend the expected id set in `RuleRegistryCompletenessTest.publishesExactlyTheSeededFirstCutRules`.
-8. Add a row to the [Rules](#rules) table above; `ReadmeRulesTableTest` fails otherwise.
-9. Add fixtures under `src/test/java/.../fixtures/` and a rule test asserting both what the rule
-   flags and what it must leave alone, plus a pairing test (see `*FrozenFieldsTest`) so the public
-   frozen field is pinned to its own raw rule.
+One rule, one class. A rule class lives under `rules/<topic>/` and owns everything about that rule;
+a group under `groups/` is a thin wrapper that composes rule classes, and `AllCentralRules` is a
+group of groups. `ArchTests.in(X.class)` descends into `X`'s `@ArchTest` fields, so the same shape
+nests to any depth:
+
+```
+groups/AllCentralRules      @ArchTest ArchTests testing   ->  groups/TestingRules
+groups/TestingRules         @ArchTest ArchTests ...       ->  rules/testing/TestClassNamingConvention
+rules/testing/…             @ArchTest ArchRule  rule      ->  the frozen rule a consumer evaluates
+```
+
+Every node states its membership **twice**: as `@ArchTest` fields (what
+`ArchTests.in(...)` actually descends into — what consumers run) and in a static `members()` (what
+the tooling reads). `GroupMembershipTest` walks the whole tree from `AllCentralRules` and fails on
+any node where the two disagree, or on any group that has `@ArchTest ArchTests` fields but no
+`members()`. It is recursive on purpose: a new group is guarded the moment it becomes reachable, so
+there is no per-group test to remember to write.
+
+### Adding a rule to an existing group
+
+1. Create `rules/<topic>/<RuleName>.java` — public final class, private constructor. It holds three
+   members (see `TestClassNamingConvention` for a worked example):
+   - `static final RuleDoc DOC` — `RuleDoc.builder().id(...).why(...).howToFix(...)` plus the
+     optional `.howNotToFix(...)`. The id is `<topic>.<kebab-case-rule>` and must match
+     `^[a-z0-9]+(\.[a-z0-9-]+)+$`.
+   - `static final ArchRule RULE` — the raw rule, package-private. Tests exercise *this*: the public
+     field below is frozen, so it seeds and passes, which would make rule-correctness tests
+     meaningless.
+   - `@ArchTest public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);` — the field
+     consumers evaluate. `freeze` registers the doc, renames the rule to the doc id (that name is
+     the freeze-store key), and allows an empty `should`.
+2. In the group class, add the rule class to `MEMBERS` **and** give it its own
+   `@ArchTest public static final ArchTests` field. Both, always — `GroupMembershipTest` fails
+   otherwise. Add only the `members()` entry and the rule is documented and completeness-checked
+   but **never evaluated by any consumer**.
+3. Add fixtures under `src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
+   and one it must leave alone. (Surefire excludes `**/fixtures/**`, so fixtures named `*Test` or
+   `*IT` are not executed as tests.) Then write `rules/<topic>/<RuleName>Test.java` against the raw
+   `RULE`, asserting both directions.
+4. Add a pairing test to the group's `<Group>FrozenFieldsTest` via
+   `FrozenFieldStores.assertFreezes(<RuleClass>.rule, <RuleClass>.RULE, <RuleClass>.DOC, …)` and
+   bump its `PAIRING_TESTS` count. This catches a copy-paste slip such as
+   `FrozenRules.freeze(A_RULE, B_DOC)`, which every other test in the suite would pass.
+5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
+6. Add a row to the [Rules](#rules) table above. Nothing enforces this — it is on you.
+
+### Adding a group
+
+`Java17Rules`, `JakartaMigrationRules`, and `SpringRules` are intentionally **not** in the first
+cut. On top of the rule steps above:
+
+1. Create `groups/<Topic>Rules.java` — public final class, private constructor, holding a private
+   `MEMBERS` list, one `@ArchTest public static final ArchTests` field per member, and
+   `public static List<Class<?>> members()` returning `MEMBERS`. Copy `TestingRules`.
+2. Add the group to `AllCentralRules.MEMBERS` **and** give it an `@ArchTest ArchTests` field there.
+   Skipping the field is the dangerous half: the build stays green while **no consumer ever
+   evaluates the new group**, because `ArchTests.in(AllCentralRules.class)` descends into
+   `@ArchTest` fields only, never into `members()`. `GroupMembershipTest` fails if the two diverge.
+3. Update `AllCentralRulesTest.groupsAreListedInDocumentationOrder`, which pins the group order.
+4. Create the group's `<Group>FrozenFieldsTest` (copy `TestingRulesFrozenFieldsTest`) — it is the
+   home for step 4 above.
+
+You do **not** need to write a membership guard test for the new group. `GroupMembershipTest`
+already covers it, by construction.
 
 > **Rule ids are freeze-store keys.** Changing an id orphans every consumer's frozen entry, so
 > treat it as a breaking change.
