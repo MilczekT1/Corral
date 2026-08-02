@@ -129,7 +129,7 @@ class EmptyOmittingViolationStoreTest {
     }
 
     @Test
-    void freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze() {
+    void freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze() throws IOException {
         ArchConfiguration.get().setProperty("freeze.store.default.path", storeDir.toString());
         ArchConfiguration.get().setProperty("freeze.store.default.allowStoreCreation", "true");
         ArchConfiguration.get().setProperty("freeze.store", EmptyOmittingViolationStore.class.getName());
@@ -143,6 +143,11 @@ class EmptyOmittingViolationStoreTest {
                             .as("test.freeze-roundtrip").allowEmptyShould(true));
 
             rule.check(clean);   // seeds clean: entry written, no file
+
+            // Without this the test would pass identically against stock ArchUnit, which writes an
+            // empty file here. Asserting the file count is what makes it a test of the decorator.
+            assertEquals(0, countViolationFiles(),
+                    "a clean freeze through FreezingArchRule must leave no violation file");
 
             assertThrows(AssertionError.class, () -> rule.check(dirty),
                     "a violation appearing after a clean freeze must FAIL, not be seeded as debt");

@@ -24,8 +24,8 @@ import java.util.List;
  * {@code ArchTests.in(AllCentralRules.class)} descends into, so this is what consumers actually
  * evaluate) <strong>and</strong> an entry in {@link #members()} (what the completeness and README
  * tooling reads). Registering only one of the two leaves the build green while nobody enforces the
- * new rules; {@code AllCentralRulesTest} fails if they diverge. The README growth path is the full
- * checklist.
+ * new rules; {@code GroupMembershipTest} walks the whole tree from here and fails if they diverge,
+ * at this level or any level below. The README growth path is the full checklist.
  *
  * <p>A member listed here may itself be a group (something that in turn declares its own
  * {@code @ArchTest ArchTests} fields) or a rule class (something that declares {@code @ArchTest

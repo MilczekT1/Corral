@@ -20,8 +20,10 @@ import org.junit.jupiter.api.Test;
  *   <li>{@link AllCentralRules#members()} is what the completeness and README tooling reads.</li>
  * </ul>
  *
- * <p>Diverge them and the build stays green while nobody ever runs the new group's rules. These
- * tests make that divergence fail.
+ * <p>Diverge them and the build stays green while nobody ever runs the new group's rules.
+ * {@link GroupMembershipTest} makes that divergence fail, here and at every level below. What is
+ * left in this class is what is specific to the root: that every exposed member actually
+ * contributes rules, and that the published id set is exactly the seeded one.
  */
 class AllCentralRulesTest {
 
@@ -38,12 +40,8 @@ class AllCentralRulesTest {
                 .collect(Collectors.toCollection(LinkedHashSet::new));
     }
 
-    @Test
-    void membersMatchArchTestsFields() {
-        // A member present only in members() is documented and completeness-checked but never
-        // evaluated by any consumer — the worst possible failure mode: silent non-enforcement.
-        GroupMembership.assertMembersMatchArchTestsFields(AllCentralRules.class, AllCentralRules.members());
-    }
+    // members() vs @ArchTest ArchTests fields is asserted for AllCentralRules — and for every group
+    // below it — by GroupMembershipTest, which walks the tree rather than naming groups one by one.
 
     @Test
     void everyExposedMemberContributesAtLeastOneRule() {

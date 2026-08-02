@@ -49,10 +49,17 @@ class TestingRulesFrozenFieldsTest {
                 TestClassNamingConvention.RULE, TestClassNamingConvention.DOC, FIXTURES, store);
     }
 
+    /** One pairing test per rule above; keep in step when adding one. */
+    private static final int PAIRING_TESTS = 2;
+
     @Test
     void everyPublishedFieldOfThisGroupIsCovered() {
-        // If a rule is added to TestingRules without a pairing test above, this fails.
-        assertEquals(2, PublishedRules.rulesReachableFrom(TestingRules.class).size(),
+        // If a rule is added to TestingRules without a pairing test above, this fails. Derived from
+        // members() rather than hardcoded twice, so the group itself is the single source of truth
+        // for how many rules there are.
+        assertEquals(TestingRules.members().size(), PublishedRules.rulesReachableFrom(TestingRules.class).size(),
+                "every TestingRules member must publish exactly one rule");
+        assertEquals(PAIRING_TESTS, TestingRules.members().size(),
                 "add a pairing test for the new TestingRules rule");
     }
 }

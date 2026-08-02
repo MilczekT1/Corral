@@ -65,6 +65,21 @@ class RuleRegistryCompletenessTest {
     // nested in this package-private test class) because reflective Field.get requires the
     // declaring class itself to be accessible from PublishedRules' package.
 
+    /**
+     * The leaf's id as a <em>string literal</em>, deliberately not {@code NestedFixtureLeaf.DOC.id()}.
+     *
+     * <p>{@code DOC} is a {@code static final RuleDoc}, not a compile-time constant, so reading it
+     * is itself a JLS class-initialisation trigger — and {@code NestedFixtureLeaf}'s static
+     * initialiser is what registers the doc. Naming the field inside the assertion would therefore
+     * satisfy the assertion by evaluating it: the test would pass with {@code loadAll} gutted to
+     * {@code {}}. Keeping the id as text means nothing in this test touches the leaf class before
+     * {@code loadAll} is asked to reach it.
+     *
+     * <p>Must stay in step with {@code NestedFixtureLeaf.DOC}'s id; the last assertion of the test
+     * below pins that, once the leaf may safely be touched.
+     */
+    private static final String NESTED_FIXTURE_LEAF_ID = "test.nested-fixture-registry-propagation-check";
+
     @Test
     void loadAllAndRulesReachableFromBothDescendThroughNestedArchTestsFields() {
         // AllCentralRules.loadAll(List<Class<?>>) is package-private specifically so this test can
@@ -73,16 +88,33 @@ class RuleRegistryCompletenessTest {
         // NestedFixtureLeaf: ArchTests.in(X.class) only stores the Class object, it never touches
         // X (see AllCentralRules.nestedMembersOf's Javadoc for the full evidence). This is
         // therefore a genuine test of loadAll()'s own explicit recursion.
+
+        // Without this precondition the test cannot tell "loadAll recursed" from "something else
+        // already initialised the leaf". The id is fixture-only and appears nowhere else in the
+        // repository, and no other test walks NestedFixtureGroup, so nothing in the shared Surefire
+        // JVM can register it first.
+        assertFalse(RuleRegistry.find(NESTED_FIXTURE_LEAF_ID).isPresent(),
+                "precondition: the leaf must not be registered before loadAll() is called — if it is, "
+                        + "something initialised NestedFixtureLeaf and this test proves nothing");
+
         AllCentralRules.loadAll(List.of(NestedFixtureGroup.class));
 
-        assertTrue(RuleRegistry.find(NestedFixtureLeaf.DOC.id()).isPresent(),
+        assertTrue(RuleRegistry.find(NESTED_FIXTURE_LEAF_ID).isPresent(),
                 "AllCentralRules.loadAll() must recurse into nested @ArchTest ArchTests fields, not "
                         + "just the members passed to it directly");
 
         // Same fixture, now proving PublishedRules' own recursive walk (Step 3) also reaches the
         // leaf rule and reports its id correctly.
         List<ArchRule> reached = PublishedRules.rulesReachableFrom(NestedFixtureGroup.class);
-        assertEquals(List.of(NestedFixtureLeaf.DOC.id()),
+        assertEquals(List.of(NESTED_FIXTURE_LEAF_ID),
                 reached.stream().map(ArchRule::getDescription).toList());
+
+        // Only now, with everything above already asserted, is it safe to touch the fixture class:
+        // this pins the literal to the fixture so renaming the id fails here rather than quietly
+        // turning the recursion check vacuous. It must stay last — and it must not become its own
+        // @Test method, because JUnit's method order is not guaranteed and initialising the leaf
+        // first would break the precondition above.
+        assertEquals(NESTED_FIXTURE_LEAF_ID, NestedFixtureLeaf.DOC.id(),
+                "the literal above must name the fixture leaf's actual id");
     }
 }
