@@ -19,10 +19,20 @@ import java.util.Properties;
  * <p>Register it in {@code archunit.properties}:
  * <pre>{@code freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore}</pre>
  *
- * <p><strong>The index entry is deliberately kept.</strong> {@code FreezingArchRule} treats a rule
- * the store does not contain as one to seed — it records whatever violations exist and passes. Drop
- * a clean rule's entry and its first real violation would be absorbed as debt instead of failing.
- * Only the (empty) file is removed.
+ * <p><strong>A clean rule stays frozen, and its first later violation fails the build.</strong> Add a
+ * rule while the code complies, and this store records an index entry for it with no violation file.
+ * Months later, when someone violates it for the first time, that violation is new and the build
+ * <strong>fails</strong> — it is not absorbed as debt.
+ *
+ * <p>That works because {@code FreezingArchRule} decides via {@link #contains}, which keys on the
+ * {@code stored.rules} <em>index entry</em> — not on the presence of a violation file. "No file"
+ * means "zero known violations"; it does not mean "unknown rule". Only a rule with no index entry at
+ * all seeds and passes, which is why the entry is deliberately kept and only the empty file removed.
+ *
+ * <p><strong>The one way to lose that guarantee is process, not code:</strong> the run that first
+ * freezes a new rule appends its line to {@code stored.rules}. Commit that change. Leave it
+ * uncommitted and the rule has no entry in CI, so its first violation is seeded as debt and the
+ * build stays green — a rule that looks armed and is not.
  *
  * <p>Must have a public no-arg constructor: ArchUnit instantiates it reflectively.
  */
@@ -54,6 +64,11 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         }
     }
 
+    /**
+     * An indexed rule whose file is absent has zero known violations — that is the clean-rule case
+     * this store creates, not a missing store. The rule remains {@link #contains contained}, so any
+     * violation found later is new and fails.
+     */
     @Override
     public List<String> getViolations(ArchRule rule) {
         return violationFile(rule).filter(Files::exists).isPresent()
