@@ -12,13 +12,12 @@ import org.junit.jupiter.api.Test;
 /**
  * Guards against Lombok silently generating nothing.
  *
- * <p>When annotation processing is misconfigured, Lombok produces no code and the build still
- * reports SUCCESS. For {@code @UtilityClass} specifically the damage is invisible: the hand-written
- * private constructor has been deleted, so Java supplies an implicit <em>public</em> one and the
- * class becomes instantiable. Nothing else in the build would notice.
+ * <p>Misconfigured annotation processing produces no code and still reports BUILD SUCCESS. With
+ * {@code @UtilityClass} the damage is invisible: the hand-written private constructor is gone, so
+ * Java supplies an implicit <em>public</em> one and the class becomes instantiable.
  *
- * <p>These assertions therefore anchor on the shape {@code @UtilityClass} produces, which only
- * Lombok can produce now that the explicit constructors are gone.
+ * <p>These assertions anchor on the shape {@code @UtilityClass} produces, which nothing else now
+ * produces. Run with {@code clean} — stale classes mask the failure.
  */
 class LombokWiringTest {
 

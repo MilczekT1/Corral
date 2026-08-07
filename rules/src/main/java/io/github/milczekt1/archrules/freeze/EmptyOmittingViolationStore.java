@@ -19,22 +19,16 @@ import java.util.Properties;
  * <p>Register it in {@code archunit.properties}:
  * <pre>{@code freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore}</pre>
  *
- * <p><strong>A clean rule stays frozen, and its first later violation fails the build.</strong> Add a
- * rule while the code complies, and this store records an index entry for it with no violation file.
- * Months later, when someone violates it for the first time, that violation is new and the build
- * <strong>fails</strong> — it is not absorbed as debt.
+ * <p><strong>A clean rule stays frozen; its first later violation fails the build.</strong>
+ * {@code FreezingArchRule} decides via {@link #contains}, which keys on the {@code stored.rules}
+ * index entry, not on the file. "No file" means zero known violations, not unknown rule — only a
+ * rule with no entry at all seeds and passes.
  *
- * <p>That works because {@code FreezingArchRule} decides via {@link #contains}, which keys on the
- * {@code stored.rules} <em>index entry</em> — not on the presence of a violation file. "No file"
- * means "zero known violations"; it does not mean "unknown rule". Only a rule with no index entry at
- * all seeds and passes, which is why the entry is deliberately kept and only the empty file removed.
+ * <p><strong>Commit the {@code stored.rules} line</strong> that appears when a rule is first frozen.
+ * Uncommitted, CI sees no entry, so the first violation is seeded as debt and the build stays green:
+ * a rule that looks armed and is not.
  *
- * <p><strong>The one way to lose that guarantee is process, not code:</strong> the run that first
- * freezes a new rule appends its line to {@code stored.rules}. Commit that change. Leave it
- * uncommitted and the rule has no entry in CI, so its first violation is seeded as debt and the
- * build stays green — a rule that looks armed and is not.
- *
- * <p>Must have a public no-arg constructor: ArchUnit instantiates it reflectively.
+ * <p>Needs a public no-arg constructor — ArchUnit instantiates it reflectively.
  */
 public class EmptyOmittingViolationStore implements ViolationStore {
 
@@ -45,9 +39,8 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     @Override
     public void initialize(Properties properties) {
         delegate.initialize(properties);
-        // "archunit_store" mirrors TextFileBasedViolationStore's own private STORE_PATH_DEFAULT
-        // constant, so a consumer who omits default.path gets the same directory the delegate
-        // itself would use, not an NPE. Check that constant if a future ArchUnit upgrade changes it.
+        // Mirrors TextFileBasedViolationStore's private STORE_PATH_DEFAULT, so omitting default.path
+        // lands in the delegate's own directory rather than an NPE. Recheck on ArchUnit upgrades.
         storePath = Path.of(properties.getProperty("default.path", "archunit_store"));
     }
 
@@ -64,11 +57,7 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         }
     }
 
-    /**
-     * An indexed rule whose file is absent has zero known violations — that is the clean-rule case
-     * this store creates, not a missing store. The rule remains {@link #contains contained}, so any
-     * violation found later is new and fails.
-     */
+    /** Absent file means zero known violations — the clean-rule case, not a missing store. */
     @Override
     public List<String> getViolations(ArchRule rule) {
         return violationFile(rule).filter(Files::exists).isPresent()
@@ -89,16 +78,12 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     }
 
     /**
-     * Resolves a rule to the file the delegate stores its violations in.
+     * The file the delegate stores this rule's violations in, or empty when it has no index entry.
      *
-     * <p><strong>Accepted coupling:</strong> this reads {@code stored.rules}, whose
-     * {@code <rule-description>=<uuid>} layout is an implementation detail of
-     * {@link TextFileBasedViolationStore}. That class is public, but the file format is not a
-     * documented contract, so an ArchUnit upgrade could change it —
-     * {@code storedRulesMapsRuleDescriptionToFileName} pins the assumption so such a change fails
-     * loudly instead of silently mishandling a consumer's store.
-     *
-     * @return empty when the rule has no index entry yet
+     * <p>Reads {@code stored.rules}, whose {@code <rule-description>=<uuid>} layout is
+     * {@link TextFileBasedViolationStore}'s undocumented internal format.
+     * {@code storedRulesMapsRuleDescriptionToFileName} pins it, so an upgrade that changes it fails
+     * loudly rather than mishandling a consumer's store.
      */
     private Optional<Path> violationFile(ArchRule rule) {
         Path index = storePath.resolve("stored.rules");

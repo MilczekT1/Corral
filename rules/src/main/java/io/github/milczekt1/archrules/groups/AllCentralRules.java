@@ -18,22 +18,16 @@ import java.util.List;
  * }
  * }</pre>
  *
- * <p>Growth path — add a group class here once it is seeded:
- * {@code Java17Rules}, {@code JakartaMigrationRules}, {@code SpringRules}. Every group needs
- * <strong>both</strong> an {@code @ArchTest ArchTests} field (the only members
- * {@code ArchTests.in(AllCentralRules.class)} descends into, so this is what consumers actually
- * evaluate) <strong>and</strong> an entry in {@link #members()} (what the completeness and README
- * tooling reads). Registering only one of the two leaves the build green while nobody enforces the
- * new rules; {@code GroupMembershipTest} walks the whole tree from here and fails if they diverge,
- * at this level or any level below. The README growth path is the full checklist.
+ * <p>Every member needs <strong>both</strong> an {@code @ArchTest ArchTests} field (what consumers
+ * evaluate) and an entry in {@link #members()} (what tooling reads). Register only one and the build
+ * stays green while nobody enforces the rules; {@code GroupMembershipTest} fails on that divergence
+ * at any depth.
  *
- * <p>A member listed here may itself be a group (something that in turn declares its own
- * {@code @ArchTest ArchTests} fields) or a rule class (something that declares {@code @ArchTest
- * ArchRule} fields directly). {@link #loadAll()} handles either shape, and any nesting of them.
+ * <p>A member may be another group or a rule class. See the README for the full growth path.
  */
 public final class AllCentralRules {
 
-    /** Every seeded member class, in documentation order. Kept in step with the fields below. */
+    /** In documentation order. Kept in step with the {@code @ArchTest} fields below. */
     private static final List<Class<?>> MEMBERS = List.of(TestingRules.class);
 
     @ArchTest
@@ -42,36 +36,25 @@ public final class AllCentralRules {
     private AllCentralRules() {
     }
 
-    /** @see #MEMBERS */
     public static List<Class<?>> members() {
         return MEMBERS;
     }
 
     /**
-     * Forces static initialisation of every member reachable from {@link #MEMBERS}, however many
-     * {@code @ArchTest ArchTests} levels deep it actually sits, populating {@code RuleRegistry}
-     * with every doc along the way.
-     *
-     * <p>Needed because a class literal alone does not initialise a class — without this, tooling
-     * that wants every doc up front (completeness checks, README generation) would see an empty
-     * registry.
+     * Initialises every member at any depth, so {@code RuleRegistry} holds every doc. Tooling that
+     * needs all docs up front would otherwise see an empty registry, because a class literal does
+     * not initialise the class it names.
      */
     public static void loadAll() {
         loadAll(MEMBERS);
     }
 
     /**
-     * Package-private so {@code RuleRegistryCompletenessTest} can exercise the recursion directly
-     * against a throwaway fixture, independent of the real {@link #MEMBERS}.
+     * Package-private so tests can drive the recursion against a fixture instead of {@link #MEMBERS}.
      *
-     * <p>Recurses explicitly rather than trusting a group's own static initialisation to cascade
-     * into what its {@code ArchTests} field points at. It does not: decompiling {@code ArchTests}
-     * shows {@code ArchTests.in(X.class)} does nothing but store the {@code Class} object on the
-     * new instance, and a direct experiment confirms the consequence — {@code Class.forName} on a
-     * class that merely holds a {@code Class} reference to another class does not initialise that
-     * other class (a class literal, and a field that stores one, are not JLS class-initialisation
-     * triggers). So loading a group alone does not load what its {@code ArchTests} field points at,
-     * and this method walks down explicitly instead of assuming it does.
+     * <p>Descends explicitly. {@code ArchTests.in(X)} only stores {@code X}, and storing a class
+     * literal is not a JLS initialisation trigger, so loading a group does <em>not</em> load what
+     * its {@code ArchTests} fields point at.
      */
     static void loadAll(List<Class<?>> members) {
         for (Class<?> member : members) {
@@ -89,16 +72,12 @@ public final class AllCentralRules {
     }
 
     /**
-     * The classes an already-loaded member itself points at via its own {@code @ArchTest
-     * ArchTests} fields. Empty for a rule class (which declares {@code ArchRule} fields instead),
-     * which is how the recursion above terminates at the leaves.
+     * What a loaded member points at through its own {@code @ArchTest ArchTests} fields. Empty for a
+     * rule class, which is how the recursion terminates.
      *
-     * <p>{@code ArchTests.getDefinitionLocation()} is annotated {@code @Internal}, so it is not
-     * part of ArchUnit's public API. Reading it here is deliberate: it is the only way to ask an
-     * {@code ArchTests} field which class it actually aggregates, and that question is exactly
-     * what this recursion needs answered at every level. It is read-only, so the worst case of
-     * ArchUnit removing it is a compile error in this module the next time its ArchUnit dependency
-     * is bumped — never a wrong verdict in a consumer's build.
+     * <p>{@code getDefinitionLocation()} is {@code @Internal}, but it is the only way to ask an
+     * {@code ArchTests} which class it aggregates. Read-only, so an ArchUnit upgrade that drops it
+     * costs a compile error here — never a wrong verdict in a consumer's build.
      */
     private static List<Class<?>> nestedMembersOf(Class<?> loaded) {
         List<Class<?>> nested = new ArrayList<>();

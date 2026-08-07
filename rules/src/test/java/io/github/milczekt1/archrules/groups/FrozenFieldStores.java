@@ -19,22 +19,16 @@ import java.util.Properties;
 import org.junit.jupiter.api.Assertions;
 
 /**
- * Shared machinery for the per-rule tests that pin each public {@code @ArchTest} field to the raw
- * rule it is supposed to wrap.
+ * Pins each public {@code @ArchTest} field to the raw rule it wraps.
  *
- * <p>Without this, {@code FrozenRules.freeze(NO_TX_ON_CLASSES_RULE, NO_TX_ON_METHODS_DOC)} — one
- * copy-paste slip — would pass every other test in the suite: the rule-class tests exercise only the
- * raw constants, the id-pinning assertions look at {@code getDescription()} alone, and
- * {@code FreezingBehaviourTest} re-freezes the raw rule itself. The rule would be silently wrong in
- * every consumer forever.
+ * <p>Catches a copy-paste slip like {@code freeze(RULE_A, DOC_B)}, which every other test would miss:
+ * rule tests exercise only the raw constants, and id assertions look at {@code getDescription()}
+ * alone. The rule would be wrong in every consumer, silently.
  *
- * <p>The check seeds a throwaway freeze store from the public field and reads back what landed in
- * it. That pins two things at once: the store key really is the doc id (ArchUnit derives it from the
- * rule description), and the violations recorded under it really are the raw rule's.
+ * <p>Seeds a throwaway store from the public field and reads it back, pinning both that the store
+ * key is the doc id and that the recorded violations are the raw rule's.
  *
- * <p>Public because callers live one package per rule (e.g. {@code rules.testing}) and need this
- * helper from outside {@code groups}; it does not itself need package-private access to anything —
- * only its callers do, to the rule classes' package-private {@code RULE}/{@code DOC} constants.
+ * <p>Public because callers live one package per rule, outside {@code groups}.
  */
 public final class FrozenFieldStores {
 
@@ -44,11 +38,10 @@ public final class FrozenFieldStores {
     }
 
     /**
-     * Points ArchUnit's default freeze store at {@code store} for the duration of one test.
+     * Points ArchUnit's default freeze store at {@code store} for one test.
      *
-     * <p>{@link ArchConfiguration} is global process state and Surefire reuses one JVM, so every
-     * caller must {@link #resetConfiguration()} afterwards — a leaked
-     * {@code freeze.store.default.path} would corrupt unrelated test classes.
+     * <p>{@link ArchConfiguration} is global and Surefire reuses one JVM, so callers must
+     * {@link #resetConfiguration()} afterwards or they corrupt unrelated test classes.
      */
     public static void useTemporaryStore(Path store) {
         ArchConfiguration.get().setProperty("freeze.store.default.path", store.toString());

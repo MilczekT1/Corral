@@ -13,25 +13,20 @@ import java.util.List;
 /**
  * Top-level test classes must be named so a build tool's convention actually selects them.
  *
- * <p>The rule exists twice: a package-private raw {@code RULE} constant for unit testing, plus a
- * public frozen {@code @ArchTest} field for consumers. Tests exercise the raw rule, because a
- * frozen rule seeds its violations and passes — which would make rule-correctness tests
- * meaningless.
+ * <p>{@code RULE} is the raw predicate, for tests; {@code rule} is the frozen field consumers run.
+ * Tests use the raw one, since a frozen rule seeds its violations and passes.
  *
- * <p>This rule inspects <em>test</em> classes, which is why consumers must not configure
- * {@code ImportOption.DoNotIncludeTests} — doing so makes it pass vacuously.
+ * <p>Inspects <em>test</em> classes, so consumers must not set
+ * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
 public final class TestClassNamingConvention {
 
     /**
-     * Every JUnit 5 annotation that turns a method into an executable test, matched by FQN string
-     * so a consumer without {@code junit-jupiter-params} still works.
+     * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.
      *
-     * <p>All of them are listed explicitly because ArchUnit's {@code isAnnotatedWith} looks at
-     * direct annotations only: {@code @ParameterizedTest} and {@code @RepeatedTest} are
-     * meta-annotated with {@code @TestTemplate}, but that is invisible here. Missing one is a
-     * false negative of exactly the kind this rule exists to catch — a class whose tests all use
-     * {@code @ParameterizedTest} is just as silently unexecuted as one using {@code @Test}.
+     * <p>Listed exhaustively because {@code isAnnotatedWith} sees direct annotations only — it does
+     * not know {@code @ParameterizedTest} is meta-annotated with {@code @TestTemplate}. Missing one
+     * is the exact false negative this rule exists to catch.
      */
     static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
             "org.junit.jupiter.api.Test",

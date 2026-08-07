@@ -12,13 +12,12 @@ import io.github.milczekt1.archrules.RuleRegistry;
  * {@link NestedFixtureGroup}'s {@code @ArchTest ArchTests} field, the shape real rules have after
  * the rule-per-class move.
  *
- * <p>Never referenced by {@link AllCentralRules}, never wired into any {@code @AnalyzeClasses}
- * test class, so its {@code @ArchTest} field never actually runs — it exists solely so a test can
- * prove {@code AllCentralRules.loadAll()} and {@code PublishedRules.rulesReachableFrom} both
- * descend into a genuinely nested arrangement, without moving or touching a real rule.
+ * <p>Unreachable from {@link AllCentralRules} and wired into no {@code @AnalyzeClasses} class, so it
+ * never runs. It exists so tests can prove {@code loadAll()} and {@code rulesReachableFrom} descend
+ * into real nesting without touching a production rule.
  *
- * <p>A top-level public class (not nested in the test class) because reflective {@code Field.get}
- * requires the declaring class itself to be accessible from {@code PublishedRules}' package.
+ * <p>Top-level and public because reflective {@code Field.get} needs the declaring class accessible
+ * from {@code PublishedRules}' package.
  */
 public final class NestedFixtureLeaf {
 

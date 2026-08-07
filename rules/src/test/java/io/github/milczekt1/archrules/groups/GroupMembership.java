@@ -16,27 +16,22 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
- * Shared assertions for the group contract: a group declares each member twice — in {@code
- * members()} for tooling, and as an {@code @ArchTest ArchTests} field for the engine. Divergence is
- * silent in the worst direction: a member present only in {@code members()} is documented and
- * completeness-checked but never evaluated by any consumer.
+ * Asserts the group contract: each member is declared twice — in {@code members()} for tooling, and
+ * as an {@code @ArchTest ArchTests} field for the engine. A member present only in {@code members()}
+ * is never evaluated by any consumer, silently.
  *
- * <p>{@link #assertEveryGroupReachableFrom(Class)} applies that contract to the whole tree in one
- * call. It exists because a per-group call site is opt-in: add a group, forget to write its test,
- * and the pair goes unguarded — exactly the silent non-enforcement this class is for. Walking from
- * {@link AllCentralRules} instead means a new group is guarded the moment it becomes reachable,
- * which is the same moment it starts mattering.
+ * <p>{@link #assertEveryGroupReachableFrom(Class)} covers the whole tree in one call, so a new group
+ * is guarded the moment it becomes reachable. Per-group call sites would be opt-in, and the one
+ * somebody forgets is the one that goes unenforced.
  */
 final class GroupMembership {
 
     /**
-     * Asserts the {@code members()}/{@code @ArchTest} contract for every group reachable from
-     * {@code root}, {@code root} itself included, at any nesting depth.
+     * Checks {@code root} and every group below it, at any depth.
      *
-     * <p>A node counts as a group when it declares at least one {@code @ArchTest ArchTests} field
-     * (a rule class declares {@code ArchRule} fields instead, and is a leaf here). Every such node
-     * must expose a static {@code members()}; a group without one would otherwise slip through
-     * having stated its membership only once, leaving nothing to cross-check.
+     * <p>A node is a group when it declares {@code @ArchTest ArchTests} fields; a rule class
+     * declares {@code ArchRule} fields and is a leaf. Groups must expose a static {@code members()}
+     * — without one, membership is stated once and nothing can cross-check it.
      */
     static void assertEveryGroupReachableFrom(Class<?> root) {
         for (Class<?> node : nodesReachableFrom(root)) {
@@ -64,13 +59,11 @@ final class GroupMembership {
     }
 
     /**
-     * {@code root} plus every class reachable from it through {@code @ArchTest ArchTests} fields,
-     * in walk order.
+     * {@code root} plus everything reachable through {@code @ArchTest ArchTests} fields.
      *
-     * <p>Deliberately keyed on those fields rather than on {@code members()}: they are what
-     * {@code ArchTests.in(...)} actually descends into, so this walk sees exactly the tree
-     * consumers evaluate. A group listed only in a parent's {@code members()} is unreachable here
-     * — and is caught by that parent's own assertion, which is where the divergence lives.
+     * <p>Keyed on those fields, not {@code members()}, so the walk sees exactly the tree consumers
+     * evaluate. A group listed only in a parent's {@code members()} is unreachable here, and is
+     * caught by that parent's own assertion.
      */
     private static List<Class<?>> nodesReachableFrom(Class<?> root) {
         List<Class<?>> nodes = new ArrayList<>();

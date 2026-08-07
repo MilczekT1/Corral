@@ -66,17 +66,12 @@ class RuleRegistryCompletenessTest {
     // declaring class itself to be accessible from PublishedRules' package.
 
     /**
-     * The leaf's id as a <em>string literal</em>, deliberately not {@code NestedFixtureLeaf.DOC.id()}.
+     * A literal, deliberately not {@code NestedFixtureLeaf.DOC.id()}: reading {@code DOC} would
+     * initialise the leaf, and its static initialiser is what registers the doc — so naming the
+     * field inside the assertion would satisfy it, and the test would pass with {@code loadAll}
+     * gutted to {@code {}}.
      *
-     * <p>{@code DOC} is a {@code static final RuleDoc}, not a compile-time constant, so reading it
-     * is itself a JLS class-initialisation trigger — and {@code NestedFixtureLeaf}'s static
-     * initialiser is what registers the doc. Naming the field inside the assertion would therefore
-     * satisfy the assertion by evaluating it: the test would pass with {@code loadAll} gutted to
-     * {@code {}}. Keeping the id as text means nothing in this test touches the leaf class before
-     * {@code loadAll} is asked to reach it.
-     *
-     * <p>Must stay in step with {@code NestedFixtureLeaf.DOC}'s id; the last assertion of the test
-     * below pins that, once the leaf may safely be touched.
+     * <p>Kept in step with {@code NestedFixtureLeaf.DOC} by the last assertion below.
      */
     private static final String NESTED_FIXTURE_LEAF_ID = "test.nested-fixture-registry-propagation-check";
 

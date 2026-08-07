@@ -7,11 +7,9 @@ import lombok.Builder;
 /**
  * Structured, agent-facing documentation for a single architecture rule.
  *
- * <p>The {@link #id()} is deliberately short and stable: it becomes the ArchUnit rule
- * description, which in turn is the key ArchUnit uses for the freeze store <em>and</em> the key
- * {@code AgentFriendlyFailureDisplayFormat} uses to look this doc back up. Rich prose is kept
- * out of the description on purpose — rewording it would otherwise silently re-seed every
- * consumer's freeze store.
+ * <p>{@link #id()} becomes the ArchUnit rule description, which is both the freeze-store key and how
+ * {@code AgentFriendlyFailureDisplayFormat} finds this doc again. Prose is kept out of it so that
+ * rewording documentation cannot re-seed every consumer's store.
  *
  * <p><strong>Changing an id is a breaking change.</strong>
  */
@@ -43,15 +41,11 @@ public record RuleDoc(String id, String why, String howToFix, Optional<String> h
     }
 
     /**
-     * Partially hand-written on purpose; Lombok generates the rest.
-     *
-     * <p>Two members are carried by hand because Lombok's defaults are wrong for this type: the
-     * field initializer, because an omitted {@code Optional} component would otherwise arrive as
-     * {@code null} and trip the canonical constructor's null check; and the {@code String} setter,
-     * because the generated one would take {@code Optional<String>} and force every rule author to
-     * write {@code .howNotToFix(Optional.of("..."))}. Lombok suppresses generation by method
-     * <em>name</em>, so declaring the {@code String} form means no {@code Optional} overload is
-     * generated at all.
+     * Partly hand-written; Lombok generates the rest. Two members are carried by hand because
+     * Lombok's defaults are wrong here: the initialiser, because an omitted {@code Optional} would
+     * arrive as {@code null} and trip the constructor's null check; and the {@code String} setter,
+     * because the generated one takes {@code Optional<String>}. Lombok suppresses by method name, so
+     * declaring the {@code String} form means no {@code Optional} overload is generated.
      */
     public static class Builder {
 

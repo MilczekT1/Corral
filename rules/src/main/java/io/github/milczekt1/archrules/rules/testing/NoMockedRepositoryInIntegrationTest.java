@@ -16,13 +16,11 @@ import java.util.List;
 /**
  * Integration tests must not mock repositories or daos.
  *
- * <p>The rule exists twice: a package-private raw {@code RULE} constant for unit testing, plus a
- * public frozen {@code @ArchTest} field for consumers. Tests exercise the raw rule, because a
- * frozen rule seeds its violations and passes — which would make rule-correctness tests
- * meaningless.
+ * <p>{@code RULE} is the raw predicate, for tests; {@code rule} is the frozen field consumers run.
+ * Tests use the raw one, since a frozen rule seeds its violations and passes.
  *
- * <p>This rule inspects <em>test</em> classes, which is why consumers must not configure
- * {@code ImportOption.DoNotIncludeTests} — doing so makes it pass vacuously.
+ * <p>Inspects <em>test</em> classes, so consumers must not set
+ * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
 public final class NoMockedRepositoryInIntegrationTest {
 

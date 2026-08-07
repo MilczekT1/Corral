@@ -16,15 +16,12 @@ import java.util.stream.Collectors;
  * Reflection over what consumers actually evaluate: the {@code @ArchTest} fields reachable,
  * however deeply nested, from {@link AllCentralRules}.
  *
- * <p>Exists so tests can assert against the <em>published</em> rule set rather than
- * {@code RuleRegistry.all()}. The registry is deliberately process-wide static state and Surefire
- * reuses one JVM, so any sibling test that registers a throwaway {@code RuleDoc} leaks into it —
- * a test keyed on the registry's total contents is therefore order-dependent. Keying on the
- * published fields is order-independent <em>and</em> a stronger assertion, because it pins exactly
- * what a consumer runs.
+ * <p>Assert against this rather than {@code RuleRegistry.all()}. The registry is process-wide and
+ * Surefire reuses one JVM, so a sibling test registering a throwaway doc leaks into it, making any
+ * assertion on its total contents order-dependent. The published fields are order-independent and
+ * pin exactly what a consumer runs.
  *
- * <p>Test-only helper: nothing in production is made public for its sake. Not named {@code *Test},
- * so Surefire does not try to execute it.
+ * <p>Test-only. Not named {@code *Test}, so Surefire skips it.
  */
 public final class PublishedRules {
 
@@ -38,17 +35,13 @@ public final class PublishedRules {
     }
 
     /**
-     * Every {@code @ArchTest ArchRule} reachable from {@code root}, descending through any
-     * {@code @ArchTest ArchTests} fields. A rule class is a leaf (it declares ArchRule fields); a
-     * group is a branch (it declares ArchTests fields). Both shapes, and any nesting of them, are
-     * handled by the same walk.
+     * Every {@code @ArchTest ArchRule} reachable from {@code root}, descending through
+     * {@code @ArchTest ArchTests} fields. Rule classes are leaves, groups are branches; one walk
+     * handles both and any nesting.
      *
-     * <p>{@code ArchTests.getDefinitionLocation()} is annotated {@code @Internal}, so it is not
-     * part of ArchUnit's public API. Reading it here is deliberate and confined to this test-only
-     * class: it is the only way to ask an {@code ArchTests} field which class it actually
-     * aggregates, and that question is exactly what this walk needs answered at every level. It is
-     * read-only, so the worst case of ArchUnit removing it is a compile error in this test module —
-     * never a wrong verdict in a consumer's build.
+     * <p>{@code getDefinitionLocation()} is {@code @Internal}, but it is the only way to ask an
+     * {@code ArchTests} which class it aggregates. Read-only and test-only, so an ArchUnit upgrade
+     * that drops it costs a compile error here — never a wrong verdict in a consumer's build.
      */
     public static List<ArchRule> rulesReachableFrom(Class<?> root) {
         List<ArchRule> collected = new ArrayList<>(archRuleFieldsOf(root));

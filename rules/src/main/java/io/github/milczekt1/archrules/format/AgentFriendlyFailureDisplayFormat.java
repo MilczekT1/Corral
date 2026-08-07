@@ -18,18 +18,15 @@ import lombok.extern.slf4j.Slf4j;
  * <p>Register it in a consumer's {@code src/test/resources/archunit.properties}:
  * <pre>{@code failureDisplayFormat=io.github.milczekt1.archrules.format.AgentFriendlyFailureDisplayFormat}</pre>
  *
- * <p>{@code failureDisplayFormat} is a <strong>global per-run</strong> setting, so this formatter
- * also sees the consumer's own unrelated rules. Any description that is not a registered
- * {@link RuleDoc} id falls through to ArchUnit's standard rendering, and this class never throws:
- * a formatter must never mask a real architecture violation with its own stack trace.
+ * <p>{@code failureDisplayFormat} is <strong>global per run</strong>, so this also sees the
+ * consumer's own rules. Anything that is not a registered {@link RuleDoc} id falls through to
+ * ArchUnit's standard rendering, and this class never throws — a formatter must not mask the
+ * violation it is reporting.
  *
- * <p>Must stay {@code public} with a {@code public} no-arg constructor — ArchUnit instantiates it
- * reflectively from the configured class name.
+ * <p>Needs a public no-arg constructor — ArchUnit instantiates it reflectively.
  *
- * <p>Logging uses {@code slf4j-api} only — already on the compile classpath transitively via
- * ArchUnit — and this library deliberately ships no binding, so a consumer's own logging setup
- * decides whether these messages surface. Every degradation below is logged at DEBUG: silently
- * falling back is what made this class undiagnosable in a consumer's CI.
+ * <p>Degradations are logged at DEBUG via {@code slf4j-api} only; the library ships no binding, so
+ * whether they surface is the consumer's choice.
  */
 @Slf4j
 public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
@@ -47,16 +44,12 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /**
-     * Logging must never widen this class's never-throw contract, so the call itself is guarded:
-     * a broken or misconfigured binding would otherwise turn a formatting fallback into a thrown
-     * exception that masks the real architecture violation.
-     */
+    /** Guarded so a broken logging binding cannot widen the never-throw contract. */
     private static void debug(String message, Throwable cause) {
         try {
             log.debug(message, cause);
         } catch (RuntimeException ignored) {
-            // Nothing left to do: there is no channel to report a failure of the reporting channel.
+            // No channel left to report a failure of the reporting channel.
         }
     }
 
