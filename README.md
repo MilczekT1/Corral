@@ -234,9 +234,9 @@ This module uses [Lombok](https://projectlombok.org/). Install your IDE's Lombok
 will report errors on generated members that `mvn verify` compiles cleanly.
 
 Lombok is wired through `annotationProcessorPaths` in the root `pom.xml`, not just as a dependency —
-JDK 23+ ignores annotation processors that are only on the classpath, and would otherwise generate
-nothing while still reporting a successful build. `LombokWiringTest` guards against that; run it
-with `clean`, since a stale `target/classes` will mask the failure.
+JDK 23+ ignores annotation processors that are only on the classpath. Remove that block and
+compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
+misconfiguration cannot pass silently.
 
 ## License
 
