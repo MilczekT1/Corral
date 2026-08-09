@@ -12,7 +12,7 @@ import org.junit.jupiter.api.Test;
 class NoMockedRepositoryInIntegrationTestTest {
 
     private static final JavaClasses FIXTURES = new ClassFileImporter()
-            .importPackages("io.github.milczekt1.archrules.fixtures.testing");
+            .importPackages("io.github.milczekt1.llamarules.rules.fixtures.testing");
 
     private static String report(ArchRule rule) {
         return String.join("\n", rule.allowEmptyShould(true).evaluate(FIXTURES).getFailureReport().getDetails());

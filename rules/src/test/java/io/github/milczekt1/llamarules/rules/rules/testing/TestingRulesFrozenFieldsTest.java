@@ -20,7 +20,7 @@ import org.junit.jupiter.api.io.TempDir;
 class TestingRulesFrozenFieldsTest {
 
     private static final JavaClasses FIXTURES = new ClassFileImporter()
-            .importPackages("io.github.milczekt1.archrules.fixtures.testing");
+            .importPackages("io.github.milczekt1.llamarules.rules.fixtures.testing");
 
     @TempDir
     Path store;

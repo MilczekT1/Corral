@@ -17,7 +17,7 @@ import java.util.Properties;
  * a rule with zero violations, so a committed freeze store carries no empty files.
  *
  * <p>Register it in {@code archunit.properties}:
- * <pre>{@code freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore}</pre>
+ * <pre>{@code freeze.store=io.github.milczekt1.llamarules.rules.freeze.EmptyOmittingViolationStore}</pre>
  *
  * <p><strong>A clean rule stays frozen; its first later violation fails the build.</strong>
  * {@code FreezingArchRule} decides via {@link #contains}, which keys on the {@code stored.rules}

@@ -16,7 +16,7 @@ import lombok.extern.slf4j.Slf4j;
  * HOW TO FIX it, the rule's own anti-fix trap, and the global {@link AntiFixPolicy}.
  *
  * <p>Register it in a consumer's {@code src/test/resources/archunit.properties}:
- * <pre>{@code failureDisplayFormat=io.github.milczekt1.archrules.format.AgentFriendlyFailureDisplayFormat}</pre>
+ * <pre>{@code failureDisplayFormat=io.github.milczekt1.llamarules.rules.format.AgentFriendlyFailureDisplayFormat}</pre>
  *
  * <p>{@code failureDisplayFormat} is <strong>global per run</strong>, so this also sees the
  * consumer's own rules. Anything that is not a registered {@link RuleDoc} id falls through to
