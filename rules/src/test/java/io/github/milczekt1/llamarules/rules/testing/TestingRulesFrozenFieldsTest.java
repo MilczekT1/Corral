@@ -5,7 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.llamarules.groups.FrozenFieldStores;
-import io.github.milczekt1.llamarules.groups.TestingRules;
+import io.github.milczekt1.llamarules.groups.TestingRulesGroup;
 import io.github.milczekt1.llamarules.testsupport.PublishedRules;
 import java.nio.file.Path;
 import org.junit.jupiter.api.AfterEach;
@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Pins every public {@code @ArchTest} field reachable from {@link TestingRules} to the raw rule it
+ * Pins every public {@code @ArchTest} field reachable from {@link TestingRulesGroup} to the raw rule it
  * wraps. See {@link FrozenFieldStores} for why {@code getDescription()} alone is not enough.
  */
 class TestingRulesFrozenFieldsTest {
@@ -57,9 +57,9 @@ class TestingRulesFrozenFieldsTest {
         // If a rule is added to TestingRules without a pairing test above, this fails. Derived from
         // members() rather than hardcoded twice, so the group itself is the single source of truth
         // for how many rules there are.
-        assertEquals(TestingRules.members().size(), PublishedRules.rulesReachableFrom(TestingRules.class).size(),
+        assertEquals(TestingRulesGroup.members().size(), PublishedRules.rulesReachableFrom(TestingRulesGroup.class).size(),
                 "every TestingRules member must publish exactly one rule");
-        assertEquals(PAIRING_TESTS, TestingRules.members().size(),
+        assertEquals(PAIRING_TESTS, TestingRulesGroup.members().size(),
                 "add a pairing test for the new TestingRules rule");
     }
 }

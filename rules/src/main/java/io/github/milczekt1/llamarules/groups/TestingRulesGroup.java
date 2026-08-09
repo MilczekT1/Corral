@@ -6,13 +6,7 @@ import io.github.milczekt1.llamarules.rules.testing.NoMockedRepositoryInIntegrat
 import io.github.milczekt1.llamarules.rules.testing.TestClassNamingConvention;
 import java.util.List;
 
-/**
- * Rules about test hygiene.
- *
- * <p>These rules inspect <em>test</em> classes, which is why consumers must not configure
- * {@code ImportOption.DoNotIncludeTests} — doing so makes them pass vacuously.
- */
-public final class TestingRules {
+public final class TestingRulesGroup {
 
     private static final List<Class<?>> MEMBERS = List.of(
             NoMockedRepositoryInIntegrationTest.class,
@@ -31,6 +25,6 @@ public final class TestingRules {
         return MEMBERS;
     }
 
-    private TestingRules() {
+    private TestingRulesGroup() {
     }
 }

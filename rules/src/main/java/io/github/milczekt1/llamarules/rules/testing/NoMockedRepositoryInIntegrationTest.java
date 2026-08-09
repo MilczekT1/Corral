@@ -16,9 +16,6 @@ import java.util.List;
 /**
  * Integration tests must not mock repositories or daos.
  *
- * <p>{@code RULE} is the raw predicate, for tests; {@code rule} is the frozen field consumers run.
- * Tests use the raw one, since a frozen rule seeds its violations and passes.
- *
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
@@ -33,21 +30,23 @@ public final class NoMockedRepositoryInIntegrationTest {
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("test.no-mocked-repository-in-integration-test")
-            .why("An integration test exists to prove the real wiring works — schema, queries, mapping "
-                    + "and transactions included. Mocking the repository or dao removes exactly the layer the "
-                    + "test was written to exercise, leaving a slow test that proves nothing.")
-            .howToFix("Let the integration test hit the real persistence layer against a real database "
-                    + "(Testcontainers or an equivalent). If you genuinely want to mock the persistence layer, "
-                    + "the test is a unit test — rename it so it is no longer an integration test and move it "
-                    + "beside the class it tests.")
-            .howNotToFix("Do NOT rename the class from FooIT to FooTests just to stop this rule matching while "
-                    + "it keeps doing integration work, and do NOT rename the mocked type so it no longer ends "
-                    + "in Repository or Dao. Both dodge the matcher and leave the problem in place.")
+            .why("""
+                    An integration test exists to prove the real wiring works — schema, queries, mapping \
+                    and transactions included. Mocking the repository or dao removes exactly the layer the \
+                    test was written to exercise, leaving a slow test that proves nothing.""")
+            .howToFix("""
+                    Let the integration test hit the real persistence layer against a real database \
+                    (Testcontainers or an equivalent). If you genuinely want to mock the persistence layer, \
+                    the test is a unit test — rename it so it is no longer an integration test and move it \
+                    beside the class it tests.""")
+            .howNotToFix("""
+                    Do NOT rename the class from FooIT to FooTests just to stop this rule matching while \
+                    it keeps doing integration work, and do NOT rename the mocked type so it no longer ends \
+                    in Repository or Dao. Both dodge the matcher and leave the problem in place.""")
             .build();
 
     static final ArchRule RULE = noClasses()
-            .that().haveSimpleNameEndingWith("IntegrationTest")
-            .or().haveSimpleNameEndingWith("IT")
+            .that().haveSimpleNameEndingWith("IT")
             .should(declareAMockedRepositoryOrDaoField());
 
     @ArchTest

@@ -54,7 +54,7 @@ class AllCentralRulesTest {
 
     @Test
     void groupsAreListedInDocumentationOrder() {
-        assertEquals(List.of(TestingRules.class), AllCentralRules.members());
+        assertEquals(List.of(TestingRulesGroup.class), AllCentralRules.members());
     }
 
     @Test

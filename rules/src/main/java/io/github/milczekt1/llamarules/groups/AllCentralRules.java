@@ -28,10 +28,10 @@ import java.util.List;
 public final class AllCentralRules {
 
     /** In documentation order. Kept in step with the {@code @ArchTest} fields below. */
-    private static final List<Class<?>> MEMBERS = List.of(TestingRules.class);
+    private static final List<Class<?>> MEMBERS = List.of(TestingRulesGroup.class);
 
     @ArchTest
-    public static final ArchTests testing = ArchTests.in(TestingRules.class);
+    public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
 
     private AllCentralRules() {
     }

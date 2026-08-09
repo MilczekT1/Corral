@@ -15,9 +15,6 @@ import java.util.List;
 /**
  * Top-level test classes must be named so a build tool's convention actually selects them.
  *
- * <p>{@code RULE} is the raw predicate, for tests; {@code rule} is the frozen field consumers run.
- * Tests use the raw one, since a frozen rule seeds its violations and passes.
- *
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
@@ -37,6 +34,15 @@ public final class TestClassNamingConvention {
             "org.junit.jupiter.api.TestFactory",
             "org.junit.jupiter.api.TestTemplate",
             "org.junit.jupiter.params.ParameterizedTest");
+
+    static final ArchRule RULE = classes()
+            .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
+                    (JavaMethod method) ->
+                            JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isAnnotatedWith)))
+            .and().areNotMemberClasses()
+            .should().haveSimpleNameEndingWith("Test")
+            .orShould().haveSimpleNameEndingWith("Tests")
+            .orShould().haveSimpleNameEndingWith("IT");
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("test.class-naming-convention")
@@ -60,21 +66,6 @@ public final class TestClassNamingConvention {
                     either; every one of them counts.""")
             .build();
 
-    /**
-     * Nested classes are excluded because no build tool selects them by name — the enclosing class
-     * is what gets selected, so a JUnit 5 {@code @Nested} group (imported by ArchUnit as its own
-     * {@code JavaClass} named e.g. {@code WhenEmpty}) is a guaranteed false positive whose only
-     * "fix" would be a rename that changes nothing. {@code areNotMemberClasses()} also drops static
-     * nested test-holders, which are genuinely unexecuted; that trade is accepted, because a rule
-     * that fires on every {@code @Nested} class a consumer writes is unusable.
-     */
-    static final ArchRule RULE = classes()
-            .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
-                    (JavaMethod method) ->
-                            JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isAnnotatedWith)))
-            .and().areNotMemberClasses()
-            .should().haveSimpleNameEndingWith("Test")
-            .orShould().haveSimpleNameEndingWith("IT");
 
     @ArchTest
     public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
