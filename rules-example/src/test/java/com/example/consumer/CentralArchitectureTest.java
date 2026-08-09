@@ -4,7 +4,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
-import io.github.milczekt1.llamarules.rules.groups.AllCentralRules;
+import io.github.milczekt1.llamarules.groups.AllCentralRules;
 
 /**
  * The entire consumer-side wiring. No rule logic lives here.
