@@ -27,10 +27,10 @@ class NoMockedRepositoryInIntegrationTestTest {
     }
 
     @Test
-    void flagsMockedDaoInAClassNamedIntegrationTest() {
+    void flagsMockedDaoInAClassNamedIT() {
         String report = report(NoMockedRepositoryInIntegrationTest.RULE);
 
-        assertTrue(report.contains("MockingDaoIntegrationTest"), report);
+        assertTrue(report.contains("MockingDaoIT"), report);
         assertTrue(report.contains("orderDao"), report);
     }
 

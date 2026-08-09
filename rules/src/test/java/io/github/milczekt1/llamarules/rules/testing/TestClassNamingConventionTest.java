@@ -60,7 +60,7 @@ class TestClassNamingConventionTest {
         String report = report(TestClassNamingConvention.RULE);
 
         assertFalse(report.contains("MockingRepositoryIT"), report);
-        assertFalse(report.contains("MockingDaoIntegrationTest"), report);
+        assertFalse(report.contains("MockingDaoIT"), report);
         assertFalse(report.contains("MockingGatewayIT"), report);
         assertFalse(report.contains("OrderRepository"), report);
         assertFalse(report.contains("PaymentGateway"), report);

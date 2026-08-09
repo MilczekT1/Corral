@@ -50,10 +50,10 @@ public final class TestClassNamingConvention {
                     Most build tools select which top-level classes to run by class-name convention (Maven's \
                     Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \
                     top-level class holding JUnit test methods — @Test, @ParameterizedTest, @RepeatedTest, \
-                    @TestFactory or @TestTemplate — whose name ends in neither Test nor IT is silently \
+                    @TestFactory or @TestTemplate — whose name ends in none of Test, Tests or IT is silently \
                     never executed: it looks like coverage in the source tree while proving nothing in CI.""")
             .howToFix("""
-                    Rename the reported top-level class to end in Test (unit tests) or IT (integration \
+                    Rename the reported top-level class to end in Test or Tests (unit tests) or IT (integration \
                     tests) so your build tool's test-selection convention picks it up (with Maven, Surefire \
                     runs *Test and Failsafe runs *IT). Nested classes are never reported by this rule and \
                     must not be renamed: a JUnit 5 @Nested group is executed through its enclosing class, \

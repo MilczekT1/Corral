@@ -128,8 +128,8 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 
 | Rule id | Group | What it enforces |
 |---|---|---|
-| `test.no-mocked-repository-in-integration-test` | `TestingRules` | A `*IntegrationTest` / `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
-| `test.class-naming-convention` | `TestingRules` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
+| `test.no-mocked-repository-in-integration-test` | `TestingRules` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
+| `test.class-naming-convention` | `TestingRules` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 
 This table is maintained by hand; nothing in the build checks it.
 
@@ -161,6 +161,12 @@ Two consequences follow, and they are the questions people actually ask:
 - **Commit the `stored.rules` change** produced by that first run. Uncommitted, CI sees no entry,
   takes the left branch above, and absorbs the first violation silently — a rule that looks armed and
   is not.
+
+> **Changing a rule's predicate invalidates frozen entries for it.** ArchUnit matches known
+> violations by their rendered *text*, so widening a rule from `Test`/`IT` to `Test`/`Tests`/`IT`
+> rewrites every message it produces — the frozen entries stop matching and the same old violations
+> resurface as new ones. That is a breaking change for consumers on the same footing as renaming an
+> id: they must re-freeze. Batch predicate changes into a release and say so in the notes.
 
 ## Install
 
