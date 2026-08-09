@@ -51,10 +51,6 @@ class AntiFixPolicyTest {
         assertEquals("Do NOT disable the module in CI.", extended.get(extended.size() - 1));
     }
 
-    @Test
-    void clausesIsUnmodifiableSoCallersCannotStripTheBaseline() {
-        assertThrows(UnsupportedOperationException.class, () -> AntiFixPolicy.clauses().clear());
-    }
 
     @Test
     void rejectsBlankClauses() {

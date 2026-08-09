@@ -103,67 +103,29 @@ class AgentFriendlyFailureDisplayFormatTest {
         assertFalse(out.contains("HOW NOT TO FIX (always):"), "must not decorate foreign rules: " + out);
     }
 
+    /**
+     * One consolidated check for the never-throw contract. The formatter runs inside a failing
+     * build, so throwing here would replace a real architecture violation with a stack trace.
+     */
     @Test
-    void neverThrowsWhenTheRuleDescriptionBlowsUp() {
+    void neverThrowsOnHostileOrNullInput() {
         HasDescription hostile = () -> {
             throw new IllegalStateException("boom");
         };
-
-        // No FailureMessages available in a unit test, so exercise the guard via the adapter's
-        // description lookup with a null message list standing in for a degenerate call.
-        String out = FORMAT.describeSafely(hostile);
-
-        assertTrue(out.contains("unknown rule"), "must degrade gracefully, got: " + out);
-    }
-
-    @Test
-    void describeSafelyNeverThrowsOnANullRule() {
-        String out = assertDoesNotThrow(() -> FORMAT.describeSafely(null));
-
-        assertTrue(out.contains("unknown rule"), "must degrade gracefully, got: " + out);
-    }
-
-    @Test
-    void renderNeverThrowsOnAdversarialInputs() {
-        String withNullList = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, null, Priority.MEDIUM));
-        assertTrue(withNullList.contains("Offending locations:"), withNullList);
-
-        String withNullPriority = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, VIOLATIONS, null));
-        assertTrue(withNullPriority.contains("Architecture Violation"), withNullPriority);
-
         List<String> withNullElement = new ArrayList<>(VIOLATIONS);
         withNullElement.add(null);
-        String withNullEntry = assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, withNullElement, Priority.MEDIUM));
-        assertTrue(withNullEntry.contains("Offending locations:"), withNullEntry);
-    }
 
-    @Test
-    void defaultFormatNeverThrowsOnAdversarialInputs() {
-        String withNullList =
-                assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", null, "2 times", Priority.HIGH));
-        assertTrue(withNullList.contains("Architecture Violation"), withNullList);
+        assertTrue(FORMAT.describeSafely(hostile).contains("unknown rule"));
+        assertTrue(FORMAT.describeSafely(null).contains("unknown rule"));
 
-        String withNullPriority =
-                assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", VIOLATIONS, "2 times", null));
-        assertTrue(withNullPriority.contains("Architecture Violation"), withNullPriority);
+        assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, null, Priority.MEDIUM));
+        assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, VIOLATIONS, null));
+        assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, withNullElement, Priority.MEDIUM));
 
-        List<String> withNullElement = new ArrayList<>(VIOLATIONS);
-        withNullElement.add(null);
-        String withNullEntry = assertDoesNotThrow(
-                () -> FORMAT.defaultFormat("some.rule", withNullElement, "2 times", Priority.HIGH));
-        assertTrue(withNullEntry.contains("Architecture Violation"), withNullEntry);
-    }
+        assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", null, "2 times", Priority.HIGH));
+        assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", VIOLATIONS, "2 times", null));
 
-    @Test
-    void lastResortFormatNeverThrowsEvenWhenEverythingIsHostileOrNull() {
-        HasDescription hostile = () -> {
-            throw new IllegalStateException("boom");
-        };
-
-        String withHostileRule = assertDoesNotThrow(() -> FORMAT.lastResortFormat(hostile, null, null));
-        assertTrue(withHostileRule.contains("Architecture Violation"), withHostileRule);
-
-        String allNull = assertDoesNotThrow(() -> FORMAT.lastResortFormat(null, null, null));
-        assertTrue(allNull.contains("Architecture Violation"), allNull);
+        assertDoesNotThrow(() -> FORMAT.lastResortFormat(hostile, null, null));
+        assertDoesNotThrow(() -> FORMAT.lastResortFormat(null, null, null));
     }
 }

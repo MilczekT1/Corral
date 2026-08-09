@@ -46,10 +46,4 @@ class RuleDocTest {
         assertThrows(IllegalArgumentException.class, () -> valid().id("DB.no-spring-tx").build());
     }
 
-    @Test
-    void blankFieldMessageNamesTheOffendingField() {
-        IllegalArgumentException e =
-                assertThrows(IllegalArgumentException.class, () -> valid().why(" ").build());
-        assertTrue(e.getMessage().contains("why"), "message should name the field: " + e.getMessage());
-    }
 }

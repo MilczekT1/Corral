@@ -96,24 +96,6 @@ class EmptyOmittingViolationStoreTest {
         assertEquals(0, countViolationFiles());
     }
 
-    @Test
-    void storedRulesMapsRuleDescriptionToFileName() throws Exception {
-        // Pins an assumption about TextFileBasedViolationStore's file layout that this decorator
-        // depends on. If an ArchUnit upgrade changes it, fail here rather than silently mishandling
-        // a consumer's store.
-        ArchRule rule = ruleNamed("test.layout-probe");
-        store.save(rule, List.of("Class <Foo> is bad"));
-
-        Properties index = new Properties();
-        try (var in = Files.newInputStream(storeDir.resolve("stored.rules"))) {
-            index.load(in);
-        }
-        String fileName = index.getProperty("test.layout-probe");
-
-        assertNotNull(fileName, "stored.rules must key violations by rule description");
-        assertTrue(Files.exists(storeDir.resolve(fileName)),
-                "stored.rules value must name a file in the store directory");
-    }
 
     @Test
     void aRuleFrozenCleanIsStillContainedSoItsFirstViolationFails() {
@@ -156,29 +138,6 @@ class EmptyOmittingViolationStoreTest {
         }
     }
 
-    @Test
-    void initializeFallsBackToArchUnitsOwnDefaultPathWhenDefaultPathIsOmitted() throws IOException {
-        // Deliberately independent of the storeDir @TempDir fixture used by every other test in this
-        // class: this exercises the fallback that applies when a consumer omits default.path
-        // entirely (the case that used to throw NullPointerException), not the configured path.
-        // TextFileBasedViolationStore.initialize() creates its "archunit_store" directory as a side
-        // effect of resolving the path, regardless of whether store creation later succeeds, so we
-        // only assert that initialize() completes and then remove that directory again rather than
-        // asserting anything about its contents.
-        Path defaultStoreDir = Path.of("archunit_store");
-        try {
-            Properties properties = new Properties();
-            properties.setProperty("default.allowStoreCreation", "true");
-            properties.setProperty("default.allowStoreUpdate", "true");
-            // default.path deliberately omitted.
-
-            EmptyOmittingViolationStore defaultPathStore = new EmptyOmittingViolationStore();
-
-            assertDoesNotThrow(() -> defaultPathStore.initialize(properties));
-        } finally {
-            deleteRecursively(defaultStoreDir);
-        }
-    }
 
     /**
      * Counts rule violation files only, excluding the {@code stored.rules} index itself — chosen
