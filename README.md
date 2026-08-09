@@ -75,11 +75,11 @@ Opt in group by group instead with `ArchTests.in(TestingRules.class)`.
 ```properties
 freeze.store.default.path=src/test/resources/archunit/frozen
 
-failureDisplayFormat=io.github.milczekt1.archrules.format.AgentFriendlyFailureDisplayFormat
+failureDisplayFormat=format.io.github.milczekt1.llamarules.rules.AgentFriendlyFailureDisplayFormat
 
 # Optional. Keeps stored.rules complete but writes no file for a rule with zero violations,
 # so the committed store carries no empty files. See "Empty violation files" below.
-freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore
+freeze.store=freeze.io.github.milczekt1.llamarules.rules.EmptyOmittingViolationStore
 ```
 
 Then seed the freeze store **once**, out of band, and commit it:
@@ -116,7 +116,7 @@ enforced (a rule the store does *not* contain is seeded-and-passed on its next r
 real violation would be absorbed as debt instead of failing). The empty file, however, is pure
 noise in a commit.
 
-`freeze.store=io.github.milczekt1.archrules.freeze.EmptyOmittingViolationStore` keeps the index
+`freeze.store=freeze.io.github.milczekt1.llamarules.rules.EmptyOmittingViolationStore` keeps the index
 entry and drops only the file. Three things to know before enabling it:
 
 - **It is opt-in.** Leave the line out and you get ArchUnit's stock `TextFileBasedViolationStore`,
