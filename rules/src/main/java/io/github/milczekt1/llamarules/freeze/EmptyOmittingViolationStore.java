@@ -40,7 +40,6 @@ public class EmptyOmittingViolationStore implements ViolationStore {
      */
     private static final String INDEX_FILE = "stored.rules";
 
-    /** Mirrors the delegate's private {@code STORE_PATH_DEFAULT}. Recheck on ArchUnit upgrades. */
     private static final String DEFAULT_STORE_PATH = "archunit_store";
 
     private final TextFileBasedViolationStore delegate = new TextFileBasedViolationStore();
@@ -94,13 +93,11 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         }
     }
 
-    /** Where the delegate keeps this rule's violations, or empty when it has no index entry. */
     private Optional<Path> violationFileOf(ArchRule rule) {
         return Optional.ofNullable(readIndex().getProperty(rule.getDescription()))
                 .map(storePath::resolve);
     }
 
-    /** The index as the delegate left it, or empty when the store has not been created yet. */
     private Properties readIndex() {
         Properties index = new Properties();
         Path indexFile = storePath.resolve(INDEX_FILE);
