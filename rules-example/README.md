@@ -103,7 +103,8 @@ Two things to read off it:
 
 ## Freezing this rule
 
-`acme.no-stdout-in-services` was not in `stored.rules` when it was first added, so its first run
-**seeded** `NoisyService` as debt and passed. That is by design, and it is why a new rule never
-retroactively fails a build. The rule is armed from that run onward — provided the resulting
-`stored.rules` line is committed.
+A rule with no `stored.rules` entry **seeds** whatever it finds as debt and passes, which is why
+adopting one never fails a build retroactively. `NoisyService` sits in the store on those terms.
+
+The rule is armed from that point on — provided the `stored.rules` line is committed. Uncommitted,
+CI keeps seeing a rule with no entry, and every first violation is seeded instead of reported.
