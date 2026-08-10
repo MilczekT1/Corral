@@ -260,6 +260,19 @@ and drops the file. Three things to know:
 One rule, one class. A rule class under `rules/<topic>/` owns everything about that rule; a group
 under `groups/` is a thin wrapper composing rule classes; `AllCentralRules` is a group of groups.
 
+Packages split by role, and the arrows only point one way:
+
+| package | holds | depends on |
+|---|---|---|
+| `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
+| `freeze` | `Freezer`, `EmptyOmittingViolationStore` | `doc` |
+| `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
+| `rules/<topic>` | the rules themselves | `doc`, `freeze` |
+| `groups` | composition only | `rules/<topic>` |
+
+`freeze` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
+with it, so neither imports the other.
+
 Every node states its membership **twice** — as `@ArchTest` fields (what `ArchTests.in(...)` descends
 into, i.e. what consumers run) and in a static `members()` (what tooling reads). `GroupMembershipTest`
 walks the whole tree and fails on any node where the two disagree, or on any group with `@ArchTest

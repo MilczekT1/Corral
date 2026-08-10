@@ -6,7 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.base.HasDescription;
 import com.tngtech.archunit.lang.Priority;
-import io.github.milczekt1.llamarules.RuleDoc;
+import io.github.milczekt1.llamarules.doc.RuleDoc;
 import java.util.ArrayList;
 import java.util.List;
 import org.junit.jupiter.api.Test;

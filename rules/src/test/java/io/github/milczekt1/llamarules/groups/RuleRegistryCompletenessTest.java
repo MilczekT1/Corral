@@ -5,8 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.RuleDoc;
-import io.github.milczekt1.llamarules.RuleRegistry;
+import io.github.milczekt1.llamarules.doc.RuleDoc;
+import io.github.milczekt1.llamarules.doc.RuleRegistry;
 import io.github.milczekt1.llamarules.testsupport.PublishedRules;
 import java.util.Collections;
 import java.util.IdentityHashMap;

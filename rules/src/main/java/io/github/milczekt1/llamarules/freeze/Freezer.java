@@ -2,8 +2,8 @@ package io.github.milczekt1.llamarules.freeze;
 
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
-import io.github.milczekt1.llamarules.RuleDoc;
-import io.github.milczekt1.llamarules.RuleRegistry;
+import io.github.milczekt1.llamarules.doc.RuleDoc;
+import io.github.milczekt1.llamarules.doc.RuleRegistry;
 import lombok.experimental.UtilityClass;
 
 /**

@@ -3,7 +3,7 @@ package io.github.milczekt1.llamarules.freeze;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.TextFileBasedViolationStore;
 import com.tngtech.archunit.library.freeze.ViolationStore;
-import io.github.milczekt1.llamarules.RuleDoc;
+import io.github.milczekt1.llamarules.doc.RuleDoc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;

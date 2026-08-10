@@ -6,7 +6,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.RuleDoc;
+import io.github.milczekt1.llamarules.doc.RuleDoc;
 import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.util.List;
 import lombok.experimental.UtilityClass;

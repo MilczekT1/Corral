@@ -1,4 +1,4 @@
-package io.github.milczekt1.llamarules;
+package io.github.milczekt1.llamarules.doc;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;

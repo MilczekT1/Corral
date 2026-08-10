@@ -1,4 +1,4 @@
-package io.github.milczekt1.llamarules;
+package io.github.milczekt1.llamarules.doc;
 
 import java.util.Comparator;
 import java.util.List;
