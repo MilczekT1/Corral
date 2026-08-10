@@ -18,9 +18,6 @@
   <description>Reference wiring: one test-scoped dependency plus one thin test class.</description>
 
   <dependencies>
-    <!-- THE ONLY DEPENDENCY NEEDED FOR THE RULES THEMSELVES.
-         archunit-junit5 (and its engine) arrive transitively, so wiring the rules into your build
-         costs exactly this one entry. -->
     <dependency>
       <groupId>io.github.milczekt1</groupId>
       <artifactId>llama-rules</artifactId>
@@ -28,10 +25,6 @@
       <scope>test</scope>
     </dependency>
 
-    <!-- Not required to USE the rules — archunit-junit5-api depends only on archunit, and the
-         wiring class above uses ArchUnit's own annotations. This is here purely so LegacyChecks can
-         carry a real @Test method and thereby violate test.class-naming-convention, seeding the
-         committed freeze store. Any consumer that writes tests at all already has this. -->
     <dependency>
       <groupId>org.junit.jupiter</groupId>
       <artifactId>junit-jupiter-api</artifactId>
