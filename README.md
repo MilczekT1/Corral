@@ -207,7 +207,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 |---|---|---|
 | `freeze.store.default.path` | yes | Resolved against the JVM's **working directory**, not the classpath. Maven sets it to the module directory; an IDE run configuration with a different working directory will not find the store. |
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
-| `freeze.store` | optional | Set to `io.github.milczekt1.llamarules.freeze.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
+| `freeze.store` | optional | Set to `io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -220,7 +220,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 
 ### The freeze store
 
-`freeze.store=io.github.milczekt1.llamarules.freeze.EmptyOmittingViolationStore` changes two things
+`freeze.store=io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` changes two things
 about how the store is written.
 
 **Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
@@ -266,12 +266,12 @@ Packages split by role, and the arrows only point one way:
 |---|---|---|
 | root | `DocumentedRule` — the authoring contract | `doc` |
 | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `freeze` | `EmptyOmittingViolationStore` | nothing |
+| `store` | `EmptyOmittingViolationStore` | `doc` |
 | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
 | `rules/<topic>` | the rules themselves | root, `doc` |
 | `groups` | composition only | `rules/<topic>` |
 
-`freeze` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
+`store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
 with it, so neither imports the other.
 
 Every node states its membership **twice** — as `@ArchTest` fields (what `ArchTests.in(...)` descends

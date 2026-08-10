@@ -1,4 +1,4 @@
-package io.github.milczekt1.llamarules.freeze;
+package io.github.milczekt1.llamarules.store;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;

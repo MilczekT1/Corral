@@ -1,4 +1,4 @@
-package io.github.milczekt1.llamarules.freeze;
+package io.github.milczekt1.llamarules.store;
 
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.TextFileBasedViolationStore;
@@ -19,7 +19,7 @@ import java.util.UUID;
  * a rule with zero violations, so a committed freeze store carries no empty files.
  *
  * <p>Register it in {@code archunit.properties}:
- * <pre>{@code freeze.store=io.github.milczekt1.llamarules.freeze.EmptyOmittingViolationStore}</pre>
+ * <pre>{@code freeze.store=io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore}</pre>
  *
  * <p><strong>A clean rule stays frozen; its first later violation fails the build.</strong>
  * {@code FreezingArchRule} decides via {@link #contains}, which keys on the {@code stored.rules}
