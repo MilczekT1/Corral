@@ -4,7 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.FrozenRules;
+import io.github.milczekt1.llamarules.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
 import java.io.PrintStream;
 
@@ -13,7 +13,7 @@ import java.io.PrintStream;
  *
  * <p>Any {@code ArchRule} works with {@code @ArchTest}, but a plain one renders through ArchUnit's
  * default format — one line, no guidance. Giving it a {@link RuleDoc} and freezing it through
- * {@link FrozenRules} makes it behave exactly like a built-in rule: WHY / HOW TO FIX on failure,
+ * {@link Freezer} makes it behave exactly like a built-in rule: WHY / HOW TO FIX on failure,
  * existing violations recorded as debt rather than blocking.
  *
  * <p>{@code howNotToFix} is where this rule's own anti-fix guidance goes. The global policy in
@@ -40,7 +40,7 @@ public final class NoStdoutInServicesRule {
             .should().callMethod(PrintStream.class, "println", String.class);
 
     @ArchTest
-    public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
+    public static final ArchRule rule = Freezer.freeze(RULE, DOC);
 
     private NoStdoutInServicesRule() {
     }

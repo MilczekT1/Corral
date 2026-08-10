@@ -20,7 +20,7 @@ import lombok.experimental.UtilityClass;
  * existing debt rather than blocking in-flight work.
  */
 @UtilityClass
-public class FrozenRules {
+public class Freezer {
 
     public static ArchRule freeze(ArchRule rule, RuleDoc doc) {
         RuleRegistry.register(doc);

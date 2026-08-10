@@ -9,7 +9,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import io.github.milczekt1.llamarules.FrozenRules;
+import io.github.milczekt1.llamarules.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
 import java.util.List;
 
@@ -50,7 +50,7 @@ public final class NoMockedRepositoryInIntegrationTestRule {
             .should(declareAMockedRepositoryOrDaoField());
 
     @ArchTest
-    public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
+    public static final ArchRule rule = Freezer.freeze(RULE, DOC);
 
     /**
      * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed

@@ -10,7 +10,7 @@ import lombok.experimental.UtilityClass;
 /**
  * Global lookup from a rule's stable id to its {@link RuleDoc}.
  *
- * <p>Populated as a side effect of {@link FrozenRules#freeze}, i.e. when a group class is
+ * <p>Populated as a side effect of {@link Freezer#freeze}, i.e. when a group class is
  * initialised. The failure formatter reads from here to re-attach rich prose to a violation.
  */
 @UtilityClass

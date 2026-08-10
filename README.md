@@ -259,7 +259,7 @@ becomes reachable, so there is no per-group test to remember to write.
      `^[a-z0-9]+(\.[a-z0-9-]+)+$`.
    - `static final ArchRule RULE` — the raw rule, package-private. Tests exercise *this*; the public
      field is frozen, so it seeds and passes, which would make rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);` — `freeze`
+   - `@ArchTest public static final ArchRule rule = Freezer.freeze(RULE, DOC);` — `freeze`
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
      allows an empty `should`.
 2. In the group, add the class to `MEMBERS` **and** give it an `@ArchTest ArchTests` field. Both,
@@ -272,7 +272,7 @@ becomes reachable, so there is no per-group test to remember to write.
    ever finds nothing.
 4. Assert in the rule's own test that the public field carries the doc id, as
    `publicRuleIsFrozenAndIdPinned` does. Note what this does *not* catch:
-   `FrozenRules.freeze(A_RULE, B_DOC)` — a field frozen against the wrong raw rule — is currently
+   `Freezer.freeze(A_RULE, B_DOC)` — a field frozen against the wrong raw rule — is currently
    caught by nothing.
 5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.

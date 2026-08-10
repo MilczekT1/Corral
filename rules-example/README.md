@@ -21,7 +21,7 @@ Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a pa
 should call method PrintStream.println(String)' was violated (1 times): …
 ```
 
-Give it a `RuleDoc` and freeze it through `FrozenRules`, as `NoStdoutInServicesRule` does, and it behaves
+Give it a `RuleDoc` and freeze it through `Freezer`, as `NoStdoutInServicesRule` does, and it behaves
 like a built-in rule: guidance on failure, and existing violations recorded as debt instead of
 blocking the build.
 
@@ -38,7 +38,7 @@ static final ArchRule RULE = noClasses()
         .should().callMethod(PrintStream.class, "println", String.class);
 
 @ArchTest
-public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
+public static final ArchRule rule = Freezer.freeze(RULE, DOC);
 ```
 
 Ids are freeze-store keys, so use your own namespace (`acme.`) and treat a rename as a breaking

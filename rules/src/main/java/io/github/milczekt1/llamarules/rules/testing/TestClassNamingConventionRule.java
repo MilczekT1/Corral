@@ -6,7 +6,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.FrozenRules;
+import io.github.milczekt1.llamarules.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
 import lombok.NoArgsConstructor;
 
@@ -68,5 +68,5 @@ public final class TestClassNamingConventionRule {
 
 
     @ArchTest
-    public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
+    public static final ArchRule rule = Freezer.freeze(RULE, DOC);
 }
