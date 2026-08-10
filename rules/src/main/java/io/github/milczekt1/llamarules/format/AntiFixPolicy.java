@@ -22,12 +22,14 @@ public class AntiFixPolicy {
                     Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation\
                      disappear. The store records pre-existing debt only; new violations must be fixed in code.""",
             "Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.",
-            "Do NOT rename a class, field, or package solely to dodge a name-based rule"
-                    + " (e.g. renaming FooIT so the integration-test rule stops matching).",
+            """
+                    Do NOT rename a class, field, or package solely to dodge a name-based rule\
+                     (e.g. renaming FooIT so the integration-test rule stops matching).""",
             "Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.",
             "Do NOT downgrade, remove, reword, or otherwise weaken the rule.",
-            "The ONLY acceptable resolution is changing the production/test code so the rule genuinely"
-                    + " passes — then follow this rule's HOW TO FIX.");
+            """
+                    The ONLY acceptable resolution is changing the production/test code so the rule genuinely\
+                     passes — then follow this rule's HOW TO FIX.""");
 
     private static final List<String> ADDITIONAL = new CopyOnWriteArrayList<>();
 
