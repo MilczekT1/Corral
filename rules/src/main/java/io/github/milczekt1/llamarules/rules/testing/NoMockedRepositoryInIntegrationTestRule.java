@@ -19,7 +19,7 @@ import java.util.List;
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
-public final class NoMockedRepositoryInIntegrationTest {
+public final class NoMockedRepositoryInIntegrationTestRule {
 
     /** Matched by FQN string, so a consumer missing any of these libraries still works. */
     static final List<String> FORBIDDEN_MOCK_ANNOTATIONS = List.of(
@@ -74,6 +74,6 @@ public final class NoMockedRepositoryInIntegrationTest {
         };
     }
 
-    private NoMockedRepositoryInIntegrationTest() {
+    private NoMockedRepositoryInIntegrationTestRule() {
     }
 }

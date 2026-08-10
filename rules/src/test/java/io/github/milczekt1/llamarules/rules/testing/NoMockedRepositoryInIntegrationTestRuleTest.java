@@ -9,7 +9,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
 
-class NoMockedRepositoryInIntegrationTestTest {
+class NoMockedRepositoryInIntegrationTestRuleTest {
 
     private static final JavaClasses FIXTURES = new ClassFileImporter()
             .importPackages("io.github.milczekt1.llamarules.fixtures.testing");
@@ -20,7 +20,7 @@ class NoMockedRepositoryInIntegrationTestTest {
 
     @Test
     void flagsMockedRepositoryInAClassNamedIT() {
-        String report = report(NoMockedRepositoryInIntegrationTest.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
 
         assertTrue(report.contains("MockingRepositoryIT"), report);
         assertTrue(report.contains("orderRepository"), report);
@@ -28,7 +28,7 @@ class NoMockedRepositoryInIntegrationTestTest {
 
     @Test
     void flagsMockedDaoInAClassNamedIT() {
-        String report = report(NoMockedRepositoryInIntegrationTest.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
 
         assertTrue(report.contains("MockingDaoIT"), report);
         assertTrue(report.contains("orderDao"), report);
@@ -36,7 +36,7 @@ class NoMockedRepositoryInIntegrationTestTest {
 
     @Test
     void allowsMockingNonPersistenceCollaboratorsInIntegrationTests() {
-        String report = report(NoMockedRepositoryInIntegrationTest.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
 
         assertFalse(report.contains("MockingGatewayIT"),
                 "only Repository/Dao types are forbidden: " + report);
@@ -44,7 +44,7 @@ class NoMockedRepositoryInIntegrationTestTest {
 
     @Test
     void allowsUnitTestsToMockRepositories() {
-        String report = report(NoMockedRepositoryInIntegrationTest.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
 
         assertFalse(report.contains("PlainUnitTest"),
                 "the rule targets integration tests only: " + report);
@@ -54,7 +54,7 @@ class NoMockedRepositoryInIntegrationTestTest {
     void coversEveryForbiddenMockAnnotationIncludingTheRemovedSpringBootOne() {
         // MockBean was removed in Spring Boot 4, so it has no fixture; it stays in the list for
         // consumers still on Boot 3 and is verified here as a configured constant.
-        assertTrue(NoMockedRepositoryInIntegrationTest.FORBIDDEN_MOCK_ANNOTATIONS.containsAll(java.util.List.of(
+        assertTrue(NoMockedRepositoryInIntegrationTestRule.FORBIDDEN_MOCK_ANNOTATIONS.containsAll(java.util.List.of(
                 "org.mockito.Mock",
                 "org.springframework.test.context.bean.override.mockito.MockitoBean",
                 "org.springframework.boot.test.mock.mockito.MockBean")));
@@ -63,6 +63,6 @@ class NoMockedRepositoryInIntegrationTestTest {
     @Test
     void publicRuleIsFrozenAndIdPinned() {
         assertEquals("test.no-mocked-repository-in-integration-test",
-                NoMockedRepositoryInIntegrationTest.rule.getDescription());
+                NoMockedRepositoryInIntegrationTestRule.rule.getDescription());
     }
 }

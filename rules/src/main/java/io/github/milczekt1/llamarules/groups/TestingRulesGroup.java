@@ -2,23 +2,23 @@ package io.github.milczekt1.llamarules.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
-import io.github.milczekt1.llamarules.rules.testing.NoMockedRepositoryInIntegrationTest;
-import io.github.milczekt1.llamarules.rules.testing.TestClassNamingConvention;
+import io.github.milczekt1.llamarules.rules.testing.NoMockedRepositoryInIntegrationTestRule;
+import io.github.milczekt1.llamarules.rules.testing.TestClassNamingConventionRule;
 import java.util.List;
 
 public final class TestingRulesGroup {
 
     private static final List<Class<?>> MEMBERS = List.of(
-            NoMockedRepositoryInIntegrationTest.class,
-            TestClassNamingConvention.class);
+            NoMockedRepositoryInIntegrationTestRule.class,
+            TestClassNamingConventionRule.class);
 
     @ArchTest
     public static final ArchTests noMockedRepositoryInIntegrationTest =
-            ArchTests.in(NoMockedRepositoryInIntegrationTest.class);
+            ArchTests.in(NoMockedRepositoryInIntegrationTestRule.class);
 
     @ArchTest
     public static final ArchTests testClassNamingConvention =
-            ArchTests.in(TestClassNamingConvention.class);
+            ArchTests.in(TestClassNamingConventionRule.class);
 
     /** Members may be rule classes or nested groups. @see AllCentralRules#members() */
     public static List<Class<?>> members() {

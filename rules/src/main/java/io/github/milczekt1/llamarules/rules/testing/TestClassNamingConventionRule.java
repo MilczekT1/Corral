@@ -19,7 +19,7 @@ import java.util.List;
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
 @NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public final class TestClassNamingConvention {
+public final class TestClassNamingConventionRule {
 
     /**
      * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.

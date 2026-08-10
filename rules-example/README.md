@@ -6,7 +6,7 @@ rule this project owns.
 | File | What it shows |
 |---|---|
 | `CentralArchitectureTest` | Wiring the library's rules — the whole point of the dependency. |
-| `custom/NoStdoutInServices` | Writing **your own** rule with the library's machinery, and appending a clause to the anti-fix policy. |
+| `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, and appending a clause to the anti-fix policy. |
 | `custom/CustomArchitectureTest` | Wiring your own rules alongside the library's. |
 | `archunit/frozen/` | The committed freeze store. Three entries, two files — the clean rule has no file. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. |
@@ -21,7 +21,7 @@ Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a pa
 should call method PrintStream.println(String)' was violated (1 times): …
 ```
 
-Give it a `RuleDoc` and freeze it through `FrozenRules`, as `NoStdoutInServices` does, and it behaves
+Give it a `RuleDoc` and freeze it through `FrozenRules`, as `NoStdoutInServicesRule` does, and it behaves
 like a built-in rule: guidance on failure, and existing violations recorded as debt instead of
 blocking the build.
 
@@ -47,7 +47,7 @@ change.
 ## Extending the anti-fix policy
 
 `AntiFixPolicy.addClause(...)` appends to the "HOW NOT TO FIX (always):" block printed on **every**
-rule failure in the build — the library's rules included, not only your own. `NoStdoutInServices`
+rule failure in the build — the library's rules included, not only your own. `NoStdoutInServicesRule`
 registers its clause from a static initialiser:
 
 ```java
@@ -59,10 +59,19 @@ static {
 
 The baseline clauses cannot be removed or replaced, only appended to.
 
-> A static initialiser runs when its class is first loaded, so a clause registered this way is
-> guaranteed to be present for that rule's own failures, but a rule in a class loaded earlier may
-> render without it. Put clauses that must appear everywhere in a class you know is loaded first, or
-> accept that they are best-effort for unrelated rules.
+> **This leaks across rules, and the result depends on class-load order.** `AntiFixPolicy` is
+> process-wide static state and Surefire reuses one JVM, so from the moment `NoStdoutInServicesRule`
+> is loaded, the clause prints on *every* subsequent failure — the library's rules included.
+> Anything that fails earlier in the run renders without it. Measured directly:
+>
+> ```
+> library-rule failure BEFORE addClause -> false
+> library-rule failure AFTER  addClause -> true
+> ```
+>
+> So a clause is reliable for its own rule (loading the rule runs the initialiser) and best-effort
+> for everything else. If a clause must appear on every failure, register it from something loaded
+> before any rule runs rather than from a rule class.
 
 ## Expected output
 

@@ -26,8 +26,8 @@ flowchart LR
     subgraph lib["llama-rules"]
         ACR["AllCentralRules"]
         TG["TestingRules<br/><i>group</i>"]
-        R1["TestClassNamingConvention"]
-        R2["NoMockedRepositoryInIntegrationTest"]
+        R1["TestClassNamingConventionRule"]
+        R2["NoMockedRepositoryInIntegrationTestRule"]
         FMT["AgentFriendlyFailureDisplayFormat"]
     end
 
@@ -252,8 +252,9 @@ becomes reachable, so there is no per-group test to remember to write.
 
 ### Adding a rule to an existing group
 
-1. Create `rules/<topic>/<RuleName>.java` — public final class, private constructor, three members
-   (see `TestClassNamingConvention`):
+1. Create `rules/<topic>/<RuleName>Rule.java` — public final class, private constructor, three
+   members (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a rule class is
+   recognisable at a glance and never collides with the `*Test` convention its own tests follow.
    - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
      `^[a-z0-9]+(\.[a-z0-9-]+)+$`.
    - `static final ArchRule RULE` — the raw rule, package-private. Tests exercise *this*; the public
@@ -266,12 +267,13 @@ becomes reachable, so there is no per-group test to remember to write.
    **never evaluated by any consumer**.
 3. Add fixtures under `src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
    and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
-   are not executed. Then write `rules/<topic>/<RuleName>Test.java` against the raw `RULE`, asserting
+   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `RULE`, asserting
    **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
    ever finds nothing.
-4. Add a pairing test to the group's `<Group>FrozenFieldsTest` via `FrozenFieldStores.assertFreezes(…)`
-   and bump `PAIRING_TESTS`. This catches `FrozenRules.freeze(A_RULE, B_DOC)`, which every other test
-   in the suite would pass.
+4. Assert in the rule's own test that the public field carries the doc id, as
+   `publicRuleIsFrozenAndIdPinned` does. Note what this does *not* catch:
+   `FrozenRules.freeze(A_RULE, B_DOC)` — a field frozen against the wrong raw rule — is currently
+   caught by nothing.
 5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
 
@@ -285,7 +287,6 @@ top of the rule steps:
 2. Add it to `AllCentralRules.MEMBERS` **and** give it an `@ArchTest ArchTests` field there. Skipping
    the field is the dangerous half: the build stays green while no consumer ever evaluates the group.
 3. Update `AllCentralRulesTest.groupsAreListedInDocumentationOrder`.
-4. Create the group's `<Group>FrozenFieldsTest` (copy `TestingRulesFrozenFieldsTest`).
 
 No membership guard test is needed — `GroupMembershipTest` covers it by construction.
 

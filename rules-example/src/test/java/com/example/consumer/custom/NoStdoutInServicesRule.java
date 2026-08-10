@@ -17,7 +17,7 @@ import java.io.PrintStream;
  * {@link FrozenRules} makes it behave exactly like a built-in rule: WHY / HOW TO FIX on failure,
  * existing violations recorded as debt rather than blocking.
  */
-public final class NoStdoutInServices {
+public final class NoStdoutInServicesRule {
 
     static {
         // Appended to the global anti-fix policy, so it prints under "HOW NOT TO FIX (always):" on
@@ -46,6 +46,6 @@ public final class NoStdoutInServices {
     @ArchTest
     public static final ArchRule rule = FrozenRules.freeze(RULE, DOC);
 
-    private NoStdoutInServices() {
+    private NoStdoutInServicesRule() {
     }
 }

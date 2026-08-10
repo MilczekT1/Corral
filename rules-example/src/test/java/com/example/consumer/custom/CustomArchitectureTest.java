@@ -10,5 +10,5 @@ import com.tngtech.archunit.junit.ArchTests;
 class CustomArchitectureTest {
 
     @ArchTest
-    static final ArchTests custom = ArchTests.in(NoStdoutInServices.class);
+    static final ArchTests custom = ArchTests.in(NoStdoutInServicesRule.class);
 }
