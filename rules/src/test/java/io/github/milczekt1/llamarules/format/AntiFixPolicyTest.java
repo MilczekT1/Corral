@@ -1,22 +1,10 @@
 package io.github.milczekt1.llamarules.format;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.ArrayList;
-import java.util.List;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 class AntiFixPolicyTest {
-
-    private static List<String> baselineSnapshot;
-
-    @BeforeAll
-    static void captureBaseline() {
-        baselineSnapshot = new ArrayList<>(AntiFixPolicy.clauses());
-    }
 
     @Test
     void baselineCoversEveryDocumentedCheat() {
@@ -33,28 +21,9 @@ class AntiFixPolicyTest {
 
     @Test
     void baselineEndsWithTheOnlyAcceptableResolution() {
-        String last = baselineSnapshot.get(baselineSnapshot.size() - 1).toLowerCase();
+        String last = AntiFixPolicy.clauses().get(AntiFixPolicy.clauses().size() - 1).toLowerCase();
 
         assertTrue(last.contains("only"), "final clause must state the only acceptable resolution");
         assertTrue(last.contains("genuinely passes"), "final clause: " + last);
-    }
-
-    @Test
-    void addedClausesAppendAfterTheBaselineAndNeverReplaceIt() {
-        List<String> baseline = AntiFixPolicy.clauses();
-
-        AntiFixPolicy.addClause("Do NOT disable the module in CI.");
-        List<String> extended = AntiFixPolicy.clauses();
-
-        assertEquals(baseline.size() + 1, extended.size());
-        assertEquals(baseline, extended.subList(0, baseline.size()), "baseline must be preserved verbatim");
-        assertEquals("Do NOT disable the module in CI.", extended.get(extended.size() - 1));
-    }
-
-
-    @Test
-    void rejectsBlankClauses() {
-        assertThrows(IllegalArgumentException.class, () -> AntiFixPolicy.addClause("  "));
-        assertThrows(IllegalArgumentException.class, () -> AntiFixPolicy.addClause(null));
     }
 }

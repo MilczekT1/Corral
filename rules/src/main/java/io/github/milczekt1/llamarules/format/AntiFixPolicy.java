@@ -1,18 +1,15 @@
 package io.github.milczekt1.llamarules.format;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import lombok.experimental.UtilityClass;
 
 /**
  * The global "how NOT to fix this" policy rendered at the bottom of <em>every</em> framework
  * rule failure.
  *
- * <p>Rule authors and consumers may {@link #addClause append} project-specific clauses. There is
- * intentionally no API to remove or replace the baseline: the whole point is that the anti-cheat
- * guidance cannot be forgotten, weakened, or quietly dropped per rule.
+ * <p>Identical for every rule, and immutable: the anti-cheat guidance cannot be forgotten, weakened,
+ * or quietly dropped. Clauses specific to one rule belong in that rule's
+ * {@code RuleDoc.howNotToFix}, which renders just above this block.
  */
 @UtilityClass
 public class AntiFixPolicy {
@@ -31,20 +28,7 @@ public class AntiFixPolicy {
                     The ONLY acceptable resolution is changing the production/test code so the rule genuinely\
                      passes — then follow this rule's HOW TO FIX.""");
 
-    private static final List<String> ADDITIONAL = new CopyOnWriteArrayList<>();
-
-    /** Baseline clauses first, then any appended clauses, in insertion order. */
     public static List<String> clauses() {
-        List<String> all = new ArrayList<>(BASELINE);
-        all.addAll(ADDITIONAL);
-        return Collections.unmodifiableList(all);
-    }
-
-    /** Appends a project-specific clause. The baseline is never affected. */
-    public static void addClause(String clause) {
-        if (clause == null || clause.isBlank()) {
-            throw new IllegalArgumentException("clause must not be null or blank");
-        }
-        ADDITIONAL.add(clause.trim());
+        return BASELINE;
     }
 }

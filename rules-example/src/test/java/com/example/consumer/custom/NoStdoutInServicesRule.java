@@ -6,7 +6,6 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.llamarules.FrozenRules;
 import io.github.milczekt1.llamarules.RuleDoc;
-import io.github.milczekt1.llamarules.format.AntiFixPolicy;
 import java.io.PrintStream;
 
 /**
@@ -16,15 +15,11 @@ import java.io.PrintStream;
  * default format — one line, no guidance. Giving it a {@link RuleDoc} and freezing it through
  * {@link FrozenRules} makes it behave exactly like a built-in rule: WHY / HOW TO FIX on failure,
  * existing violations recorded as debt rather than blocking.
+ *
+ * <p>{@code howNotToFix} is where this rule's own anti-fix guidance goes. The global policy in
+ * {@code AntiFixPolicy} is identical for every rule and prints below it.
  */
 public final class NoStdoutInServicesRule {
-
-    static {
-        // Appended to the global anti-fix policy, so it prints under "HOW NOT TO FIX (always):" on
-        // every rule failure in this build — the library's rules included, not just this one.
-        AntiFixPolicy.addClause(
-                "Do NOT swap System.out for a logger you then silence in test configuration.");
-    }
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("acme.no-stdout-in-services")
@@ -36,7 +31,8 @@ public final class NoStdoutInServicesRule {
                     let the caller decide how to present it.""")
             .howNotToFix("""
                     Do NOT move the call into a helper class outside ..service.. to dodge the package \
-                    matcher — the output still lands on stdout.""")
+                    matcher — the output still lands on stdout. Do NOT swap System.out for a logger you \
+                    then silence in test configuration.""")
             .build();
 
     static final ArchRule RULE = noClasses()
