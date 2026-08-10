@@ -6,11 +6,10 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
-import lombok.NoArgsConstructor;
-
+import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
 /**
  * Top-level test classes must be named so a build tool's convention actually selects them.
@@ -18,8 +17,8 @@ import java.util.List;
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
-@NoArgsConstructor(access = lombok.AccessLevel.PRIVATE)
-public final class TestClassNamingConventionRule {
+@UtilityClass
+public class TestClassNamingConventionRule {
 
     /**
      * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.

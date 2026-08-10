@@ -25,12 +25,8 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         requireText(id, "id");
         requireText(why, "why");
         requireText(howToFix, "howToFix");
-        if (!ID_PATTERN.matcher(id).matches()) {
-            throw new IllegalArgumentException(
-                    "id '" + id + "' must match " + ID_PATTERN.pattern()
-                            + " — it is the freeze-store key and must stay short and stable");
-        }
-        howNotToFix = (howNotToFix == null || howNotToFix.isBlank()) ? null : howNotToFix.trim();
+        requireFreezeKeyShape(id);
+        howNotToFix = blankToNull(howNotToFix);
     }
 
     /** True when this rule carries anti-fix guidance of its own, beyond the global policy. */
@@ -42,6 +38,18 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         if (value == null || value.isBlank()) {
             throw new IllegalArgumentException(field + " must not be null or blank");
         }
+    }
+
+    private static void requireFreezeKeyShape(String id) {
+        if (!ID_PATTERN.matcher(id).matches()) {
+            throw new IllegalArgumentException(
+                    "id '" + id + "' must match " + ID_PATTERN.pattern()
+                            + " — it is the freeze-store key and must stay short and stable");
+        }
+    }
+
+    private static String blankToNull(String text) {
+        return text == null || text.isBlank() ? null : text.trim();
     }
 
 }

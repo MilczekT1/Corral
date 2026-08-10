@@ -9,9 +9,10 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
+import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
 /**
  * Integration tests must not mock repositories or daos.
@@ -19,7 +20,8 @@ import java.util.List;
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
-public final class NoMockedRepositoryInIntegrationTestRule {
+@UtilityClass
+public class NoMockedRepositoryInIntegrationTestRule {
 
     /** Matched by FQN string, so a consumer missing any of these libraries still works. */
     static final List<String> FORBIDDEN_MOCK_ANNOTATIONS = List.of(
@@ -74,6 +76,4 @@ public final class NoMockedRepositoryInIntegrationTestRule {
         };
     }
 
-    private NoMockedRepositoryInIntegrationTestRule() {
-    }
 }

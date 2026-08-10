@@ -5,8 +5,10 @@ import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.llamarules.rules.testing.NoMockedRepositoryInIntegrationTestRule;
 import io.github.milczekt1.llamarules.rules.testing.TestClassNamingConventionRule;
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
-public final class TestingRulesGroup {
+@UtilityClass
+public class TestingRulesGroup {
 
     private static final List<Class<?>> MEMBERS = List.of(
             NoMockedRepositoryInIntegrationTestRule.class,
@@ -25,6 +27,4 @@ public final class TestingRulesGroup {
         return MEMBERS;
     }
 
-    private TestingRulesGroup() {
-    }
 }

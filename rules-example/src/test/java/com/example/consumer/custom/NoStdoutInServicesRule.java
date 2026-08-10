@@ -4,12 +4,10 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
-import lombok.AccessLevel;
-import lombok.NoArgsConstructor;
-
+import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.io.PrintStream;
+import lombok.experimental.UtilityClass;
 
 /**
  * A rule this project owns, written with the library's own machinery.
@@ -22,8 +20,8 @@ import java.io.PrintStream;
  * <p>{@code howNotToFix} is where this rule's own anti-fix guidance goes. The global policy in
  * {@code AntiFixPolicy} is identical for every rule and prints below it.
  */
-@NoArgsConstructor(access = AccessLevel.PRIVATE)
-public final class NoStdoutInServicesRule {
+@UtilityClass
+public class NoStdoutInServicesRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("acme.no-stdout-in-services")

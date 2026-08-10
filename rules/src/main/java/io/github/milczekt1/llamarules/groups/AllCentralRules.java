@@ -6,6 +6,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.List;
+import lombok.experimental.UtilityClass;
 
 /**
  * Opt into every central rule group with a single field:
@@ -25,7 +26,8 @@ import java.util.List;
  *
  * <p>A member may be another group or a rule class. See the README for the full growth path.
  */
-public final class AllCentralRules {
+@UtilityClass
+public class AllCentralRules {
 
     /** In documentation order. Kept in step with the {@code @ArchTest} fields below. */
     private static final List<Class<?>> MEMBERS = List.of(TestingRulesGroup.class);
@@ -33,8 +35,6 @@ public final class AllCentralRules {
     @ArchTest
     public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
 
-    private AllCentralRules() {
-    }
 
     public static List<Class<?>> members() {
         return MEMBERS;
