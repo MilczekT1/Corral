@@ -8,7 +8,6 @@ import io.github.milczekt1.llamarules.RuleDoc;
 import io.github.milczekt1.llamarules.RuleRegistry;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -34,10 +33,11 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
     private static final String INDENT = "  ";
     private static final String UNKNOWN_RULE = "<unknown rule>";
 
+    /** The one guard that enforces the never-throw contract; everything below it degrades in place. */
     @Override
     public String formatFailure(HasDescription rule, FailureMessages failureMessages, Priority priority) {
         try {
-            return formatFailureUnsafe(rule, failureMessages, priority);
+            return format(rule, failureMessages, priority);
         } catch (RuntimeException e) {
             debug("Falling back to the last-resort failure format", e);
             return lastResortFormat(rule, failureMessages, priority);
@@ -53,33 +53,32 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    private String formatFailureUnsafe(HasDescription rule, FailureMessages failureMessages, Priority priority) {
+    /** {@code countInfo} is read only by {@link #defaultFormat}, so a documented rule never asks for it. */
+    private String format(HasDescription rule, FailureMessages failureMessages, Priority priority) {
         String description = describeSafely(rule);
-        String countInfo = countInfoSafely(failureMessages);
         List<String> lines = linesSafely(failureMessages);
-        try {
-            Optional<RuleDoc> doc = RuleRegistry.find(description);
-            return doc.isPresent()
-                    ? render(doc.get(), lines, priority)
-                    : defaultFormat(description, lines, countInfo, priority);
-        } catch (RuntimeException e) {
-            debug("Registry lookup or rich rendering failed; using ArchUnit's default format", e);
-            return defaultFormat(description, lines, countInfo, priority);
-        }
+        return RuleRegistry.find(description)
+                .map(doc -> render(doc, lines, priority))
+                .orElseGet(() ->
+                        defaultFormat(description, lines, countInfoSafely(failureMessages), priority));
     }
 
     /**
-     * Provably non-throwing backstop for {@link #formatFailure}, reached only if every guarded
-     * path above still failed — e.g. a corrupted {@link RuleDoc}, or {@link #defaultFormat} itself
-     * throwing on a null {@link Priority} while it was already handling another exception. Every
-     * value here comes from {@code String.valueOf} or {@code getClass().getName()} — never from a
-     * caller-controlled accessor or {@code toString()} that could itself throw or be null. Package
-     * -private so the guarantee is directly testable without needing a real {@link FailureMessages}.
+     * Provably non-throwing backstop for {@link #formatFailure}, reached only if a guarded path above
+     * still failed. Every value here comes from a guarded accessor, {@code getClass().getName()} or
+     * an enum — never from a caller-controlled {@code toString()}. Package-private so the guarantee
+     * is directly testable without needing a real {@link FailureMessages}.
      */
     String lastResortFormat(HasDescription rule, FailureMessages failureMessages, Priority priority) {
-        return "Architecture Violation [Priority: " + String.valueOf(priority) + "] - " + UNKNOWN_RULE
-                + " (failed to render failure details; rule type=" + safeClassName(rule)
-                + ", failureMessages type=" + safeClassName(failureMessages) + ")";
+        return lastResortFormat(describeSafely(rule), priority,
+                "rule type=" + safeClassName(rule)
+                        + ", failureMessages type=" + safeClassName(failureMessages));
+    }
+
+    /** Names the rule whenever the caller knows it — that is the whole value of a failure message. */
+    private static String lastResortFormat(String ruleLabel, Priority priority, String diagnostics) {
+        return "Architecture Violation [Priority: " + priority + "] - " + ruleLabel
+                + " (failed to render failure details; " + diagnostics + ")";
     }
 
     /** Package-private seam: rendering a documented rule, testable with a plain list. */
@@ -114,8 +113,13 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             return out.toString();
         } catch (RuntimeException e) {
             debug("Rich rendering of a documented rule failed; using the last-resort format", e);
-            return lastResortFormat(null, null, priority);
+            return lastResortFormat(idOf(doc), priority, "rich rendering threw");
         }
+    }
+
+    /** A record accessor cannot throw, but {@link #render} is package-private and may be handed null. */
+    private static String idOf(RuleDoc doc) {
+        return doc == null ? UNKNOWN_RULE : doc.id();
     }
 
     /** Package-private seam: byte-for-byte ArchUnit's default rendering, so foreign rules look untouched. */
@@ -128,7 +132,8 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
                     priorityLabel, description, countInfo, violationTexts);
         } catch (RuntimeException e) {
             debug("ArchUnit's default rendering failed; using the last-resort format", e);
-            return lastResortFormat(null, null, priority);
+            return lastResortFormat(description == null ? UNKNOWN_RULE : description, priority,
+                    "default rendering threw");
         }
     }
 
@@ -151,20 +156,21 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
+    /** Keeps whatever was collected before a mid-iteration failure — partial locations still help. */
     private static List<String> linesSafely(FailureMessages messages) {
         if (messages == null) {
             return List.of();
         }
+        List<String> copy = new ArrayList<>();
         try {
-            List<String> copy = new ArrayList<>();
             for (String line : messages) {
                 copy.add(line == null ? "" : line);
             }
-            return List.copyOf(copy);
         } catch (RuntimeException e) {
-            debug("Iterating FailureMessages threw; reporting no offending locations", e);
-            return List.of();
+            debug("Iterating FailureMessages threw; reporting the " + copy.size()
+                    + " offending locations collected so far", e);
         }
+        return List.copyOf(copy);
     }
 
     /** {@code getClass()} is final and {@code getName()} runs no caller code, so this cannot throw. */

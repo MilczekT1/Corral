@@ -89,9 +89,11 @@ class AgentFriendlyFailureDisplayFormatTest {
     }
 
     @Test
-    void defaultFormatMatchesArchUnitsOwnRenderingForForeignRules() {
+    void defaultFormatLeavesForeignRulesUndecorated() {
         // failureDisplayFormat is global: a consumer's own rules pass through this formatter too,
         // and must come out looking exactly as they would without the framework installed.
+        // ArchUnit's own default lives in a package-private class and cannot be invoked here, so
+        // this pins our copy of its template — matching the real one is verified by reading it.
         String description = "no classes should depend on classes that reside in a package '..internal..'";
 
         String out = FORMAT.defaultFormat(description, VIOLATIONS, "2 times", Priority.HIGH);
