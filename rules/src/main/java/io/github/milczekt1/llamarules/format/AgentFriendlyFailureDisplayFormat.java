@@ -7,7 +7,9 @@ import com.tngtech.archunit.lang.Priority;
 import io.github.milczekt1.llamarules.RuleDoc;
 import io.github.milczekt1.llamarules.RuleRegistry;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.extern.slf4j.Slf4j;
 
 /**
@@ -137,7 +139,8 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    String describeSafely(HasDescription rule) {
+    /** Package-private seam: the only degradation testable with a rule that throws on description. */
+    static String describeSafely(HasDescription rule) {
         try {
             String description = rule == null ? null : rule.getDescription();
             return description == null ? UNKNOWN_RULE : description;
@@ -170,7 +173,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             debug("Iterating FailureMessages threw; reporting the " + copy.size()
                     + " offending locations collected so far", e);
         }
-        return List.copyOf(copy);
+        return Collections.unmodifiableList(copy);
     }
 
     /** {@code getClass()} is final and {@code getName()} runs no caller code, so this cannot throw. */
@@ -181,7 +184,6 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
     private static String indent(String text) {
         return text.lines()
                 .map(line -> INDENT + line)
-                .reduce((a, b) -> a + System.lineSeparator() + b)
-                .orElse("");
+                .collect(Collectors.joining(System.lineSeparator()));
     }
 }

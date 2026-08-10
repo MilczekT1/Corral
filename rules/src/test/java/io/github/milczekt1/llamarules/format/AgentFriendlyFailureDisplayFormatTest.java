@@ -117,8 +117,8 @@ class AgentFriendlyFailureDisplayFormatTest {
         List<String> withNullElement = new ArrayList<>(VIOLATIONS);
         withNullElement.add(null);
 
-        assertTrue(FORMAT.describeSafely(hostile).contains("unknown rule"));
-        assertTrue(FORMAT.describeSafely(null).contains("unknown rule"));
+        assertTrue(AgentFriendlyFailureDisplayFormat.describeSafely(hostile).contains("unknown rule"));
+        assertTrue(AgentFriendlyFailureDisplayFormat.describeSafely(null).contains("unknown rule"));
 
         assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, null, Priority.MEDIUM));
         assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, VIOLATIONS, null));
