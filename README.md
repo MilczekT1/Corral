@@ -218,14 +218,30 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 > `Creating new violation store is disabled (…)`. ArchUnit merges any `archunit.`-prefixed system
 > property, which is why the one-off override in step 4 works without editing the committed file.
 
-### Empty violation files
+### The freeze store
 
-A rule that is already clean still gets frozen: ArchUnit records it in `stored.rules` *and* writes an
-empty violation file. The index entry is what keeps the rule enforced (see the flowchart above); the
-empty file is noise in a commit.
+`freeze.store=io.github.milczekt1.llamarules.freeze.EmptyOmittingViolationStore` changes two things
+about how the store is written.
 
-`freeze.store=io.github.milczekt1.llamarules.freeze.EmptyOmittingViolationStore` keeps the entry and
-drops only the file. Three things to know:
+**Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
+reading a store means resolving names through `stored.rules` first:
+
+```
+archunit/frozen/
+├── stored.rules
+├── test.class-naming-convention        # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
+└── acme.no-stdout-in-services
+```
+
+`git log -p archunit/frozen/test.class-naming-convention` is then that rule's debt history. Only ids
+get this treatment: the store is global, so it also serves rules frozen without a `RuleDoc`, whose
+descriptions are whole sentences — those keep a UUID. Names are assigned once, when a rule is first
+frozen, so existing stores keep their UUIDs and keep working.
+
+**A clean rule leaves no file.** A rule that is already clean still gets frozen: ArchUnit records it
+in `stored.rules` *and* writes an empty violation file. The index entry is what keeps the rule
+enforced (see the flowchart above); the empty file is noise in a commit. This store keeps the entry
+and drops the file. Three things to know:
 
 - **Opt-in.** Leave the line out and you get ArchUnit's stock store, empty files included.
 - **Global per run.** ArchUnit uses it for *every* `FreezingArchRule` in the run, including your own.

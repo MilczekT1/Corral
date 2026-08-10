@@ -40,6 +40,11 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         }
     }
 
+    /** Whether {@code text} has the shape of an id, where an id must be told apart from prose. */
+    public static boolean isId(String text) {
+        return text != null && ID_PATTERN.matcher(text).matches();
+    }
+
     private static void throwOnInvalidId(String id) {
         if (!ID_PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException(

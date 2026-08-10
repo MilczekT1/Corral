@@ -3,6 +3,7 @@ package io.github.milczekt1.llamarules.freeze;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.TextFileBasedViolationStore;
 import com.tngtech.archunit.library.freeze.ViolationStore;
+import io.github.milczekt1.llamarules.RuleDoc;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
@@ -11,6 +12,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.UUID;
 
 /**
  * A {@link ViolationStore} that keeps the {@code stored.rules} index complete but writes no file for
@@ -42,9 +44,26 @@ public class EmptyOmittingViolationStore implements ViolationStore {
 
     private static final String DEFAULT_STORE_PATH = "archunit_store";
 
-    private final TextFileBasedViolationStore delegate = new TextFileBasedViolationStore();
+    private final TextFileBasedViolationStore delegate =
+            new TextFileBasedViolationStore(EmptyOmittingViolationStore::fileNameFor);
 
     private Path storePath;
+
+    /**
+     * Names a rule's file after its id, so {@code git log -p archunit/frozen/test.class-naming-convention}
+     * reads as that rule's debt history instead of requiring a UUID lookup in the index.
+     *
+     * <p>Only ids qualify: {@code freeze.store} is global, so this store also serves rules frozen
+     * without a {@code RuleDoc}, whose descriptions are whole sentences — spaces, quotes, no length
+     * bound. Those keep ArchUnit's UUID. An id is lower-case, dot-and-hyphen only and short, so it is
+     * safe as a file name on any filesystem.
+     *
+     * <p>Applied only to a rule with no index entry yet: {@code TextFileBasedViolationStore} reuses an
+     * existing entry's file name. Stores written before this keep their UUIDs and keep working.
+     */
+    static String fileNameFor(String ruleDescription) {
+        return RuleDoc.isId(ruleDescription) ? ruleDescription : UUID.randomUUID().toString();
+    }
 
     @Override
     public void initialize(Properties properties) {

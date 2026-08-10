@@ -1,5 +1,5 @@
 #
-#Mon Aug 10 16:23:39 CEST 2026
-acme.no-stdout-in-services=6af04143-edee-4cd5-ba54-5fc016f5c898
-test.class-naming-convention=56d55a4e-91ac-4e12-8682-030d6f3f746f
-test.no-mocked-repository-in-integration-test=63badc35-2a40-4832-a424-be02d9484d60
+#Mon Aug 10 21:38:05 CEST 2026
+acme.no-stdout-in-services=acme.no-stdout-in-services
+test.class-naming-convention=test.class-naming-convention
+test.no-mocked-repository-in-integration-test=test.no-mocked-repository-in-integration-test

@@ -98,6 +98,21 @@ class EmptyOmittingViolationStoreTest {
 
 
     @Test
+    void aRuleIdBecomesTheFileNameWhileProseKeepsAUuid() throws Exception {
+        // The store is global, so it also serves rules frozen without a RuleDoc. Their descriptions
+        // are whole sentences and must not reach the filesystem as file names.
+        ArchRule documented = ruleNamed("test.documented-rule");
+        ArchRule foreign = ruleNamed("no classes should depend on classes that reside in '..internal..'");
+
+        store.save(documented, List.of("Class <Foo> is bad"));
+        store.save(foreign, List.of("Class <Bar> is bad"));
+
+        assertTrue(Files.exists(storeDir.resolve("test.documented-rule")));
+        assertEquals(List.of("Class <Bar> is bad"), store.getViolations(foreign),
+                "a rule named after prose must still round-trip through its generated file name");
+    }
+
+    @Test
     void aRuleFrozenCleanIsStillContainedSoItsFirstViolationFails() {
         // No file must not mean "unknown rule". FreezingArchRule seeds-and-passes anything the store
         // does not contain, so if this ever returns false a clean rule's first real violation would

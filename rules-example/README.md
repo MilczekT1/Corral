@@ -8,7 +8,7 @@ rule this project owns.
 | `CentralArchitectureTest` | Wiring the library's rules — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. |
 | `custom/CustomArchitectureTest` | Wiring your own rules alongside the library's. |
-| `archunit/frozen/` | The committed freeze store. Three entries, two files — the clean rule has no file. |
+| `archunit/frozen/` | The committed freeze store. Three entries, two files named after their rule ids — the clean rule has no file. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. |
 
 ## Writing your own rule
