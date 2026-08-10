@@ -51,8 +51,8 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
     }
 
     @Test
-    void coversEveryForbiddenMockAnnotationIncludingTheRemovedSpringBootOne() {
-        // MockBean was removed in Spring Boot 4, so it has no fixture; it stays in the list for
+    void coversEveryForbiddenMockAnnotation() {
+        // MockBean does not exist in Spring Boot 4, so it has no fixture; it is listed for
         // consumers still on Boot 3 and is verified here as a configured constant.
         assertTrue(NoMockedRepositoryInIntegrationTestRule.FORBIDDEN_MOCK_ANNOTATIONS.containsAll(java.util.List.of(
                 "org.mockito.Mock",

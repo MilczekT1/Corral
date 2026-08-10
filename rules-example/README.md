@@ -62,10 +62,8 @@ So rule-specific traps go on the rule. `NoStdoutInServicesRule` names two:
         then silence in test configuration.""")
 ```
 
-The global block cannot be extended, removed, or reworded — that is the point of it. Earlier there
-was an `AntiFixPolicy.addClause(...)` for appending to it; it was dropped because it was global
-mutable state whose visibility depended on class-load order, and `howNotToFix` already covers the
-per-rule case properly.
+The global block cannot be extended, removed, or reworded — that is the point of it. Anything
+specific to one rule belongs in that rule's `howNotToFix`.
 
 ## Expected output
 

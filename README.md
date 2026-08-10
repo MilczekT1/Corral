@@ -279,8 +279,7 @@ becomes reachable, so there is no per-group test to remember to write.
 
 ### Adding a group
 
-`Java17Rules`, `JakartaMigrationRules` and `SpringRules` are intentionally not in the first cut. On
-top of the rule steps:
+`Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
 
 1. Create `groups/<Topic>Rules.java` — copy `TestingRules`: private `MEMBERS`, one `@ArchTest
    ArchTests` field per member, `public static List<Class<?>> members()`.
