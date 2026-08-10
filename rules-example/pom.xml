@@ -15,7 +15,7 @@
   <packaging>jar</packaging>
 
   <name>LLamaRules Example Consumer (JUnit 5)</name>
-  <description>Reference wiring: one test-scoped dependency plus one thin test class.</description>
+  <description>module with examples</description>
 
   <dependencies>
     <dependency>
