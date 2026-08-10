@@ -25,7 +25,7 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         requireText(id, "id");
         requireText(why, "why");
         requireText(howToFix, "howToFix");
-        requireFreezeKeyShape(id);
+        throwOnInvalidId(id);
         howNotToFix = blankToNull(howNotToFix);
     }
 
@@ -40,7 +40,7 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         }
     }
 
-    private static void requireFreezeKeyShape(String id) {
+    private static void throwOnInvalidId(String id) {
         if (!ID_PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException(
                     "id '" + id + "' must match " + ID_PATTERN.pattern()
