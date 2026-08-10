@@ -77,16 +77,12 @@ public final class PublishedRules {
         return List.copyOf(nested);
     }
 
-    /** Ids (= ArchUnit rule descriptions, = freeze-store keys) of every published rule. */
-    public static List<String> ids() {
-        return all().stream().map(ArchRule::getDescription).toList();
-    }
-
     /**
-     * {@link #ids()} de-duplicated; use {@link #ids()} when duplicates are the thing under test.
+     * The distinct ids (= ArchUnit rule descriptions, = freeze-store keys) consumers evaluate.
      *
-     * <p>Starts from {@link AllCentralRules} and walks {@link #rulesReachableFrom(Class)}, so it
-     * reflects whatever nesting the group tree actually has, rather than assuming one level.
+     * <p>Distinct because a rule may be reachable through more than one group. Walks
+     * {@link #rulesReachableFrom(Class)} from {@link AllCentralRules}, so it reflects whatever
+     * nesting the group tree actually has, rather than assuming one level.
      */
     public static Set<String> idSet() {
         AllCentralRules.loadAll();

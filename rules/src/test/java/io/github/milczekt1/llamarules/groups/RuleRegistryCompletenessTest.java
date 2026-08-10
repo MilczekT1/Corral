@@ -8,8 +8,10 @@ import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.llamarules.RuleDoc;
 import io.github.milczekt1.llamarules.RuleRegistry;
 import io.github.milczekt1.llamarules.testsupport.PublishedRules;
-import java.util.LinkedHashSet;
-import java.util.List;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
@@ -47,11 +49,26 @@ class RuleRegistryCompletenessTest {
         }
     }
 
+    /**
+     * One id, one rule. The id is the freeze-store key, so two <em>different</em> rules sharing one
+     * would each treat the other's recorded violations as their own.
+     *
+     * <p>Keyed on rule identity, not on how often an id appears: a rule reachable through two groups
+     * is one object read from one {@code static final} field, and enforcing it under both groups is
+     * legitimate. {@code RuleRegistry} does not cover this — its guard compares docs, so two rules
+     * carrying identical documentation pass it.
+     */
     @Test
-    void ruleIdsAreUnique() {
-        List<String> ids = PublishedRules.ids();
-        Set<String> unique = new LinkedHashSet<>(ids);
+    void everyRuleIdIsClaimedByExactlyOneRule() {
+        Map<String, Set<ArchRule>> rulesById = new LinkedHashMap<>();
+        for (ArchRule rule : PublishedRules.all()) {
+            rulesById.computeIfAbsent(rule.getDescription(),
+                            id -> Collections.newSetFromMap(new IdentityHashMap<>()))
+                    .add(rule);
+        }
 
-        assertEquals(ids.size(), unique.size(), "duplicate rule ids among published rules: " + ids);
+        rulesById.forEach((id, rules) -> assertEquals(1, rules.size(),
+                "rule id '" + id + "' is claimed by " + rules.size() + " different rules; ids are"
+                        + " freeze-store keys, so those rules would share stored violations"));
     }
 }
