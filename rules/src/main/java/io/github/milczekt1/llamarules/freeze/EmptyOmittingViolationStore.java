@@ -50,6 +50,12 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     }
 
     @Override
+    /**
+     * Order matters: {@code delegate.save} is the only thing that writes this rule's
+     * {@code stored.rules} entry, so it must run even when there is nothing to record. Skipping it
+     * for an empty list would leave the rule unknown to the store, and its first real violation
+     * would then be seeded as debt instead of failing. Write, then delete the empty file.
+     */
     public void save(ArchRule rule, List<String> violations) {
         delegate.save(rule, violations);
         if (violations.isEmpty()) {
