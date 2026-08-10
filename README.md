@@ -264,10 +264,11 @@ Packages split by role, and the arrows only point one way:
 
 | package | holds | depends on |
 |---|---|---|
+| root | `DocumentedRule` — the authoring contract | `doc` |
 | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `freeze` | `Freezer`, `EmptyOmittingViolationStore` | `doc` |
+| `freeze` | `EmptyOmittingViolationStore` | nothing |
 | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
-| `rules/<topic>` | the rules themselves | `doc`, `freeze` |
+| `rules/<topic>` | the rules themselves | root, `doc` |
 | `groups` | composition only | `rules/<topic>` |
 
 `freeze` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
@@ -281,16 +282,19 @@ becomes reachable, so there is no per-group test to remember to write.
 
 ### Adding a rule to an existing group
 
-1. Create `rules/<topic>/<RuleName>Rule.java` — a Lombok `@UtilityClass` with three
-   members (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a rule class is
-   recognisable at a glance and never collides with the `*Test` convention its own tests follow.
+1. Create `rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
+   private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
+   rule class is recognisable at a glance and never collides with the `*Test` convention its own
+   tests follow.
    - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
-     `^[a-z0-9]+(\.[a-z0-9-]+)+$`.
-   - `static final ArchRule RULE` — the raw rule, package-private. Tests exercise *this*; the public
-     field is frozen, so it seeds and passes, which would make rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = Freezer.freeze(RULE, DOC);` — `freeze`
+     `^[a-z0-9]+(\.[a-z0-9-]+)+$`. Returned from `doc()`.
+   - `static final ArchRule RULE` — the raw rule, package-private. Returned from `definition()`.
+     Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
+     rule-correctness tests meaningless.
+   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().published();` — `published`
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`.
+     allows an empty `should`. **Declare this field last**: it runs during class initialisation and
+     reads the constants above it.
 2. In the group, add the class to `MEMBERS` **and** give it an `@ArchTest ArchTests` field. Both,
    always. Add only the `members()` entry and the rule is documented and completeness-checked but
    **never evaluated by any consumer**.
@@ -299,10 +303,10 @@ becomes reachable, so there is no per-group test to remember to write.
    are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `RULE`, asserting
    **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
    ever finds nothing.
-4. Assert in the rule's own test that the public field carries the doc id, as
-   `publicRuleIsFrozenAndIdPinned` does. Note what this does *not* catch:
-   `Freezer.freeze(A_RULE, B_DOC)` — a field frozen against the wrong raw rule — is currently
-   caught by nothing.
+4. Assert in the rule's own test that the published field carries the doc id, as
+   `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
+   `published()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
+   exists at all, which an interface cannot enforce.
 5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
 

@@ -9,10 +9,11 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
+import io.github.milczekt1.llamarules.DocumentedRule;
 import io.github.milczekt1.llamarules.doc.RuleDoc;
-import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.util.List;
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * Integration tests must not mock repositories or daos.
@@ -20,8 +21,8 @@ import lombok.experimental.UtilityClass;
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
-@UtilityClass
-public class NoMockedRepositoryInIntegrationTestRule {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class NoMockedRepositoryInIntegrationTestRule implements DocumentedRule {
 
     /** Matched by FQN string, so a consumer missing any of these libraries still works. */
     static final List<String> FORBIDDEN_MOCK_ANNOTATIONS = List.of(
@@ -51,8 +52,19 @@ public class NoMockedRepositoryInIntegrationTestRule {
             .that().haveSimpleNameEndingWith("IT")
             .should(declareAMockedRepositoryOrDaoField());
 
+    @Override
+    public ArchRule definition() {
+        return RULE;
+    }
+
+    @Override
+    public RuleDoc doc() {
+        return DOC;
+    }
+
+    /** Declared last: published() reads the constants above during class initialisation. */
     @ArchTest
-    public static final ArchRule rule = Freezer.freeze(RULE, DOC);
+    public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().published();
 
     /**
      * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed

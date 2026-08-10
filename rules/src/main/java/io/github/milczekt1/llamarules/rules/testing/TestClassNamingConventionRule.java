@@ -6,10 +6,11 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
+import io.github.milczekt1.llamarules.DocumentedRule;
 import io.github.milczekt1.llamarules.doc.RuleDoc;
-import io.github.milczekt1.llamarules.freeze.Freezer;
 import java.util.List;
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
 
 /**
  * Top-level test classes must be named so a build tool's convention actually selects them.
@@ -17,8 +18,8 @@ import lombok.experimental.UtilityClass;
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
  */
-@UtilityClass
-public class TestClassNamingConventionRule {
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
+public final class TestClassNamingConventionRule implements DocumentedRule {
 
     /**
      * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.
@@ -66,6 +67,17 @@ public class TestClassNamingConventionRule {
             .build();
 
 
+    @Override
+    public ArchRule definition() {
+        return RULE;
+    }
+
+    @Override
+    public RuleDoc doc() {
+        return DOC;
+    }
+
+    /** Declared last: published() reads the constants above during class initialisation. */
     @ArchTest
-    public static final ArchRule rule = Freezer.freeze(RULE, DOC);
+    public static final ArchRule rule = new TestClassNamingConventionRule().published();
 }

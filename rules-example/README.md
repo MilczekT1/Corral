@@ -21,24 +21,30 @@ Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a pa
 should call method PrintStream.println(String)' was violated (1 times): …
 ```
 
-Give it a `RuleDoc` and freeze it through `Freezer`, as `NoStdoutInServicesRule` does, and it behaves
-like a built-in rule: guidance on failure, and existing violations recorded as debt instead of
-blocking the build.
+Implement `DocumentedRule`, as `NoStdoutInServicesRule` does, and it behaves like a built-in rule:
+guidance on failure, and existing violations recorded as debt instead of blocking the build.
 
 ```java
-static final RuleDoc DOC = RuleDoc.builder()
-        .id("acme.no-stdout-in-services")
-        .why(...)
-        .howToFix(...)
-        .howNotToFix(...)
-        .build();
+public final class NoStdoutInServicesRule implements DocumentedRule {
 
-static final ArchRule RULE = noClasses()
-        .that().resideInAPackage("..service..")
-        .should().callMethod(PrintStream.class, "println", String.class);
+    static final RuleDoc DOC = RuleDoc.builder()
+            .id("acme.no-stdout-in-services")
+            .why(...)
+            .howToFix(...)
+            .howNotToFix(...)
+            .build();
 
-@ArchTest
-public static final ArchRule rule = Freezer.freeze(RULE, DOC);
+    static final ArchRule RULE = noClasses()
+            .that().resideInAPackage("..service..")
+            .should().callMethod(PrintStream.class, "println", String.class);
+
+    @Override public ArchRule definition() { return RULE; }
+
+    @Override public RuleDoc doc() { return DOC; }
+
+    @ArchTest
+    public static final ArchRule rule = new NoStdoutInServicesRule().published();
+}
 ```
 
 Ids are freeze-store keys, so use your own namespace (`acme.`) and treat a rename as a breaking
