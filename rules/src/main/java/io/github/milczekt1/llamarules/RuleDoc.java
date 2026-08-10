@@ -26,7 +26,7 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         requireText(why, "why");
         requireText(howToFix, "howToFix");
         throwOnInvalidId(id);
-        howNotToFix = blankToNull(howNotToFix);
+        howNotToFix = trimmedOrNull(howNotToFix);
     }
 
     /** True when this rule carries anti-fix guidance of its own, beyond the global policy. */
@@ -48,7 +48,7 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         }
     }
 
-    private static String blankToNull(String text) {
+    private static String trimmedOrNull(String text) {
         return text == null || text.isBlank() ? null : text.trim();
     }
 
