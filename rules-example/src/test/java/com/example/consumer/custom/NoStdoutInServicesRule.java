@@ -6,6 +6,9 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
+import lombok.AccessLevel;
+import lombok.NoArgsConstructor;
+
 import java.io.PrintStream;
 
 /**
@@ -19,6 +22,7 @@ import java.io.PrintStream;
  * <p>{@code howNotToFix} is where this rule's own anti-fix guidance goes. The global policy in
  * {@code AntiFixPolicy} is identical for every rule and prints below it.
  */
+@NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoStdoutInServicesRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
@@ -42,6 +46,4 @@ public final class NoStdoutInServicesRule {
     @ArchTest
     public static final ArchRule rule = Freezer.freeze(RULE, DOC);
 
-    private NoStdoutInServicesRule() {
-    }
 }
