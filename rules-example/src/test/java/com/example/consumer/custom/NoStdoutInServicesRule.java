@@ -53,6 +53,6 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
     }
 
     @ArchTest
-    public static final ArchRule rule = new NoStdoutInServicesRule().evaluate();
+    public static final ArchRule rule = new NoStdoutInServicesRule().guard();
 
 }

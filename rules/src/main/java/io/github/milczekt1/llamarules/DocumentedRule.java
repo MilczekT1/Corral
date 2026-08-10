@@ -8,7 +8,7 @@ import io.github.milczekt1.llamarules.doc.RuleRegistry;
 /**
  * The contract every rule class implements, in this library and in consumers.
  *
- * <p>Pairing is the point: {@link #evaluate()} reads the doc and the raw rule off the same object,
+ * <p>Pairing is the point: {@link #guard()} reads the doc and the raw rule off the same object,
  * so a rule cannot be frozen under another rule's documentation.
  *
  * <pre>{@code
@@ -21,18 +21,18 @@ import io.github.milczekt1.llamarules.doc.RuleRegistry;
  *     @Override public RuleDoc doc() { return DOC; }
  *
  *     @ArchTest
- *     public static final ArchRule rule = new NoStdoutInServicesRule().evaluate();
+ *     public static final ArchRule rule = new NoStdoutInServicesRule().guard();
  * }
  * }</pre>
  *
- * <p><strong>Declare the {@code @ArchTest} field last.</strong> It runs {@code evaluate()} during
+ * <p><strong>Declare the {@code @ArchTest} field last.</strong> It runs {@code guard()} during
  * class initialisation, which reads the constants above it; a constant declared below is still
  * {@code null} at that point. Nothing but ordering prevents that — an interface cannot mandate a
  * static field, so ArchUnit's discovery of the field remains the author's responsibility.
  */
 public interface DocumentedRule {
 
-    /** The raw, unfrozen rule. Test <em>this</em>: {@link #evaluate()} seeds and passes. */
+    /** The raw, unfrozen rule. Test <em>this</em>: {@link #guard()} seeds and passes. */
     ArchRule definition();
 
     RuleDoc doc();
@@ -44,7 +44,7 @@ public interface DocumentedRule {
      * {@code should} so a module with no matching classes stays green, and freezes, so that adopting
      * a rule records existing debt instead of blocking in-flight work.
      */
-    default ArchRule evaluate() {
+    default ArchRule guard() {
         RuleRegistry.register(doc());
         return FreezingArchRule.freeze(definition().as(doc().id()).allowEmptyShould(true));
     }

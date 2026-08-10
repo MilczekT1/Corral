@@ -291,7 +291,7 @@ becomes reachable, so there is no per-group test to remember to write.
    - `static final ArchRule RULE` — the raw rule, package-private. Returned from `definition()`.
      Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
      rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().evaluate();` — `evaluate`
+   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
      allows an empty `should`. **Declare this field last**: it runs during class initialisation and
      reads the constants above it.
@@ -305,7 +305,7 @@ becomes reachable, so there is no per-group test to remember to write.
    ever finds nothing.
 4. Assert in the rule's own test that the published field carries the doc id, as
    `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
-   `evaluate()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
+   `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
    exists at all, which an interface cannot enforce.
 5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
