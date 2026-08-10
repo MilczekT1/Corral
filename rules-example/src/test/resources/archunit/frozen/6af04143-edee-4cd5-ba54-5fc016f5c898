@@ -1,0 +1,1 @@
+Method <com.example.consumer.service.NoisyService.announce(java.lang.String)> calls method <java.io.PrintStream.println(java.lang.String)> in (NoisyService.java:7)
