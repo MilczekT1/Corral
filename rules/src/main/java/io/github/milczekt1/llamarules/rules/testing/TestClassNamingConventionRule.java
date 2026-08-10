@@ -77,7 +77,7 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
         return DOC;
     }
 
-    /** Declared last: published() reads the constants above during class initialisation. */
+    /** Declared last: evaluate() reads the constants above during class initialisation. */
     @ArchTest
-    public static final ArchRule rule = new TestClassNamingConventionRule().published();
+    public static final ArchRule rule = new TestClassNamingConventionRule().evaluate();
 }

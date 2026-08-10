@@ -43,7 +43,7 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
     @Override public RuleDoc doc() { return DOC; }
 
     @ArchTest
-    public static final ArchRule rule = new NoStdoutInServicesRule().published();
+    public static final ArchRule rule = new NoStdoutInServicesRule().evaluate();
 }
 ```
 

@@ -62,9 +62,9 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
         return DOC;
     }
 
-    /** Declared last: published() reads the constants above during class initialisation. */
+    /** Declared last: evaluate() reads the constants above during class initialisation. */
     @ArchTest
-    public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().published();
+    public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().evaluate();
 
     /**
      * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed
