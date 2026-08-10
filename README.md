@@ -25,7 +25,7 @@ flowchart LR
 
     subgraph lib["llama-rules"]
         ACR["AllCentralRules"]
-        TG["TestingRules<br/><i>group</i>"]
+        TG["TestingRulesGroup<br/><i>group</i>"]
         R1["TestClassNamingConventionRule"]
         R2["NoMockedRepositoryInIntegrationTestRule"]
         FMT["AgentFriendlyFailureDisplayFormat"]
@@ -128,8 +128,8 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 
 | Rule id | Group | What it enforces |
 |---|---|---|
-| `test.no-mocked-repository-in-integration-test` | `TestingRules` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
-| `test.class-naming-convention` | `TestingRules` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
+| `test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
+| `test.class-naming-convention` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 
 This table is maintained by hand; nothing in the build checks it.
 
@@ -252,7 +252,7 @@ becomes reachable, so there is no per-group test to remember to write.
 
 ### Adding a rule to an existing group
 
-1. Create `rules/<topic>/<RuleName>Rule.java` — public final class, private constructor, three
+1. Create `rules/<topic>/<RuleName>Rule.java` — a Lombok `@UtilityClass` with three
    members (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a rule class is
    recognisable at a glance and never collides with the `*Test` convention its own tests follow.
    - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
@@ -277,12 +277,40 @@ becomes reachable, so there is no per-group test to remember to write.
 5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
 
+### A rule in more than one group
+
+Membership is a graph, not a tree: nothing stops two groups naming the same rule class, and over
+time a rule genuinely belonging to two axes (say testing *and* security) will.
+
+That works. It also costs something:
+
+| | |
+|---|---|
+| JUnit nodes | **one per path** — the rule appears once under each group |
+| Rule evaluation | **once per node** — predicates re-run over the same classes |
+| Class import | once — ArchUnit caches `JavaClasses` per `@AnalyzeClasses` |
+| Freeze store | one entry — both nodes share the description, so they cannot disagree |
+
+Nothing deduplicates the nodes: ArchUnit builds one per `@ArchTest` field it reaches, and those
+fields are static. Collapsing them would mean owning node creation, which is not worth it for a
+repeated predicate pass over already-imported classes.
+
+`everyRuleIdIsClaimedByExactlyOneRule` allows this on purpose. It groups published rules by id and
+requires **one distinct rule object** per id — a rule reached by two paths is one object read from
+one `static final` field, while two rules colliding on an id are two. That collision is the real
+hazard, because the id is the freeze-store key, so the two would read each other's recorded
+violations as their own. `RuleRegistry` does not catch it: its guard compares docs, so two rules
+carrying identical documentation pass straight through.
+
+Default to one group per rule and compose by nesting groups. Reach for a second parent when the
+rule really does belong under both.
+
 ### Adding a group
 
 `Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
 
-1. Create `groups/<Topic>Rules.java` — copy `TestingRules`: private `MEMBERS`, one `@ArchTest
-   ArchTests` field per member, `public static List<Class<?>> members()`.
+1. Create `groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with private
+   `MEMBERS`, one `@ArchTest ArchTests` field per member, `public static List<Class<?>> members()`.
 2. Add it to `AllCentralRules.MEMBERS` **and** give it an `@ArchTest ArchTests` field there. Skipping
    the field is the dangerous half: the build stays green while no consumer ever evaluates the group.
 3. Update `AllCentralRulesTest.groupsAreListedInDocumentationOrder`.
