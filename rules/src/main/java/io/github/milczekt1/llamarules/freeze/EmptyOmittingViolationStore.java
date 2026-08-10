@@ -32,6 +32,17 @@ import java.util.Properties;
  */
 public class EmptyOmittingViolationStore implements ViolationStore {
 
+    /**
+     * The delegate's index file. Its {@code <rule-description>=<file-name>} layout is
+     * {@link TextFileBasedViolationStore}'s undocumented internal format;
+     * {@code storedRulesMapsRuleDescriptionToFileName} pins it so an ArchUnit upgrade that changes it
+     * fails loudly rather than mishandling a consumer's store.
+     */
+    private static final String INDEX_FILE = "stored.rules";
+
+    /** Mirrors the delegate's private {@code STORE_PATH_DEFAULT}. Recheck on ArchUnit upgrades. */
+    private static final String DEFAULT_STORE_PATH = "archunit_store";
+
     private final TextFileBasedViolationStore delegate = new TextFileBasedViolationStore();
 
     private Path storePath;
@@ -39,9 +50,7 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     @Override
     public void initialize(Properties properties) {
         delegate.initialize(properties);
-        // Mirrors TextFileBasedViolationStore's private STORE_PATH_DEFAULT, so omitting default.path
-        // lands in the delegate's own directory rather than an NPE. Recheck on ArchUnit upgrades.
-        storePath = Path.of(properties.getProperty("default.path", "archunit_store"));
+        storePath = Path.of(properties.getProperty("default.path", DEFAULT_STORE_PATH));
     }
 
     @Override
@@ -49,60 +58,60 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         return delegate.contains(rule);
     }
 
-    @Override
     /**
-     * Order matters: {@code delegate.save} is the only thing that writes this rule's
-     * {@code stored.rules} entry, so it must run even when there is nothing to record. Skipping it
-     * for an empty list would leave the rule unknown to the store, and its first real violation
-     * would then be seeded as debt instead of failing. Write, then delete the empty file.
+     * Saves through the delegate first, always — that call is what writes the rule's index entry, and
+     * an entry is what keeps the rule frozen. Only the resulting file is dropped when there is
+     * nothing to record.
      */
+    @Override
     public void save(ArchRule rule, List<String> violations) {
         delegate.save(rule, violations);
         if (violations.isEmpty()) {
-            deleteViolationFile(rule);
+            deleteViolationFileOf(rule);
         }
     }
 
-    /** Absent file means zero known violations — the clean-rule case, not a missing store. */
+    /** No file means zero known violations — the clean-rule case, not a missing store. */
     @Override
     public List<String> getViolations(ArchRule rule) {
-        return violationFile(rule).filter(Files::exists).isPresent()
-                ? delegate.getViolations(rule)
-                : List.of();
+        return hasViolationFile(rule) ? delegate.getViolations(rule) : List.of();
     }
 
-    private void deleteViolationFile(ArchRule rule) {
-        violationFile(rule).ifPresent(file -> {
-            try {
-                Files.deleteIfExists(file);
-            } catch (IOException e) {
-                throw new UncheckedIOException(
-                        "Could not remove the empty violation file for rule '"
-                                + rule.getDescription() + "'", e);
-            }
-        });
+    private boolean hasViolationFile(ArchRule rule) {
+        return violationFileOf(rule).filter(Files::exists).isPresent();
     }
 
-    /**
-     * The file the delegate stores this rule's violations in, or empty when it has no index entry.
-     *
-     * <p>Reads {@code stored.rules}, whose {@code <rule-description>=<uuid>} layout is
-     * {@link TextFileBasedViolationStore}'s undocumented internal format.
-     * {@code storedRulesMapsRuleDescriptionToFileName} pins it, so an upgrade that changes it fails
-     * loudly rather than mishandling a consumer's store.
-     */
-    private Optional<Path> violationFile(ArchRule rule) {
-        Path index = storePath.resolve("stored.rules");
-        if (!Files.exists(index)) {
-            return Optional.empty();
+    private void deleteViolationFileOf(ArchRule rule) {
+        Optional<Path> file = violationFileOf(rule);
+        if (file.isEmpty()) {
+            return;
         }
-        Properties storedRules = new Properties();
-        try (InputStream in = Files.newInputStream(index)) {
-            storedRules.load(in);
+        try {
+            Files.deleteIfExists(file.get());
         } catch (IOException e) {
-            throw new UncheckedIOException("Could not read " + index, e);
+            throw new UncheckedIOException(
+                    "Could not remove the empty violation file for rule '" + rule.getDescription() + "'", e);
         }
-        return Optional.ofNullable(storedRules.getProperty(rule.getDescription()))
+    }
+
+    /** Where the delegate keeps this rule's violations, or empty when it has no index entry. */
+    private Optional<Path> violationFileOf(ArchRule rule) {
+        return Optional.ofNullable(readIndex().getProperty(rule.getDescription()))
                 .map(storePath::resolve);
+    }
+
+    /** The index as the delegate left it, or empty when the store has not been created yet. */
+    private Properties readIndex() {
+        Properties index = new Properties();
+        Path indexFile = storePath.resolve(INDEX_FILE);
+        if (!Files.exists(indexFile)) {
+            return index;
+        }
+        try (InputStream in = Files.newInputStream(indexFile)) {
+            index.load(in);
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not read " + indexFile, e);
+        }
+        return index;
     }
 }
