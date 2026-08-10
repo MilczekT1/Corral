@@ -30,7 +30,6 @@ public final class PublishedRules {
 
     /** Every {@code @ArchTest ArchRule} reachable from {@link AllCentralRules}, in group order. */
     public static List<ArchRule> all() {
-        AllCentralRules.loadAll();
         return rulesReachableFrom(AllCentralRules.class);
     }
 
@@ -67,7 +66,6 @@ public final class PublishedRules {
      * {@code ArchTests.in(owner)} actually descends into.
      */
     public static List<ArchTests> archTestsFieldsOf(Class<?> owner) {
-        AllCentralRules.loadAll();
         List<ArchTests> nested = new ArrayList<>();
         for (Field field : owner.getDeclaredFields()) {
             if (isPublished(field, ArchTests.class)) {
@@ -85,7 +83,6 @@ public final class PublishedRules {
      * nesting the group tree actually has, rather than assuming one level.
      */
     public static Set<String> idSet() {
-        AllCentralRules.loadAll();
         return rulesReachableFrom(AllCentralRules.class).stream()
                 .map(ArchRule::getDescription)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
