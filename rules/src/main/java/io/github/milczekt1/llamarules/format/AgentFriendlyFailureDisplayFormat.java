@@ -96,8 +96,10 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             out.append("WHY:").append(nl).append(indent(doc.why())).append(nl).append(nl);
             out.append("HOW TO FIX:").append(nl).append(indent(doc.howToFix())).append(nl).append(nl);
 
-            doc.howNotToFix().ifPresent(text -> out.append("HOW NOT TO FIX (this rule):").append(nl)
-                    .append(indent(text)).append(nl).append(nl));
+            if (doc.hasHowNotToFix()) {
+                out.append("HOW NOT TO FIX (this rule):").append(nl)
+                        .append(indent(doc.howNotToFix())).append(nl).append(nl);
+            }
 
             out.append("HOW NOT TO FIX (always):").append(nl);
             for (String clause : AntiFixPolicy.clauses()) {

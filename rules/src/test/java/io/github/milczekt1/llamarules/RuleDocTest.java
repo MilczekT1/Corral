@@ -1,10 +1,10 @@
 package io.github.milczekt1.llamarules;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import java.util.Optional;
 import org.junit.jupiter.api.Test;
 
 class RuleDocTest {
@@ -23,12 +23,13 @@ class RuleDocTest {
         assertEquals("db.no-spring-transactional", doc.id());
         assertEquals("because reasons", doc.why());
         assertEquals("do this instead", doc.howToFix());
-        assertEquals(Optional.of("do not do that"), doc.howNotToFix());
+        assertEquals("do not do that", doc.howNotToFix());
+        assertTrue(doc.hasHowNotToFix());
     }
 
     @Test
-    void howNotToFixIsOptionalAndDefaultsToEmpty() {
-        assertEquals(Optional.empty(), valid().build().howNotToFix());
+    void howNotToFixIsOptionalAndDefaultsToAbsent() {
+        assertFalse(valid().build().hasHowNotToFix());
     }
 
     @Test

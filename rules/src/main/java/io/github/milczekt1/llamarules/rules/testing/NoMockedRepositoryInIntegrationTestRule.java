@@ -9,7 +9,7 @@ import com.tngtech.archunit.lang.ArchCondition;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
-import io.github.milczekt1.llamarules.Freezer;
+import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
 import java.util.List;
 

@@ -4,7 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.Freezer;
+import io.github.milczekt1.llamarules.freeze.Freezer;
 import io.github.milczekt1.llamarules.RuleDoc;
 import java.io.PrintStream;
 
