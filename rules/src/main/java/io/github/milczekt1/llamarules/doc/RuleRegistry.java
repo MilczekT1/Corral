@@ -7,20 +7,15 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.experimental.UtilityClass;
 
-/** Global lookup from a rule's stable id to its {@link RuleDoc}. */
 @UtilityClass
 public class RuleRegistry {
 
     private static final Map<String, RuleDoc> DOCS = new ConcurrentHashMap<>();
 
-    /**
-     * @throws IllegalStateException if a <em>different</em> doc is already registered under this id
-     */
     public static void register(RuleDoc doc) {
         RuleDoc alreadyUnderThisId = DOCS.putIfAbsent(doc.id(), doc);
 
-        boolean idWasFree = alreadyUnderThisId == null;
-        if (idWasFree) {
+        if (alreadyUnderThisId == null) {
             return;
         }
 
