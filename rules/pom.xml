@@ -17,25 +17,15 @@
   <description>Centralized, freezable ArchUnit rules with agent-friendly failure messages.</description>
 
   <dependencies>
-    <!-- Compile-time only: an annotation processor. `provided` keeps it off every consumer's
-         classpath. The processor itself is wired via annotationProcessorPaths in the parent. -->
     <dependency>
       <groupId>org.projectlombok</groupId>
       <artifactId>lombok</artifactId>
       <scope>provided</scope>
     </dependency>
-
-    <!-- compile scope on purpose: consumers add ONE test-scoped dependency on llama-rules
-         and inherit the archunit-junit5 engine transitively. -->
     <dependency>
       <groupId>com.tngtech.archunit</groupId>
       <artifactId>archunit-junit5</artifactId>
     </dependency>
-
-    <!-- The logging FACADE only, used by AgentFriendlyFailureDisplayFormat to record why the rich
-         failure format degraded. Already on the classpath transitively via ArchUnit; declared
-         because we now compile against it. No binding is ever added at compile scope — choosing a
-         logging implementation stays the consumer's decision. -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-api</artifactId>
@@ -48,11 +38,6 @@
     </dependency>
     <!-- test-only: provide the REAL forbidden annotations so the rules are verified
          against actual artifacts rather than hand-copied FQN strings. -->
-    <dependency>
-      <groupId>org.springframework</groupId>
-      <artifactId>spring-tx</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
