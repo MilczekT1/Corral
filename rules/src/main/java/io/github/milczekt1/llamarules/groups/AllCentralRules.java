@@ -2,7 +2,6 @@ package io.github.milczekt1.llamarules.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
-import java.util.List;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -16,22 +15,14 @@ import lombok.experimental.UtilityClass;
  * }
  * }</pre>
  *
- * <p>Every member needs <strong>both</strong> an {@code @ArchTest ArchTests} field (what consumers
- * evaluate) and an entry in {@link #members()} (what tooling reads). Register only one and the build
- * stays green while nobody enforces the rules; {@code GroupMembershipTest} fails on that divergence
- * at any depth.
+ * <p>An {@code @ArchTest ArchTests} field is the whole declaration: it is what
+ * {@code ArchTests.in(...)} descends into, so a member without one is a member nobody evaluates.
  *
  * <p>A member may be another group or a rule class. See the README for the full growth path.
  */
 @UtilityClass
 public class AllCentralRules {
 
-    private static final List<Class<?>> MEMBERS = List.of(TestingRulesGroup.class);
-
     @ArchTest
     public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
-
-    public static List<Class<?>> members() {
-        return MEMBERS;
-    }
 }

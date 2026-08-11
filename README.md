@@ -274,11 +274,9 @@ Packages split by role, and the arrows only point one way:
 `store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
 with it, so neither imports the other.
 
-Every node states its membership **twice** — as `@ArchTest` fields (what `ArchTests.in(...)` descends
-into, i.e. what consumers run) and in a static `members()` (what tooling reads). `GroupMembershipTest`
-walks the whole tree and fails on any node where the two disagree, or on any group with `@ArchTest
-ArchTests` fields but no `members()`. It is recursive on purpose: a new group is guarded the moment it
-becomes reachable, so there is no per-group test to remember to write.
+Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
+exactly those fields and nothing else, so the field *is* the membership — there is no second list to
+keep in step, and no way to declare a member that consumers never evaluate.
 
 ### Adding a rule to an existing group
 
@@ -295,9 +293,8 @@ becomes reachable, so there is no per-group test to remember to write.
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
      allows an empty `should`. **Declare it below `DOC` and `RULE`**: it runs during class
      initialisation and reads them. Method order does not matter — only fields initialise.
-2. In the group, add the class to `MEMBERS` **and** give it an `@ArchTest ArchTests` field. Both,
-   always. Add only the `members()` entry and the rule is documented and completeness-checked but
-   **never evaluated by any consumer**.
+2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
+   rule class nobody points at is never run.
 3. Add fixtures under `src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
    and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
    are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `RULE`, asserting
@@ -342,13 +339,10 @@ rule really does belong under both.
 
 `Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
 
-1. Create `groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with private
-   `MEMBERS`, one `@ArchTest ArchTests` field per member, `public static List<Class<?>> members()`.
-2. Add it to `AllCentralRules.MEMBERS` **and** give it an `@ArchTest ArchTests` field there. Skipping
-   the field is the dangerous half: the build stays green while no consumer ever evaluates the group.
-3. Update `AllCentralRulesTest.groupsAreListedInDocumentationOrder`.
-
-No membership guard test is needed — `GroupMembershipTest` covers it by construction.
+1. Create `groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
+   `@ArchTest ArchTests` field per member.
+2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
+   consumer ever evaluates it.
 
 ## Contributing
 
