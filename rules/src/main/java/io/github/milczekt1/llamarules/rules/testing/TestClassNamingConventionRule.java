@@ -66,7 +66,6 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
             .orShould().haveSimpleNameEndingWith("Tests")
             .orShould().haveSimpleNameEndingWith("IT");
 
-    /** Declared below the constants it reads: guard() runs during class initialisation. */
     @ArchTest
     public static final ArchRule rule = new TestClassNamingConventionRule().guard();
 

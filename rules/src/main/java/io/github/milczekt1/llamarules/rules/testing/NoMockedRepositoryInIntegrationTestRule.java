@@ -52,7 +52,6 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
             .that().haveSimpleNameEndingWith("IT")
             .should(declareAMockedRepositoryOrDaoField());
 
-    /** Declared below the constants it reads: guard() runs during class initialisation. */
     @ArchTest
     public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().guard();
 
