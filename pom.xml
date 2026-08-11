@@ -93,16 +93,11 @@
   <build>
     <pluginManagement>
       <plugins>
-        <!-- Pinned deliberately: Maven 3.8.x defaults to compiler plugin 3.1,
-             which ignores maven.compiler.release and fails with "Source option 5". -->
         <plugin>
           <groupId>org.apache.maven.plugins</groupId>
           <artifactId>maven-compiler-plugin</artifactId>
           <version>3.13.0</version>
           <configuration>
-            <!-- MANDATORY, not decorative. JDK 23+ switched off implicitly-enabled annotation
-                 processing from the classpath. Without this path Lombok never runs, generates
-                 nothing, and the build still reports SUCCESS — see LombokWiringTest. -->
             <annotationProcessorPaths>
               <path>
                 <groupId>org.projectlombok</groupId>

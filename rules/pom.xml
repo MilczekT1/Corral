@@ -36,8 +36,6 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- test-only: provide the REAL forbidden annotations so the rules are verified
-         against actual artifacts rather than hand-copied FQN strings. -->
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-test</artifactId>
@@ -48,8 +46,6 @@
       <artifactId>mockito-core</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- test-only: silences ArchUnit's internal SLF4J "no providers found" warning.
-         Deliberately test-scoped so this library never pushes a logging binding onto consumers. -->
     <dependency>
       <groupId>org.slf4j</groupId>
       <artifactId>slf4j-nop</artifactId>
@@ -63,8 +59,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <configuration>
-          <!-- Fixtures are inputs to the architecture rules, not tests. Some are named
-               *Test / *TestCase / *IT on purpose and would otherwise be executed. -->
           <excludes>
             <exclude>**/fixtures/**</exclude>
           </excludes>
