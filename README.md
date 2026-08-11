@@ -293,8 +293,8 @@ becomes reachable, so there is no per-group test to remember to write.
      rule-correctness tests meaningless.
    - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`. **Declare this field last**: it runs during class initialisation and
-     reads the constants above it.
+     allows an empty `should`. **Declare it below `DOC` and `RULE`**: it runs during class
+     initialisation and reads them. Method order does not matter — only fields initialise.
 2. In the group, add the class to `MEMBERS` **and** give it an `@ArchTest ArchTests` field. Both,
    always. Add only the `members()` entry and the rule is documented and completeness-checked but
    **never evaluated by any consumer**.

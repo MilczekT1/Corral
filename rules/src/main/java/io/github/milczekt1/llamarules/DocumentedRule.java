@@ -17,18 +17,19 @@ import io.github.milczekt1.llamarules.doc.RuleRegistry;
  *     static final ArchRule RULE = noClasses()...;
  *     static final RuleDoc DOC = RuleDoc.builder()...build();
  *
- *     @Override public ArchRule definition() { return RULE; }
- *     @Override public RuleDoc doc() { return DOC; }
- *
  *     @ArchTest
  *     public static final ArchRule rule = new NoStdoutInServicesRule().guard();
+ *
+ *     @Override public ArchRule definition() { return RULE; }
+ *     @Override public RuleDoc doc() { return DOC; }
  * }
  * }</pre>
  *
- * <p><strong>Declare the {@code @ArchTest} field last.</strong> It runs {@code guard()} during
- * class initialisation, which reads the constants above it; a constant declared below is still
- * {@code null} at that point. Nothing but ordering prevents that — an interface cannot mandate a
- * static field, so ArchUnit's discovery of the field remains the author's responsibility.
+ * <p><strong>Declare the {@code @ArchTest} field below the constants it reads.</strong> It runs
+ * {@code guard()} during class initialisation, and a static field declared after it is still
+ * {@code null} at that point. Method order is irrelevant — only fields initialise. Nothing but that
+ * ordering prevents the mistake, and an interface cannot mandate a static field at all, so ArchUnit
+ * discovering the field remains the author's responsibility.
  */
 public interface DocumentedRule {
 

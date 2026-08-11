@@ -42,6 +42,10 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
             .that().resideInAPackage("..service..")
             .should().callMethod(PrintStream.class, "println", String.class);
 
+    /** Declared below the constants it reads: guard() runs during class initialisation. */
+    @ArchTest
+    public static final ArchRule rule = new NoStdoutInServicesRule().guard();
+
     @Override
     public ArchRule definition() {
         return RULE;
@@ -51,8 +55,4 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
     public RuleDoc doc() {
         return DOC;
     }
-
-    @ArchTest
-    public static final ArchRule rule = new NoStdoutInServicesRule().guard();
-
 }
