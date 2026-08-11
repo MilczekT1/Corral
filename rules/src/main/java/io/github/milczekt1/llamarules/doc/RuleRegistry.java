@@ -7,10 +7,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import lombok.experimental.UtilityClass;
 
-/**
- * Global lookup from a rule's stable id to its {@link RuleDoc}.
- *
- */
+/** Global lookup from a rule's stable id to its {@link RuleDoc}. */
 @UtilityClass
 public class RuleRegistry {
 
@@ -20,22 +17,26 @@ public class RuleRegistry {
      * @throws IllegalStateException if a <em>different</em> doc is already registered under this id
      */
     public static void register(RuleDoc doc) {
-        throwOnConflictingDoc(DOCS.putIfAbsent(doc.id(), doc), doc);
+        RuleDoc alreadyUnderThisId = DOCS.putIfAbsent(doc.id(), doc);
+
+        boolean idWasFree = alreadyUnderThisId == null;
+        boolean sameDocAgain = !idWasFree && alreadyUnderThisId.equals(doc);
+        if (idWasFree || sameDocAgain) {
+            return;
+        }
+
+        throw new IllegalStateException(
+                "Duplicate rule id '" + doc.id() + "': it is already registered with different"
+                        + " documentation. Rule ids are freeze-store keys and must be globally unique.");
     }
 
-    public static Optional<RuleDoc> find(String id) {
-        return id == null ? Optional.empty() : Optional.ofNullable(DOCS.get(id));
+    public static Optional<RuleDoc> find(String ruleDescription) {
+        return ruleDescription == null
+                ? Optional.empty()
+                : Optional.ofNullable(DOCS.get(ruleDescription));
     }
 
     public static List<RuleDoc> all() {
         return DOCS.values().stream().sorted(Comparator.comparing(RuleDoc::id)).toList();
-    }
-
-    private static void throwOnConflictingDoc(RuleDoc existing, RuleDoc doc) {
-        if (existing != null && !existing.equals(doc)) {
-            throw new IllegalStateException(
-                    "Duplicate rule id '" + doc.id() + "': it is already registered with different"
-                            + " documentation. Rule ids are freeze-store keys and must be globally unique.");
-        }
     }
 }
