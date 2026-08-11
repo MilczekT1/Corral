@@ -20,14 +20,23 @@ public class RuleRegistry {
         RuleDoc alreadyUnderThisId = DOCS.putIfAbsent(doc.id(), doc);
 
         boolean idWasFree = alreadyUnderThisId == null;
-        boolean sameDocAgain = !idWasFree && alreadyUnderThisId.equals(doc);
-        if (idWasFree || sameDocAgain) {
+        if (idWasFree) {
+            return;
+        }
+
+        // The id alone decides nothing: the same rule registering again carries the same
+        // documentation, so only a difference in why/howToFix/howNotToFix is a real collision.
+        boolean sameDocumentationWordForWord = alreadyUnderThisId.equals(doc);
+        if (sameDocumentationWordForWord) {
             return;
         }
 
         throw new IllegalStateException(
-                "Duplicate rule id '" + doc.id() + "': it is already registered with different"
-                        + " documentation. Rule ids are freeze-store keys and must be globally unique.");
+                "Duplicate rule id '" + doc.id() + "': two rules claim it with different"
+                        + " documentation. Rule ids are freeze-store keys and must be globally"
+                        + " unique — registering the identical doc again is fine, this is not."
+                        + "\n  already registered: " + alreadyUnderThisId
+                        + "\n  rejected:           " + doc);
     }
 
     public static Optional<RuleDoc> find(String ruleDescription) {
