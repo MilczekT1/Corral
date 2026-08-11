@@ -29,7 +29,6 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         howNotToFix = trimmedOrNull(howNotToFix);
     }
 
-    /** True when this rule carries anti-fix guidance of its own, beyond the global policy. */
     public boolean hasHowNotToFix() {
         return howNotToFix != null;
     }

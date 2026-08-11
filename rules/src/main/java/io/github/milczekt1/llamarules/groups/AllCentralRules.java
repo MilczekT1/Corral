@@ -26,7 +26,6 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class AllCentralRules {
 
-    /** In documentation order. Kept in step with the {@code @ArchTest} fields below. */
     private static final List<Class<?>> MEMBERS = List.of(TestingRulesGroup.class);
 
     @ArchTest

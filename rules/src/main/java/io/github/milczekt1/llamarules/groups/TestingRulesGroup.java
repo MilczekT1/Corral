@@ -22,7 +22,6 @@ public class TestingRulesGroup {
     public static final ArchTests testClassNamingConvention =
             ArchTests.in(TestClassNamingConventionRule.class);
 
-    /** Members may be rule classes or nested groups. @see AllCentralRules#members() */
     public static List<Class<?>> members() {
         return MEMBERS;
     }
