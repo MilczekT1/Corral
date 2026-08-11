@@ -21,6 +21,28 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class TestClassNamingConventionRule implements DocumentedRule {
 
+    static final RuleDoc DOC = RuleDoc.builder()
+            .id("test.class-naming-convention")
+            .why("""
+                    Most build tools select which top-level classes to run by class-name convention (Maven's \
+                    Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \
+                    top-level class holding JUnit test methods — @Test, @ParameterizedTest, @RepeatedTest, \
+                    @TestFactory or @TestTemplate — whose name ends in none of Test, Tests or IT is silently \
+                    never executed: it looks like coverage in the source tree while proving nothing in CI.""")
+            .howToFix("""
+                    Rename the reported top-level class to end in Test or Tests (unit tests) or IT (integration \
+                    tests) so your build tool's test-selection convention picks it up (with Maven, Surefire \
+                    runs *Test and Failsafe runs *IT). Nested classes are never reported by this rule and \
+                    must not be renamed: a JUnit 5 @Nested group is executed through its enclosing class, \
+                    whose name is the only one the build tool ever looks at.""")
+            .howNotToFix("""
+                    Do NOT delete the test methods or the class to make this rule pass, and do NOT \
+                    widen your build tool's test-include configuration instead of renaming (for example, \
+                    Surefire's include patterns) — the convention is what makes the unit/integration split \
+                    legible. Do NOT swap @Test for @ParameterizedTest or any other JUnit test annotation \
+                    either; every one of them counts.""")
+            .build();
+
     /**
      * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.
      *
@@ -44,27 +66,9 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
             .orShould().haveSimpleNameEndingWith("Tests")
             .orShould().haveSimpleNameEndingWith("IT");
 
-    static final RuleDoc DOC = RuleDoc.builder()
-            .id("test.class-naming-convention")
-            .why("""
-                    Most build tools select which top-level classes to run by class-name convention (Maven's \
-                    Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \
-                    top-level class holding JUnit test methods — @Test, @ParameterizedTest, @RepeatedTest, \
-                    @TestFactory or @TestTemplate — whose name ends in none of Test, Tests or IT is silently \
-                    never executed: it looks like coverage in the source tree while proving nothing in CI.""")
-            .howToFix("""
-                    Rename the reported top-level class to end in Test or Tests (unit tests) or IT (integration \
-                    tests) so your build tool's test-selection convention picks it up (with Maven, Surefire \
-                    runs *Test and Failsafe runs *IT). Nested classes are never reported by this rule and \
-                    must not be renamed: a JUnit 5 @Nested group is executed through its enclosing class, \
-                    whose name is the only one the build tool ever looks at.""")
-            .howNotToFix("""
-                    Do NOT delete the test methods or the class to make this rule pass, and do NOT \
-                    widen your build tool's test-include configuration instead of renaming (for example, \
-                    Surefire's include patterns) — the convention is what makes the unit/integration split \
-                    legible. Do NOT swap @Test for @ParameterizedTest or any other JUnit test annotation \
-                    either; every one of them counts.""")
-            .build();
+
+    @ArchTest
+    public static final ArchRule rule = new TestClassNamingConventionRule().guard();
 
 
     @Override
@@ -76,8 +80,4 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
     public RuleDoc doc() {
         return DOC;
     }
-
-    /** Declared last: guard() reads the constants above during class initialisation. */
-    @ArchTest
-    public static final ArchRule rule = new TestClassNamingConventionRule().guard();
 }

@@ -52,6 +52,9 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
             .that().haveSimpleNameEndingWith("IT")
             .should(declareAMockedRepositoryOrDaoField());
 
+    @ArchTest
+    public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().guard();
+
     @Override
     public ArchRule definition() {
         return RULE;
@@ -61,10 +64,6 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
     public RuleDoc doc() {
         return DOC;
     }
-
-    /** Declared last: guard() reads the constants above during class initialisation. */
-    @ArchTest
-    public static final ArchRule rule = new NoMockedRepositoryInIntegrationTestRule().guard();
 
     /**
      * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed
