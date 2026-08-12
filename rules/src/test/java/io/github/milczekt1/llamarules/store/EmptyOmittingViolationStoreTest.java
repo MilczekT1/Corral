@@ -2,7 +2,6 @@ package io.github.milczekt1.llamarules.store;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -14,10 +13,8 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import java.io.IOException;
-import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Properties;
 import org.junit.jupiter.api.BeforeEach;
@@ -110,6 +107,16 @@ class EmptyOmittingViolationStoreTest {
         assertTrue(Files.exists(storeDir.resolve("test.documented-rule")));
         assertEquals(List.of("Class <Bar> is bad"), store.getViolations(foreign),
                 "a rule named after prose must still round-trip through its generated file name");
+
+        // Round-trip alone would also pass if prose were sanitized into a file name, which is the
+        // failure this store exists to prevent — spaces and quotes reaching the filesystem. Pin the
+        // shape of the fallback, not just that reading it back works.
+        String generated = indexEntryFor(foreign.getDescription());
+        assertNotNull(generated, "a prose-named rule must still get an index entry");
+        assertTrue(generated.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"),
+                "a prose description must map to a UUID, not to the description: " + generated);
+        assertTrue(Files.exists(storeDir.resolve(generated)),
+                "the index must point at a file that exists: " + generated);
     }
 
     @Test
@@ -165,19 +172,12 @@ class EmptyOmittingViolationStoreTest {
         }
     }
 
-    /** Cleanup for the stray directory ArchUnit's own store creates as a side effect of {@link #initializeFallsBackToArchUnitsOwnDefaultPathWhenDefaultPathIsOmitted}. */
-    private static void deleteRecursively(Path path) throws IOException {
-        if (!Files.exists(path)) {
-            return;
+    /** The delegate's {@code <rule-description>=<file-name>} index, read the way the store reads it. */
+    private String indexEntryFor(String ruleDescription) throws IOException {
+        Properties index = new Properties();
+        try (var in = Files.newInputStream(storeDir.resolve("stored.rules"))) {
+            index.load(in);
         }
-        try (var entries = Files.walk(path)) {
-            entries.sorted(Comparator.reverseOrder()).forEach(p -> {
-                try {
-                    Files.delete(p);
-                } catch (IOException e) {
-                    throw new UncheckedIOException(e);
-                }
-            });
-        }
+        return index.getProperty(ruleDescription);
     }
 }
