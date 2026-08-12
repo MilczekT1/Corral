@@ -1,0 +1,5 @@
+#
+#Mon Aug 10 21:38:05 CEST 2026
+acme.no-stdout-in-services=acme.no-stdout-in-services
+test.class-naming-convention=test.class-naming-convention
+test.no-mocked-repository-in-integration-test=test.no-mocked-repository-in-integration-test
