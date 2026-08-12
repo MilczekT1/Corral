@@ -67,15 +67,25 @@ class TestClassNamingConventionRuleTest {
     }
 
     @Test
-    void detectsEveryJunit5TestAnnotation() {
-        // Pinned as a configured constant: @TestFactory / @TestTemplate / @RepeatedTest have no
-        // fixture, but omitting any of them reopens the "looks like coverage, never runs" hole.
+    void flagsClassesWhoseOnlyTestsUseAComposedAnnotation() {
+        // JUnit resolves @Test through a meta-annotation, so @FastTest methods really do run.
+        // Matching direct annotations only would let this class look like coverage while Surefire
+        // never selects it.
+        String report = report(TestClassNamingConventionRule.RULE);
+
+        assertTrue(report.contains("BadlyNamedComposedCase"), report);
+    }
+
+    @Test
+    void pinsTheJunit5RootAnnotations() {
+        // Only the three roots are configured: @ParameterizedTest and @RepeatedTest are themselves
+        // meta-annotated with @TestTemplate and are reached through it, as is any consumer's own
+        // composed annotation. Enumerating leaves instead reopens the "looks like coverage, never
+        // runs" hole every time JUnit adds one.
         assertEquals(java.util.List.of(
                 "org.junit.jupiter.api.Test",
-                "org.junit.jupiter.api.RepeatedTest",
                 "org.junit.jupiter.api.TestFactory",
-                "org.junit.jupiter.api.TestTemplate",
-                "org.junit.jupiter.params.ParameterizedTest"), TestClassNamingConventionRule.JUNIT_TEST_ANNOTATIONS);
+                "org.junit.jupiter.api.TestTemplate"), TestClassNamingConventionRule.JUNIT_TEST_ANNOTATIONS);
     }
 
     @Test

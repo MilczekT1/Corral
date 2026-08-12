@@ -44,23 +44,34 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
             .build();
 
     /**
-     * Matched by FQN string, so a consumer without {@code junit-jupiter-params} still works.
+     * The three JUnit 5 roots, matched by FQN string so a consumer without
+     * {@code junit-jupiter-params} still works.
      *
-     * <p>Listed exhaustively because {@code isAnnotatedWith} sees direct annotations only — it does
-     * not know {@code @ParameterizedTest} is meta-annotated with {@code @TestTemplate}. Missing one
-     * is the exact false negative this rule exists to catch.
+     * <p>Only roots are listed because the predicate below also matches meta-annotations:
+     * {@code @ParameterizedTest} and {@code @RepeatedTest} are themselves annotated with
+     * {@code @TestTemplate} and are reached through it, as is any project's own composed annotation.
+     * Enumerating the leaves instead would mean this rule silently stops covering whatever JUnit or
+     * the consumer adds next — the exact false negative it exists to catch.
      */
     static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
             "org.junit.jupiter.api.Test",
-            "org.junit.jupiter.api.RepeatedTest",
             "org.junit.jupiter.api.TestFactory",
-            "org.junit.jupiter.api.TestTemplate",
-            "org.junit.jupiter.params.ParameterizedTest");
+            "org.junit.jupiter.api.TestTemplate");
+
+    /**
+     * {@code isMetaAnnotatedWith} rather than {@code isAnnotatedWith}, and no direct check beside
+     * it: ArchUnit's meta variant "also matches elements that are directly annotated with the given
+     * annotation type", so a plain {@code @Test} method is covered by the same call that reaches
+     * {@code @ParameterizedTest} through {@code @TestTemplate} and a consumer's {@code @FastTest}
+     * through {@code @Test}.
+     */
+    private static boolean isJUnitTestMethod(JavaMethod method) {
+        return JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isMetaAnnotatedWith);
+    }
 
     static final ArchRule RULE = classes()
             .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
-                    (JavaMethod method) ->
-                            JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isAnnotatedWith)))
+                    TestClassNamingConventionRule::isJUnitTestMethod))
             .and().areNotMemberClasses()
             .should().haveSimpleNameEndingWith("Test")
             .orShould().haveSimpleNameEndingWith("Tests")
