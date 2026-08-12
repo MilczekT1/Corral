@@ -35,6 +35,24 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
     }
 
     @Test
+    void flagsMockedRepositoryInheritedFromABaseTestClass() {
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+
+        assertTrue(report.contains("inheritedOrderRepository"),
+                "a mock parked on a base class still belongs to the IT that inherits it: " + report);
+        assertTrue(report.contains("inherited by InheritingMockingRepositoryIT"),
+                "the report must name the IT to fix, not just the base class holding the field: " + report);
+    }
+
+    @Test
+    void staysSilentAboutTheBaseClassItself() {
+        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+
+        assertFalse(report.contains("inherited by AbstractMockingRepositoryTestBase"),
+                "the base class is not named IT, so it is not an integration test: " + report);
+    }
+
+    @Test
     void allowsMockingNonPersistenceCollaboratorsInIntegrationTests() {
         String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
 

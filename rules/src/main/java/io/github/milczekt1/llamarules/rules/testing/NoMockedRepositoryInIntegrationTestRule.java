@@ -69,22 +69,36 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
      * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed
      * as a persistence abstraction. Used with {@code noClasses().should(...)}, so a satisfied event
      * is reported as a violation.
+     *
+     * <p>Walks {@code getAllFields()} rather than {@code getFields()}: parking the mock on an
+     * abstract base test class is the most natural way to share it across integration tests, and
+     * inspecting declared fields only would let exactly that shape through.
      */
     private static ArchCondition<JavaClass> declareAMockedRepositoryOrDaoField() {
         return new ArchCondition<>("declare a mocked Repository or Dao field") {
             @Override
             public void check(JavaClass testClass, ConditionEvents events) {
-                for (JavaField field : testClass.getFields()) {
+                for (JavaField field : testClass.getAllFields()) {
                     boolean mocked = FORBIDDEN_MOCK_ANNOTATIONS.stream().anyMatch(field::isAnnotatedWith);
                     String typeName = field.getRawType().getSimpleName();
                     boolean persistenceType = typeName.endsWith("Repository") || typeName.endsWith("Dao");
                     if (mocked && persistenceType) {
                         events.add(SimpleConditionEvent.satisfied(field,
-                                "Field " + field.getFullName() + " mocks persistence type " + typeName));
+                                "Field " + field.getFullName() + " mocks persistence type " + typeName
+                                        + inheritedBy(testClass, field)));
                     }
                 }
             }
         };
+    }
+
+    /**
+     * Names the integration test that inherited the field, since the field's own name points at the
+     * base class and would otherwise leave the reader guessing which {@code *IT} to fix. Empty for a
+     * field the test class declares itself, where the field name already says it.
+     */
+    private static String inheritedBy(JavaClass testClass, JavaField field) {
+        return field.getOwner().equals(testClass) ? "" : ", inherited by " + testClass.getSimpleName();
     }
 
 }
