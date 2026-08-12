@@ -16,7 +16,7 @@ rule this project owns.
 Any `ArchRule` works with `@ArchTest`. But a plain one renders through ArchUnit's default format —
 one line, no guidance:
 
-```
+```text
 Architecture Violation [Priority: MEDIUM] - Rule 'no classes that reside in a package '..service..'
 should call method PrintStream.println(String)' was violated (1 times): …
 ```
@@ -76,7 +76,7 @@ specific to one rule belongs in that rule's `howNotToFix`.
 Adding a second stdout-writing service and running `mvn test` produces this — captured verbatim,
 not illustrative:
 
-```
+```text
 Architecture Violation [acme.no-stdout-in-services] [Priority: MEDIUM]
 
 WHY:

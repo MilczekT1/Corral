@@ -11,8 +11,8 @@ import io.github.milczekt1.llamarules.groups.AllCentralRules;
  *
  * <p>Run granularities: the whole class, one group node, or a single rule leaf.
  *
- * <p>Note the absence of {@code ImportOption.DoNotIncludeTests}: {@code TestingRules} inspects test
- * classes, and excluding them would make those rules pass vacuously.
+ * <p>Note the absence of {@code ImportOption.DoNotIncludeTests}: {@code TestingRulesGroup} inspects
+ * test classes, and excluding them would make those rules pass vacuously.
  */
 @AnalyzeClasses(packages = "com.example.consumer", importOptions = ImportOption.DoNotIncludeJars.class)
 class CentralArchitectureTest {
@@ -21,5 +21,5 @@ class CentralArchitectureTest {
     static final ArchTests all = ArchTests.in(AllCentralRules.class);
 
     // Equivalent, if you prefer to opt in group by group:
-    // @ArchTest static final ArchTests testing = ArchTests.in(TestingRules.class);
+    // @ArchTest static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
 }

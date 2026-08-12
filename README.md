@@ -88,7 +88,7 @@ Existing violations are now debt. Only new ones fail.
 
 ## What a failure looks like
 
-```
+```text
 Architecture Violation [test.class-naming-convention] [Priority: MEDIUM]
 
 WHY:
@@ -226,7 +226,7 @@ about how the store is written.
 **Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
 reading a store means resolving names through `stored.rules` first:
 
-```
+```text
 archunit/frozen/
 ├── stored.rules
 ├── test.class-naming-convention        # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
