@@ -6,15 +6,15 @@
 
   <parent>
     <groupId>io.github.milczekt1</groupId>
-    <artifactId>llama-rules-parent</artifactId>
+    <artifactId>llama-guard-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
     <relativePath>../pom.xml</relativePath>
   </parent>
 
-  <artifactId>rules-example</artifactId>
+  <artifactId>llama-guard-example</artifactId>
   <packaging>jar</packaging>
 
-  <name>LLamaRules Example Consumer (JUnit 5)</name>
+  <name>LLamaGuard Example Consumer (JUnit 5)</name>
   <description>module with examples</description>
 
   <dependencies>
@@ -25,7 +25,7 @@
     </dependency>
     <dependency>
       <groupId>io.github.milczekt1</groupId>
-      <artifactId>llama-rules</artifactId>
+      <artifactId>llama-guard-sdk</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>

@@ -6,14 +6,14 @@
 
   <parent>
     <groupId>io.github.milczekt1</groupId>
-    <artifactId>llama-rules-parent</artifactId>
+    <artifactId>llama-guard-parent</artifactId>
     <version>0.1.0-SNAPSHOT</version>
   </parent>
 
-  <artifactId>llama-rules</artifactId>
+  <artifactId>llama-guard-sdk</artifactId>
   <packaging>jar</packaging>
 
-  <name>LLamaRules</name>
+  <name>LLamaGuard SDK</name>
   <description>Centralized, freezable ArchUnit rules with agent-friendly failure messages.</description>
 
   <dependencies>

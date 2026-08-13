@@ -5,13 +5,13 @@
   <modelVersion>4.0.0</modelVersion>
 
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-rules-parent</artifactId>
+  <artifactId>llama-guard-parent</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <packaging>pom</packaging>
 
-  <name>LLamaRules Parent</name>
+  <name>LLamaGuard Parent</name>
   <description>Library of rules that guards the code.</description>
-  <url>https://github.com/MilczekT1/LLamaRules</url>
+  <url>https://github.com/MilczekT1/LLamaGuard</url>
 
   <licenses>
     <license>
@@ -21,8 +21,8 @@
   </licenses>
 
   <modules>
-    <module>rules</module>
-    <module>rules-example</module>
+    <module>llama-guard-sdk</module>
+    <module>llama-guard-example</module>
   </modules>
 
   <properties>
@@ -40,7 +40,7 @@
     <repository>
       <id>github</id>
       <name>GitHub Packages</name>
-      <url>https://maven.pkg.github.com/MilczekT1/LLamaRules</url>
+      <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
     </repository>
   </distributionManagement>
 
