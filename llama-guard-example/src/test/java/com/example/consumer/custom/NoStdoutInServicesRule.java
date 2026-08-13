@@ -4,8 +4,8 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.llamarules.DocumentedRule;
-import io.github.milczekt1.llamarules.doc.RuleDoc;
+import io.github.milczekt1.llamaguard.DocumentedRule;
+import io.github.milczekt1.llamaguard.doc.RuleDoc;
 import java.io.PrintStream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
