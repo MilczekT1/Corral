@@ -344,6 +344,56 @@ rule really does belong under both.
 2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
    consumer ever evaluates it.
 
+## CI/CD
+
+Every push and pull request to `main` runs **Build Pipeline**
+(`.github/workflows/build-java.yml`): a `build` job (`./mvnw clean install`) and a
+`sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
+which fails the build at `verify` below the thresholds in the root `pom.xml`
+(`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
+`llama-guard-example` overrides them to zero — it is a wiring demo, not a tested component.
+
+### Release process
+
+Releases run in CI via the **Release** GitHub Actions workflow (manual `workflow_dispatch`
+trigger). Only allowlisted users may trigger it.
+
+1. Go to **Actions → Release → Run workflow**.
+2. Enter:
+    - **releaseVersion** — the version to release, e.g. `0.1.0` (no `-SNAPSHOT`).
+    - **nextVersion** — the next development version, e.g. `0.1.1` (no `-SNAPSHOT`; the
+      workflow appends it).
+3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
+   sets the release version and commits + tags `v<version>` on it (crediting you as
+   co-author), publishes `llama-guard-sdk` to GitHub Packages, bumps to
+   `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
+   PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
+   once the required build check passes.
+
+`llama-guard-example` is never published — its `maven-deploy-plugin` is skipped, and the
+workflow's already-published check skips it for the same reason.
+
+The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
+`RELEASE_ALLOWED_ACTORS` (space-separated GitHub usernames); edit it via a normal PR.
+
+**One-time setup (maintainer):**
+
+- Create the SonarCloud project `MilczekT1_LLamaGuard` in organization `milczekt1` and store
+  its token as repo secret `SONAR_TOKEN`. This is a first-ever analysis: the project must
+  exist before the first scan (import it in the SonarCloud UI, or let the scan auto-provision
+  it if the token's user holds *Create Projects* in the organization). The first run has no
+  previous analysis to diff against, so its new-code quality gate conditions are vacuous.
+- Install a **GitHub App** on the repo with **Contents: write** and **Pull requests: write**,
+  and store its credentials as repo secrets `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
+  The release PR is created under this App so it triggers CI (a PR created by the default
+  token would not, and auto-merge would hang).
+- Enable **Settings → General → Allow auto-merge**.
+- Keep the **build check required** on `main` branch protection — this is the gate
+  auto-merge waits on.
+
+`publish-java.yml` ("Publish artifact (manual re-publish)") is a manual-only escape hatch for
+re-publishing an already-released version; it does not bump or tag.
+
 ## Contributing
 
 Uses [Lombok](https://projectlombok.org/). Install your IDE's Lombok plugin, or the IDE reports errors
