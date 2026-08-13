@@ -1,4 +1,4 @@
-# LLamaRules
+# LLamaGuard
 
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
 test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
@@ -23,7 +23,7 @@ flowchart LR
         STORE[("archunit/frozen<br/><i>committed</i>")]
     end
 
-    subgraph lib["llama-rules"]
+    subgraph lib["llama-guard-sdk"]
         ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
         R1["TestClassNamingConventionRule"]
@@ -51,7 +51,7 @@ Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-rules</artifactId>
+  <artifactId>llama-guard-sdk</artifactId>
   <version>0.1.0-SNAPSHOT</version>
   <scope>test</scope>
 </dependency>
@@ -74,7 +74,7 @@ class CentralArchitectureTest {
 
 ```properties
 freeze.store.default.path=src/test/resources/archunit/frozen
-failureDisplayFormat=io.github.milczekt1.llamarules.format.AgentFriendlyFailureDisplayFormat
+failureDisplayFormat=io.github.milczekt1.llamaguard.format.AgentFriendlyFailureDisplayFormat
 ```
 
 **4. Seed the freeze store once, and commit it:**
@@ -177,7 +177,7 @@ The artifact is published to GitHub Packages, which Maven does not know about by
   <repository>
     <id>github</id>
     <name>GitHub Packages</name>
-    <url>https://maven.pkg.github.com/MilczekT1/LLamaRules</url>
+    <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
     <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
@@ -196,7 +196,7 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 </servers>
 ```
 
-Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-rules`.
+Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-sdk`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
 `0.1.0-SNAPSHOT` is a snapshot; no release has been cut yet.
@@ -207,7 +207,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 |---|---|---|
 | `freeze.store.default.path` | yes | Resolved against the JVM's **working directory**, not the classpath. Maven sets it to the module directory; an IDE run configuration with a different working directory will not find the store. |
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
-| `freeze.store` | optional | Set to `io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
+| `freeze.store` | optional | Set to `io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -220,7 +220,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 
 ### The freeze store
 
-`freeze.store=io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` changes two things
+`freeze.store=io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` changes two things
 about how the store is written.
 
 **Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
@@ -354,7 +354,7 @@ JDK 23+ ignores annotation processors that are only on the classpath. Remove tha
 compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
 misconfiguration cannot pass silently.
 
-Build: `./mvnw verify`. The reactor is `rules` (the library) and `rules-example` (a working consumer
+Build: `./mvnw verify`. The reactor is `llama-guard-sdk` (the library) and `llama-guard-example` (a working consumer
 with a committed freeze store, which doubles as an end-to-end test of the wiring).
 
 ## License

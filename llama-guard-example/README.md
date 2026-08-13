@@ -1,6 +1,6 @@
 # Example consumer
 
-A working consumer of `llama-rules`: one test-scoped dependency, the library's rules wired in, and a
+A working consumer of `llama-guard-sdk`: one test-scoped dependency, the library's rules wired in, and a
 rule this project owns.
 
 | File | What it shows |
