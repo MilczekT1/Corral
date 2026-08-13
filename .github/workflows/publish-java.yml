@@ -1,0 +1,43 @@
+# MANUAL RE-PUBLISH ONLY.
+# Normal releases go through .github/workflows/release.yml (workflow_dispatch "Release"),
+# which bumps the version, tags, and publishes in one job.
+# Use this workflow only to re-publish an already-released version (e.g. a transient
+# GitHub Packages outage). It does NOT bump versions, commit, or tag.
+# Note: re-publishing a version that already exists in GitHub Packages will fail —
+# that repository rejects re-deploying an existing release version.
+name: Publish artifact (manual re-publish)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to re-publish (must already be committed on the checked-out ref). Informational.'
+        required: false
+
+env:
+  MVN_CONFIG: -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@v6
+      - name: Set up JDK 25
+        uses: actions/setup-java@v5
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+      - name: Build with Maven
+        run: ./mvnw package --file pom.xml -DskipTests=true ${{ env.MVN_CONFIG }}
+      - name: Publish to GitHub Packages Apache Maven
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./mvnw deploy -DskipTests=true ${{ env.MVN_CONFIG }}
