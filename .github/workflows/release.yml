@@ -74,7 +74,7 @@ jobs:
               exit 1
             fi
           done
-          if git rev-parse "v$RELEASE_VERSION" >/dev/null 2>&1; then
+          if git rev-parse --verify --quiet "refs/tags/v$RELEASE_VERSION" >/dev/null 2>&1; then
             echo "Tag v$RELEASE_VERSION already exists" >&2
             exit 1
           fi

@@ -48,11 +48,14 @@ Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape
 
 **1. Depend on it** (see [Install](#install) for the GitHub Packages repository and auth):
 
+No release is published yet. Cut `0.1.0` via the [Release workflow](#release-process) first, then
+depend on it:
+
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
   <artifactId>llama-guard-sdk</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -178,7 +181,6 @@ The artifact is published to GitHub Packages, which Maven does not know about by
     <id>github</id>
     <name>GitHub Packages</name>
     <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
-    <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
 ```
@@ -199,7 +201,8 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-sdk`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
-`0.1.0-SNAPSHOT` is a snapshot; no release has been cut yet.
+No workflow publishes snapshots — only [Release](#release-process) publishes, and only released
+`x.y.z` versions. No release has been cut yet, so nothing currently resolves.
 
 ## Configuration reference
 
@@ -365,10 +368,14 @@ trigger). Only allowlisted users may trigger it.
       workflow appends it).
 3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
    sets the release version and commits + tags `v<version>` on it (crediting you as
-   co-author), publishes `llama-guard-sdk` to GitHub Packages, bumps to
+   co-author), publishes `llama-guard-sdk` and `llama-guard-parent` to GitHub Packages —
+   consumers need the parent pom to resolve the SDK's managed dependency versions — bumps to
    `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
    PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
    once the required build check passes.
+
+The deploy runs with `-DskipTests=true`, so it does not itself re-verify coverage: the release
+relies on `main` already being green, which `build-java.yml` enforces on every push to `main`.
 
 `llama-guard-example` is never published — its `maven-deploy-plugin` is skipped, and the
 workflow's already-published check skips it for the same reason.
@@ -387,12 +394,15 @@ The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
   and store its credentials as repo secrets `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
   The release PR is created under this App so it triggers CI (a PR created by the default
   token would not, and auto-merge would hang).
-- Enable **Settings → General → Allow auto-merge**.
+- Enable **Settings → General → Allow auto-merge** and **Allow rebase merging** — the release
+  PR is merged with `gh pr merge --auto --rebase`.
 - Keep the **build check required** on `main` branch protection — this is the gate
   auto-merge waits on.
 
 `publish-java.yml` ("Publish artifact (manual re-publish)") is a manual-only escape hatch for
-re-publishing an already-released version; it does not bump or tag.
+re-publishing an already-released version; it does not bump or tag. The checked-out ref — not
+the `version` input — determines what gets published, so select the tag `v<version>` as the
+workflow ref; the input is only asserted against it, not used to check anything out.
 
 ## Contributing
 

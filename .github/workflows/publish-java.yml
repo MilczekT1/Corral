@@ -5,13 +5,16 @@
 # GitHub Packages outage). It does NOT bump versions, commit, or tag.
 # Note: re-publishing a version that already exists in GitHub Packages will fail —
 # that repository rejects re-deploying an existing release version.
+# IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
+# When running this workflow, select the tag v<version> as the workflow ref; the `version`
+# input is only used to assert against what's actually checked out.
 name: Publish artifact (manual re-publish)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to re-publish (must already be committed on the checked-out ref). Informational.'
+        description: 'Version to re-publish. Must match the version already committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
         required: false
 
 env:
@@ -35,6 +38,20 @@ jobs:
           server-id: github
           server-username: GITHUB_ACTOR
           server-password: GITHUB_TOKEN
+      - name: Assert checked-out version matches input
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -z "$EXPECTED_VERSION" ]]; then
+            echo "No version input given; skipping check."
+            exit 0
+          fi
+          actual_version=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+            echo "::error::Checked-out project version ($actual_version) does not match the version input ($EXPECTED_VERSION). Select tag v$EXPECTED_VERSION as the workflow ref." >&2
+            exit 1
+          fi
+          echo "Checked-out project version matches input: $actual_version"
       - name: Build with Maven
         run: ./mvnw package --file pom.xml -DskipTests=true ${{ env.MVN_CONFIG }}
       - name: Publish to GitHub Packages Apache Maven
