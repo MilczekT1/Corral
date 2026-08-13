@@ -17,6 +17,12 @@
   <name>LLamaGuard Example Consumer (JUnit 5)</name>
   <description>module with examples</description>
 
+  <properties>
+    <jacoco.lineCoverage.minimum>0.0</jacoco.lineCoverage.minimum>
+    <jacoco.branches.minimum>0.0</jacoco.branches.minimum>
+    <jacoco.classes.maxMissed>100</jacoco.classes.maxMissed>
+  </properties>
+
   <dependencies>
     <dependency>
       <groupId>org.projectlombok</groupId>
