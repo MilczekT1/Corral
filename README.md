@@ -374,8 +374,11 @@ trigger). Only allowlisted users may trigger it.
    PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
    once the required build check passes.
 
-The deploy runs with `-DskipTests=true`, so it does not itself re-verify coverage: the release
-relies on `main` already being green, which `build-java.yml` enforces on every push to `main`.
+Before publishing, the workflow runs `./mvnw clean verify` on the version-bumped tree. That tree
+has never been built by any CI run — `versions:set` has just rewritten the poms — and publishing to
+GitHub Packages cannot be undone, so the tests and the coverage gate run against exactly what is
+about to be released. The `deploy` step itself then uses `-DskipTests=true` rather than testing
+twice.
 
 `llama-guard-example` is never published — its `maven-deploy-plugin` is skipped, and the
 workflow's already-published check skips it for the same reason.

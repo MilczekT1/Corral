@@ -143,6 +143,14 @@ jobs:
           done
           echo "skip=$all_exist" >> "$GITHUB_OUTPUT"
 
+      # Publishing to GitHub Packages is irreversible — that repository rejects
+      # re-deploying an existing release version — and it happens before the
+      # branch and tag are pushed. versions:set has also mutated the poms, so
+      # this exact tree has never been built by any CI run. Verify it here.
+      - name: Verify release tree before publishing
+        if: steps.check_deployed.outputs.skip != 'true'
+        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
+
       - name: Deploy to GitHub Packages
         if: steps.check_deployed.outputs.skip != 'true'
         env:
