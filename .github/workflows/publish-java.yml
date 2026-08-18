@@ -1,0 +1,68 @@
+# MANUAL PUBLISH. Two supported uses, neither of which bumps versions, commits, or tags:
+#
+#   1. Re-publish an already-released x.y.z (e.g. after a transient GitHub Packages
+#      outage). Note this only works if the version is NOT already present: GitHub
+#      Packages rejects re-deploying an existing release version.
+#   2. Publish a -SNAPSHOT so consumers can try a change before a release is cut.
+#      Snapshots may be re-deployed as often as needed — GitHub Packages accepts
+#      repeated snapshot uploads, unlike release versions.
+#
+# Normal releases go through .github/workflows/release.yml (workflow_dispatch "Release"),
+# which bumps the version, tags, and publishes in one job.
+# IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
+# When running this workflow, select the tag v<version> as the workflow ref; the `version`
+# input is only used to assert against what's actually checked out.
+name: Publish artifact (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, release or -SNAPSHOT. Must match the version committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
+        required: false
+
+concurrency:
+  group: publish-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  MVN_CONFIG: -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6.1.0
+      - name: Set up JDK 25
+        uses: actions/setup-java@b6effb05e454b25005698d916606bdc6ffcbf961 # v5.7.0
+        with:
+          java-version: '25'
+          distribution: 'temurin'
+          cache: maven
+          server-id: github
+          server-username: GITHUB_ACTOR
+          server-password: GITHUB_TOKEN
+      - name: Assert checked-out version matches input
+        env:
+          EXPECTED_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -z "$EXPECTED_VERSION" ]]; then
+            echo "No version input given; skipping check."
+            exit 0
+          fi
+          actual_version=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
+            echo "::error::Checked-out project version ($actual_version) does not match the version input ($EXPECTED_VERSION). Select tag v$EXPECTED_VERSION as the workflow ref." >&2
+            exit 1
+          fi
+          echo "Checked-out project version matches input: $actual_version"
+      - name: Build with Maven
+        run: ./mvnw package --file pom.xml -DskipTests=true ${{ env.MVN_CONFIG }}
+      - name: Publish to GitHub Packages Apache Maven
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: ./mvnw deploy -DskipTests=true ${{ env.MVN_CONFIG }}

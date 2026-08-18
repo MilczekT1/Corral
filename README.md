@@ -1,4 +1,4 @@
-# LLamaRules
+# LLamaGuard
 
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
 test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
@@ -23,7 +23,7 @@ flowchart LR
         STORE[("archunit/frozen<br/><i>committed</i>")]
     end
 
-    subgraph lib["llama-rules"]
+    subgraph lib["llama-guard-sdk"]
         ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
         R1["TestClassNamingConventionRule"]
@@ -48,11 +48,14 @@ Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape
 
 **1. Depend on it** (see [Install](#install) for the GitHub Packages repository and auth):
 
+No release is published yet. Cut `0.1.0` via the [Release workflow](#release-process) first, then
+depend on it:
+
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-rules</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <artifactId>llama-guard-sdk</artifactId>
+  <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -74,7 +77,7 @@ class CentralArchitectureTest {
 
 ```properties
 freeze.store.default.path=src/test/resources/archunit/frozen
-failureDisplayFormat=io.github.milczekt1.llamarules.format.AgentFriendlyFailureDisplayFormat
+failureDisplayFormat=io.github.milczekt1.llamaguard.format.AgentFriendlyFailureDisplayFormat
 ```
 
 **4. Seed the freeze store once, and commit it:**
@@ -177,7 +180,7 @@ The artifact is published to GitHub Packages, which Maven does not know about by
   <repository>
     <id>github</id>
     <name>GitHub Packages</name>
-    <url>https://maven.pkg.github.com/MilczekT1/LLamaRules</url>
+    <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
     <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
@@ -196,10 +199,17 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 </servers>
 ```
 
-Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-rules`.
+Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-sdk`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
-`0.1.0-SNAPSHOT` is a snapshot; no release has been cut yet.
+[Release](#release-process) publishes released `x.y.z` versions. Snapshots are published manually:
+dispatch [Publish artifact](#release-process) on a ref whose project version ends in `-SNAPSHOT`
+(`main`, typically). GitHub Packages rejects re-deploying an existing release version but accepts
+re-deploying a snapshot, so `0.1.0-SNAPSHOT` can be refreshed as often as needed — which is what
+makes it useful for trying a change before a release is cut.
+
+No release has been cut yet, so `0.1.0` does not resolve until you cut one; publish a snapshot if
+you want something to depend on in the meantime.
 
 ## Configuration reference
 
@@ -207,7 +217,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 |---|---|---|
 | `freeze.store.default.path` | yes | Resolved against the JVM's **working directory**, not the classpath. Maven sets it to the module directory; an IDE run configuration with a different working directory will not find the store. |
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
-| `freeze.store` | optional | Set to `io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
+| `freeze.store` | optional | Set to `io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -220,7 +230,7 @@ In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates i
 
 ### The freeze store
 
-`freeze.store=io.github.milczekt1.llamarules.store.EmptyOmittingViolationStore` changes two things
+`freeze.store=io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` changes two things
 about how the store is written.
 
 **Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
@@ -344,6 +354,70 @@ rule really does belong under both.
 2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
    consumer ever evaluates it.
 
+## CI/CD
+
+Every push and pull request to `main` runs **Build Pipeline**
+(`.github/workflows/build-java.yml`): a `build` job (`./mvnw clean install`) and a
+`sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
+which fails the build at `verify` below the thresholds in the root `pom.xml`
+(`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
+`llama-guard-example` overrides them to zero — it is a wiring demo, not a tested component.
+
+### Release process
+
+Releases run in CI via the **Release** GitHub Actions workflow (manual `workflow_dispatch`
+trigger). Only allowlisted users may trigger it.
+
+1. Go to **Actions → Release → Run workflow**.
+2. Enter:
+    - **releaseVersion** — the version to release, e.g. `0.1.0` (no `-SNAPSHOT`).
+    - **nextVersion** — the next development version, e.g. `0.1.1` (no `-SNAPSHOT`; the
+      workflow appends it).
+3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
+   sets the release version and commits + tags `v<version>` on it (crediting you as
+   co-author), publishes `llama-guard-sdk` and `llama-guard-parent` to GitHub Packages —
+   consumers need the parent pom to resolve the SDK's managed dependency versions — bumps to
+   `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
+   PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
+   once the required build check passes.
+
+Before publishing, the workflow runs `./mvnw clean verify` on the version-bumped tree. That tree
+has never been built by any CI run — `versions:set` has just rewritten the poms — and publishing to
+GitHub Packages cannot be undone, so the tests and the coverage gate run against exactly what is
+about to be released. The `deploy` step itself then uses `-DskipTests=true` rather than testing
+twice.
+
+`llama-guard-example` is never published — its `maven-deploy-plugin` is skipped, and the
+workflow's already-published check skips it for the same reason.
+
+The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
+`RELEASE_ALLOWED_ACTORS` (space-separated GitHub usernames); edit it via a normal PR.
+
+**One-time setup (maintainer):**
+
+- Create the SonarCloud project `MilczekT1_LLamaGuard` in organization `milczekt1` and store
+  its token as repo secret `SONAR_TOKEN`. This is a first-ever analysis: the project must
+  exist before the first scan (import it in the SonarCloud UI, or let the scan auto-provision
+  it if the token's user holds *Create Projects* in the organization). The first run has no
+  previous analysis to diff against, so its new-code quality gate conditions are vacuous.
+- Install a **GitHub App** on the repo with **Contents: write** and **Pull requests: write**,
+  and store its credentials as repo secrets `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
+  The release PR is created under this App so it triggers CI (a PR created by the default
+  token would not, and auto-merge would hang).
+- Enable **Settings → General → Allow auto-merge** and **Allow rebase merging** — the release
+  PR is merged with `gh pr merge --auto --rebase`.
+- Keep the **build check required** on `main` branch protection — this is the gate
+  auto-merge waits on.
+
+`publish-java.yml` ("Publish artifact (manual)") publishes without bumping or tagging. Two uses:
+re-publishing an already-released `x.y.z` (only if it is not already present — GitHub Packages
+rejects re-deploying an existing release version), and publishing a `-SNAPSHOT` so consumers can
+try a change before a release is cut. Snapshots may be re-deployed repeatedly.
+
+The checked-out ref — not the `version` input — determines what gets published. Select the tag
+`v<version>` to re-publish a release, or a branch such as `main` to publish its snapshot; the
+input is only asserted against what is checked out, never used to check anything out.
+
 ## Contributing
 
 Uses [Lombok](https://projectlombok.org/). Install your IDE's Lombok plugin, or the IDE reports errors
@@ -354,7 +428,7 @@ JDK 23+ ignores annotation processors that are only on the classpath. Remove tha
 compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
 misconfiguration cannot pass silently.
 
-Build: `./mvnw verify`. The reactor is `rules` (the library) and `rules-example` (a working consumer
+Build: `./mvnw verify`. The reactor is `llama-guard-sdk` (the library) and `llama-guard-example` (a working consumer
 with a committed freeze store, which doubles as an end-to-end test of the wiring).
 
 ## License
