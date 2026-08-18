@@ -284,14 +284,38 @@
           </execution>
         </executions>
       </plugin>
+      <!-- Bound as in Chassis: integration-test + verify at the integration-test phase,
+           selecting **/*IT.java. There are no integration tests yet, so it currently
+           selects nothing and the build is unaffected — the binding exists so the first
+           real *IT added here runs without further pom work.
+
+           The **/fixtures/** exclude is required and must not be removed. The *IT classes
+           under llamaguard/fixtures/testing (MockingRepositoryIT, MockingDaoIT,
+           MockingGatewayIT, InheritingMockingRepositoryIT) are NOT integration tests: they
+           declare no @Test methods and exist purely as ArchUnit inputs, imported by
+           NoMockedRepositoryInIntegrationTestRuleTest to prove the rule flags them. They
+           must be named *IT because that is precisely what the rule matches. -->
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-failsafe-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>**/fixtures/**</exclude>
-          </excludes>
-        </configuration>
+        <executions>
+          <execution>
+            <id>default</id>
+            <phase>integration-test</phase>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+            <configuration>
+              <includes>
+                <include>**/*IT.java</include>
+              </includes>
+              <excludes>
+                <exclude>**/fixtures/**</exclude>
+              </excludes>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
     </plugins>
   </build>
