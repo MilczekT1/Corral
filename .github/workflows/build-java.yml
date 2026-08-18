@@ -31,6 +31,14 @@ jobs:
         run: ./mvnw clean install ${{ env.MVN_CONFIG }}
 
   sonar_scan:
+    # SONAR_TOKEN is not exposed to fork PRs or to Dependabot, so the scanner
+    # would fail authentication on every such run. Skipped is neutral, not red.
+    # Deliberately NOT solved with pull_request_target, which would expose the
+    # secret to untrusted PR code.
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.pull_request.head.repo.full_name == github.repository &&
+       github.actor != 'dependabot[bot]')
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
