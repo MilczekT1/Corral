@@ -1,20 +1,24 @@
-# MANUAL RE-PUBLISH ONLY.
+# MANUAL PUBLISH. Two supported uses, neither of which bumps versions, commits, or tags:
+#
+#   1. Re-publish an already-released x.y.z (e.g. after a transient GitHub Packages
+#      outage). Note this only works if the version is NOT already present: GitHub
+#      Packages rejects re-deploying an existing release version.
+#   2. Publish a -SNAPSHOT so consumers can try a change before a release is cut.
+#      Snapshots may be re-deployed as often as needed — GitHub Packages accepts
+#      repeated snapshot uploads, unlike release versions.
+#
 # Normal releases go through .github/workflows/release.yml (workflow_dispatch "Release"),
 # which bumps the version, tags, and publishes in one job.
-# Use this workflow only to re-publish an already-released version (e.g. a transient
-# GitHub Packages outage). It does NOT bump versions, commit, or tag.
-# Note: re-publishing a version that already exists in GitHub Packages will fail —
-# that repository rejects re-deploying an existing release version.
 # IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
 # When running this workflow, select the tag v<version> as the workflow ref; the `version`
 # input is only used to assert against what's actually checked out.
-name: Publish artifact (manual re-publish)
+name: Publish artifact (manual)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to re-publish. Must match the version already committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
+        description: 'Version to publish, release or -SNAPSHOT. Must match the version committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
         required: false
 
 # Two dispatches on the same ref would otherwise deploy concurrently, and

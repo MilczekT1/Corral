@@ -181,6 +181,7 @@ The artifact is published to GitHub Packages, which Maven does not know about by
     <id>github</id>
     <name>GitHub Packages</name>
     <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
+    <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
 ```
@@ -201,8 +202,14 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-sdk`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
-No workflow publishes snapshots — only [Release](#release-process) publishes, and only released
-`x.y.z` versions. No release has been cut yet, so nothing currently resolves.
+[Release](#release-process) publishes released `x.y.z` versions. Snapshots are published manually:
+dispatch [Publish artifact](#release-process) on a ref whose project version ends in `-SNAPSHOT`
+(`main`, typically). GitHub Packages rejects re-deploying an existing release version but accepts
+re-deploying a snapshot, so `0.1.0-SNAPSHOT` can be refreshed as often as needed — which is what
+makes it useful for trying a change before a release is cut.
+
+No release has been cut yet, so `0.1.0` does not resolve until you cut one; publish a snapshot if
+you want something to depend on in the meantime.
 
 ## Configuration reference
 
@@ -402,10 +409,14 @@ The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
 - Keep the **build check required** on `main` branch protection — this is the gate
   auto-merge waits on.
 
-`publish-java.yml` ("Publish artifact (manual re-publish)") is a manual-only escape hatch for
-re-publishing an already-released version; it does not bump or tag. The checked-out ref — not
-the `version` input — determines what gets published, so select the tag `v<version>` as the
-workflow ref; the input is only asserted against it, not used to check anything out.
+`publish-java.yml` ("Publish artifact (manual)") publishes without bumping or tagging. Two uses:
+re-publishing an already-released `x.y.z` (only if it is not already present — GitHub Packages
+rejects re-deploying an existing release version), and publishing a `-SNAPSHOT` so consumers can
+try a change before a release is cut. Snapshots may be re-deployed repeatedly.
+
+The checked-out ref — not the `version` input — determines what gets published. Select the tag
+`v<version>` to re-publish a release, or a branch such as `main` to publish its snapshot; the
+input is only asserted against what is checked out, never used to check anything out.
 
 ## Contributing
 
