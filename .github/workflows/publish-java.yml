@@ -21,9 +21,6 @@ on:
         description: 'Version to publish, release or -SNAPSHOT. Must match the version committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
         required: false
 
-# Two dispatches on the same ref would otherwise deploy concurrently, and
-# GitHub Packages rejects the duplicate, leaving a partly published set.
-# Never cancel in progress: aborting mid-upload is worse than queueing.
 concurrency:
   group: publish-${{ github.ref }}
   cancel-in-progress: false
