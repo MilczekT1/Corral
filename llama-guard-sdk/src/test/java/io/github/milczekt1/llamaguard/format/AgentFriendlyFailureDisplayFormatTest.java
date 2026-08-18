@@ -4,11 +4,19 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.base.HasDescription;
+import com.tngtech.archunit.lang.ConditionEvents;
+import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.milczekt1.llamaguard.doc.RuleDoc;
+import io.github.milczekt1.llamaguard.doc.RuleRegistry;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class AgentFriendlyFailureDisplayFormatTest {
@@ -129,5 +137,97 @@ class AgentFriendlyFailureDisplayFormatTest {
 
         assertDoesNotThrow(() -> FORMAT.lastResortFormat(hostile, null, null));
         assertDoesNotThrow(() -> FORMAT.lastResortFormat(null, null, null));
+    }
+
+    /**
+     * Everything above exercises the package-private seams directly. These drive the real
+     * {@link AgentFriendlyFailureDisplayFormat#formatFailure} entry point the way ArchUnit does:
+     * through a genuine {@code FailureMessages}, which has no public constructor and can only be
+     * obtained by letting ArchUnit build one.
+     */
+    @BeforeEach
+    void installFormatterGlobally() {
+        ArchConfiguration.get().setProperty(
+                "failureDisplayFormat", AgentFriendlyFailureDisplayFormat.class.getName());
+    }
+
+    @AfterEach
+    void restoreArchUnitConfiguration() {
+        ArchConfiguration.get().reset();
+    }
+
+    private static String renderThroughArchUnit(
+            String ruleDescription, Priority priority, String... violations) {
+        ConditionEvents events = ConditionEvents.Factory.create();
+        for (String violation : violations) {
+            events.add(new SimpleConditionEvent(new Object(), false, violation));
+        }
+        HasDescription rule = () -> ruleDescription;
+        return new EvaluationResult(rule, events, priority).getFailureReport().toString();
+    }
+
+    @Test
+    void formatFailureDecoratesADocumentedRule() {
+        RuleDoc doc = RuleDoc.builder()
+                .id("format.end-to-end-documented")
+                .why("Because the invariant matters.")
+                .howToFix("Do the right thing.")
+                .howNotToFix("Do NOT suppress it.")
+                .build();
+        RuleRegistry.register(doc);
+
+        String out = renderThroughArchUnit(doc.id(), Priority.MEDIUM,
+                "Class <com.example.A> is wrong in (A.java:1)",
+                "Class <com.example.B> is wrong in (B.java:2)");
+
+        assertTrue(out.contains("Architecture Violation [format.end-to-end-documented]"), out);
+        assertTrue(out.contains("Because the invariant matters."), out);
+        assertTrue(out.contains("HOW NOT TO FIX (always):"), out);
+        assertTrue(out.contains("(A.java:1)"), out);
+        assertTrue(out.contains("(B.java:2)"), out);
+    }
+
+    @Test
+    void formatFailureLeavesAnUnregisteredRuleUndecorated() {
+        String description = "no classes should depend on '..legacy..'";
+
+        String out = renderThroughArchUnit(description, Priority.HIGH, "Class <com.example.C> in (C.java:3)");
+
+        assertTrue(out.contains("Rule '" + description + "' was violated"), out);
+        assertTrue(out.contains("(C.java:3)"), out);
+        assertFalse(out.contains("HOW NOT TO FIX (always):"), "foreign rule was decorated: " + out);
+    }
+
+    @Test
+    void formatFailureReportsZeroViolationLinesWithoutFailing() {
+        String out = renderThroughArchUnit("no classes should be empty-reported", Priority.LOW);
+
+        assertTrue(out.contains("no classes should be empty-reported"), out);
+    }
+
+    @Test
+    void richRenderingFallsBackToTheLastResortFormat() {
+        // A null doc makes doc.id() throw inside render's try block — the only way to reach the
+        // fallback without a doc implementation that lies about itself.
+        String out = FORMAT.render(null, VIOLATIONS, Priority.MEDIUM);
+
+        assertTrue(out.contains("<unknown rule>"), out);
+        assertTrue(out.contains("failed to render failure details"), out);
+        assertTrue(out.contains("rich rendering threw"), out);
+    }
+
+    @Test
+    void defaultRenderingFallsBackToTheLastResortFormat() {
+        List<String> iterationThrows = new ArrayList<>(VIOLATIONS) {
+            @Override
+            public Iterator<String> iterator() {
+                throw new IllegalStateException("boom");
+            }
+        };
+
+        String out = FORMAT.defaultFormat("some.foreign.rule", iterationThrows, "2 times", Priority.LOW);
+
+        assertTrue(out.contains("some.foreign.rule"), out);
+        assertTrue(out.contains("default rendering threw"), out);
     }
 }
