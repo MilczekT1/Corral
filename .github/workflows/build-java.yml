@@ -8,6 +8,12 @@ on:
     branches:
       - main
 
+# Neither job writes anything: they check out code and run Maven. Declaring this
+# at workflow level stops the repository default from granting write scope to a
+# run that executes pull request code.
+permissions:
+  contents: read
+
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref_name }}
   cancel-in-progress: true
