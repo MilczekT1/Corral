@@ -1,0 +1,15 @@
+# Keeps the SHA-pinned GitHub Actions current. Pinning to immutable commit SHAs
+# stops a mutable tag from being repointed under us, but a pin never updates
+# itself — without this file the workflows would silently stop receiving
+# upstream security fixes. Dependabot opens PRs that bump the SHA and the
+# trailing version comment together.
+version: 2
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "ci"
+    labels:
+      - dependencies
