@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.llamaguard.doc.RuleDoc;
 import io.github.milczekt1.llamaguard.doc.RuleRegistry;
-import io.github.milczekt1.llamaguard.testsupport.PublishedRules;
+import io.github.milczekt1.llamaguard.reflect.PublishedRules;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.LinkedHashMap;
@@ -28,7 +28,7 @@ class RuleRegistryCompletenessTest {
 
     @Test
     void everyPublishedRuleHasARegisteredDoc() {
-        for (ArchRule rule : PublishedRules.all()) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
             String description = rule.getDescription();
             assertTrue(RuleRegistry.find(description).isPresent(),
                     "rule description '" + description + "' is not a registered RuleDoc id — the failure"
@@ -38,7 +38,7 @@ class RuleRegistryCompletenessTest {
 
     @Test
     void everyPublishedRuleHasUsableGuidance() {
-        for (ArchRule rule : PublishedRules.all()) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
             String description = rule.getDescription();
             Optional<RuleDoc> found = RuleRegistry.find(description);
 
@@ -61,7 +61,7 @@ class RuleRegistryCompletenessTest {
     @Test
     void everyRuleIdIsClaimedByExactlyOneRule() {
         Map<String, Set<ArchRule>> rulesById = new LinkedHashMap<>();
-        for (ArchRule rule : PublishedRules.all()) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
             rulesById.computeIfAbsent(rule.getDescription(),
                             id -> Collections.newSetFromMap(new IdentityHashMap<>()))
                     .add(rule);

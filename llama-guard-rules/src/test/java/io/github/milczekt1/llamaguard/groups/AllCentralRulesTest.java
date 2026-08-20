@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 
 import com.tngtech.archunit.junit.ArchTests;
-import io.github.milczekt1.llamaguard.testsupport.PublishedRules;
+import io.github.milczekt1.llamaguard.reflect.PublishedRules;
 import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -45,7 +45,7 @@ class AllCentralRulesTest {
         // A group whose members are themselves groups (or rule classes reached via ArchTests) must
         // still yield its rules. Before nesting support this returns empty for anything but a group
         // that declares @ArchTest ArchRule fields directly.
-        Set<String> ids = PublishedRules.idSet();
+        Set<String> ids = PublishedRules.idsOf(AllCentralRules.class);
 
         assertEquals(Set.of(
                 "test.class-naming-convention",
