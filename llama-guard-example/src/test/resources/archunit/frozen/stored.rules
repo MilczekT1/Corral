@@ -1,5 +1,7 @@
 #
-#Mon Aug 10 21:38:05 CEST 2026
+#Thu Aug 20 17:53:39 CEST 2026
 acme.no-stdout-in-services=acme.no-stdout-in-services
+logging.no-system-err=logging.no-system-err
+logging.no-system-out=logging.no-system-out
 test.class-naming-convention=test.class-naming-convention
 test.no-mocked-repository-in-integration-test=test.no-mocked-repository-in-integration-test

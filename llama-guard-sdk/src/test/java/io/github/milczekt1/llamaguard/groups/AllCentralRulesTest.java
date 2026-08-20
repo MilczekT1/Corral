@@ -49,6 +49,8 @@ class AllCentralRulesTest {
 
         assertEquals(Set.of(
                 "test.class-naming-convention",
-                "test.no-mocked-repository-in-integration-test"), ids);
+                "test.no-mocked-repository-in-integration-test",
+                "logging.no-system-out",
+                "logging.no-system-err"), ids);
     }
 }

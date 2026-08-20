@@ -26,18 +26,24 @@ flowchart LR
     subgraph lib["llama-guard-sdk"]
         ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
+        LG["LoggingRulesGroup<br/><i>group</i>"]
         R1["TestClassNamingConventionRule"]
         R2["NoMockedRepositoryInIntegrationTestRule"]
+        R3["NoSystemOutRule"]
+        R4["NoSystemErrRule"]
         FMT["AgentFriendlyFailureDisplayFormat"]
     end
 
     CT -->|"ArchTests.in(...)"| ACR
     ACR --> TG
+    ACR --> LG
     TG --> R1
     TG --> R2
-    R1 & R2 -.->|"violation"| FMT
+    LG --> R3
+    LG --> R4
+    R1 & R2 & R3 & R4 -.->|"violation"| FMT
     FMT -.->|"WHY / HOW TO FIX"| OUT["Build output"]
-    R1 & R2 <-->|"known violations"| STORE
+    R1 & R2 & R3 & R4 <-->|"known violations"| STORE
 ```
 
 Each arrow from a group is an `@ArchTest ArchTests` field; each leaf is an `@ArchTest ArchRule`.
@@ -133,6 +139,8 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 |---|---|---|
 | `test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
 | `test.class-naming-convention` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
+| `logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
+| `logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
 
 This table is maintained by hand; nothing in the build checks it.
 
