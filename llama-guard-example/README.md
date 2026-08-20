@@ -8,8 +8,8 @@ rule this project owns.
 | `CentralArchitectureTest` | Wiring the library's rules — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. |
 | `custom/CustomArchitectureTest` | Wiring your own rules alongside the library's. |
-| `archunit/frozen/` | The committed freeze store. Three entries, two files named after their rule ids — the clean rule has no file. |
-| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. |
+| `archunit/frozen/` | The committed freeze store. Five entries, three files named after their rule ids — the clean rules have no file. |
+| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `logging.no-system-out`. |
 
 ## Writing your own rule
 

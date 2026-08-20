@@ -25,4 +25,7 @@ public class AllCentralRules {
 
     @ArchTest
     public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 }
