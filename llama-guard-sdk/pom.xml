@@ -14,7 +14,7 @@
   <packaging>jar</packaging>
 
   <name>LLamaGuard SDK</name>
-  <description>Centralized, freezable ArchUnit rules with agent-friendly failure messages.</description>
+  <description>The framework for authoring documented, freezable ArchUnit rules with agent-friendly failure messages.</description>
 
   <dependencies>
     <dependency>

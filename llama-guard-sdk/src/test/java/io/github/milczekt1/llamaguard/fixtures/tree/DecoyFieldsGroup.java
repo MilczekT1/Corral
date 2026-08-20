@@ -23,7 +23,12 @@ public final class DecoyFieldsGroup {
     public static final ArchRule notAnnotated = noClasses()
             .should().accessField(System.class, "in").as("fixture.decoy-unannotated");
 
-    /** Annotated but non-static — unreadable without an instance, so it cannot be a member. */
+    /**
+     * Deliberately out of scope. ArchUnit does treat this as a member — it instantiates the owner
+     * to read a non-static {@code @ArchTest} field — but this walk constructs nothing, so it skips
+     * it. Static state is what the walk reads; running a constructor to discover a rule is a cost
+     * and a side-effect risk the walk does not take on.
+     */
     @ArchTest
     public final ArchRule instanceField = noClasses()
             .should().accessField(System.class, "in").as("fixture.decoy-instance");
