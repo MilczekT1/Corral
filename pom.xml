@@ -33,6 +33,7 @@
 
   <modules>
     <module>llama-guard-sdk</module>
+    <module>llama-guard-rules</module>
     <module>llama-guard-example</module>
   </modules>
 

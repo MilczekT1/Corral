@@ -31,7 +31,7 @@
     </dependency>
     <dependency>
       <groupId>io.github.milczekt1</groupId>
-      <artifactId>llama-guard-sdk</artifactId>
+      <artifactId>llama-guard-rules</artifactId>
       <version>${project.version}</version>
       <scope>test</scope>
     </dependency>
