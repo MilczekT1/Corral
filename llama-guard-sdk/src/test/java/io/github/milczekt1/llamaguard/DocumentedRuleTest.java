@@ -95,8 +95,10 @@ class DocumentedRuleTest {
     @Test
     void guardAllowsAnEmptyShouldSoAModuleWithNoMatchingClassesStaysGreen() {
         FreezingArchRule guarded = assertInstanceOf(FreezingArchRule.class, new FixtureRule().guard());
+        ArchRule guardedWithStore = guarded.persistIn(new InMemoryViolationStore());
+        JavaClasses noClassesAtAll = nothingToMatch();
 
-        assertDoesNotThrow(() -> guarded.persistIn(new InMemoryViolationStore()).check(nothingToMatch()),
+        assertDoesNotThrow(() -> guardedWithStore.check(noClassesAtAll),
                 "guard() must allow an empty should — without it, adopting a rule turns every module"
                         + " with no matching classes red for a reason the consumer cannot act on");
     }
@@ -109,11 +111,12 @@ class DocumentedRuleTest {
      */
     @Test
     void withoutAllowEmptyShouldTheSameRuleFailsOnAModuleWithNoMatchingClasses() {
-        FreezingArchRule withoutTheFlag = FreezingArchRule.freeze(
-                FixtureRule.RULE.as("fixture.documented-rule-contract-without-allow-empty-should"));
+        ArchRule withoutTheFlag = FreezingArchRule.freeze(
+                        FixtureRule.RULE.as("fixture.documented-rule-contract-without-allow-empty-should"))
+                .persistIn(new InMemoryViolationStore());
+        JavaClasses noClassesAtAll = nothingToMatch();
 
-        assertThrows(AssertionError.class,
-                () -> withoutTheFlag.persistIn(new InMemoryViolationStore()).check(nothingToMatch()));
+        assertThrows(AssertionError.class, () -> withoutTheFlag.check(noClassesAtAll));
     }
 
     /** No classes at all — the shape of a consumer module the rule's {@code should} cannot match. */
