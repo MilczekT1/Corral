@@ -23,7 +23,7 @@ flowchart LR
         STORE[("archunit/frozen<br/><i>committed</i>")]
     end
 
-    subgraph lib["llama-guard-sdk"]
+    subgraph rules["llama-guard-rules"]
         ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
         LG["LoggingRulesGroup<br/><i>group</i>"]
@@ -31,6 +31,10 @@ flowchart LR
         R2["NoMockedRepositoryInIntegrationTestRule"]
         R3["NoSystemOutRule"]
         R4["NoSystemErrRule"]
+    end
+
+    subgraph sdk["llama-guard-sdk<br/><i>framework</i>"]
+        DR["DocumentedRule"]
         FMT["AgentFriendlyFailureDisplayFormat"]
     end
 
@@ -41,6 +45,7 @@ flowchart LR
     TG --> R2
     LG --> R3
     LG --> R4
+    R1 & R2 & R3 & R4 -.->|"implements"| DR
     R1 & R2 & R3 & R4 -.->|"violation"| FMT
     FMT -.->|"WHY / HOW TO FIX"| OUT["Build output"]
     R1 & R2 & R3 & R4 <-->|"known violations"| STORE
@@ -49,6 +54,10 @@ flowchart LR
 Each arrow from a group is an `@ArchTest ArchTests` field; each leaf is an `@ArchTest ArchRule`.
 Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape nests indefinitely —
 `AllCentralRules` is just a group whose members happen to be groups.
+
+The two jars split by role: `llama-guard-sdk` is the framework for authoring rules, `llama-guard-rules`
+is the catalog of rules built on it. Depending on the catalog pulls the framework in transitively;
+depend on the SDK alone to write your own rules without adopting these.
 
 ## Quick start
 
@@ -60,7 +69,7 @@ depend on it:
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-guard-sdk</artifactId>
+  <artifactId>llama-guard-rules</artifactId>
   <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
@@ -207,7 +216,7 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 </servers>
 ```
 
-Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-sdk`.
+Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-rules`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
 [Release](#release-process) publishes released `x.y.z` versions. Snapshots are published manually:
@@ -280,14 +289,18 @@ under `groups/` is a thin wrapper composing rule classes; `AllCentralRules` is a
 
 Packages split by role, and the arrows only point one way:
 
-| package | holds | depends on |
-|---|---|---|
-| root | `DocumentedRule` — the authoring contract | `doc` |
-| `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `store` | `EmptyOmittingViolationStore` | `doc` |
-| `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
-| `rules/<topic>` | the rules themselves | root, `doc` |
-| `groups` | composition only | `rules/<topic>` |
+| module | package | holds | depends on |
+|---|---|---|---|
+| `llama-guard-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
+| `llama-guard-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
+| `llama-guard-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
+| `llama-guard-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
+| `llama-guard-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
+| `llama-guard-rules` | `rules/<topic>` | the rules themselves | root, `doc` |
+| `llama-guard-rules` | `groups` | composition only | `rules/<topic>` |
+
+The module boundary is what enforces the direction: `llama-guard-sdk` has no dependency on
+`llama-guard-rules`, so a framework class importing a concrete rule does not compile.
 
 `store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
 with it, so neither imports the other.
@@ -298,7 +311,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
 
 ### Adding a rule to an existing group
 
-1. Create `rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
+1. Create `llama-guard-rules/src/main/java/io/github/milczekt1/llamaguard/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
    private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
    rule class is recognisable at a glance and never collides with the `*Test` convention its own
    tests follow.
@@ -313,7 +326,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
      initialisation and reads them. Method order does not matter — only fields initialise.
 2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
    rule class nobody points at is never run.
-3. Add fixtures under `src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
+3. Add fixtures under `llama-guard-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
    and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
    are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `RULE`, asserting
    **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
@@ -322,7 +335,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
    `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
    `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
    exists at all, which an interface cannot enforce.
-5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`.
+5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `llama-guard-rules`).
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
 
 ### A rule in more than one group
@@ -357,7 +370,7 @@ rule really does belong under both.
 
 `Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
 
-1. Create `groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
+1. Create `llama-guard-rules/src/main/java/io/github/milczekt1/llamaguard/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
    `@ArchTest ArchTests` field per member.
 2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
    consumer ever evaluates it.
@@ -383,8 +396,9 @@ trigger). Only allowlisted users may trigger it.
       workflow appends it).
 3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
    sets the release version and commits + tags `v<version>` on it (crediting you as
-   co-author), publishes `llama-guard-sdk` and `llama-guard-parent` to GitHub Packages —
-   consumers need the parent pom to resolve the SDK's managed dependency versions — bumps to
+   co-author), publishes `llama-guard-sdk`, `llama-guard-rules` and `llama-guard-parent` to
+   GitHub Packages — consumers need the parent pom to resolve the managed dependency
+   versions — bumps to
    `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
    PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
    once the required build check passes.
@@ -436,8 +450,9 @@ JDK 23+ ignores annotation processors that are only on the classpath. Remove tha
 compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
 misconfiguration cannot pass silently.
 
-Build: `./mvnw verify`. The reactor is `llama-guard-sdk` (the library) and `llama-guard-example` (a working consumer
-with a committed freeze store, which doubles as an end-to-end test of the wiring).
+Build: `./mvnw verify`. The reactor is `llama-guard-sdk` (the framework), `llama-guard-rules` (the rule
+catalog) and `llama-guard-example` (a working consumer with a committed freeze store, which doubles as
+an end-to-end test of the wiring).
 
 ## License
 

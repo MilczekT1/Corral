@@ -47,9 +47,10 @@ class RuleRegistryTest {
     @Test
     void rejectsTwoDifferentDocsSharingAnId() {
         RuleRegistry.register(doc("registry.clash", "first reason"));
+        RuleDoc sameIdDifferentDoc = doc("registry.clash", "conflicting reason");
 
         IllegalStateException e = assertThrows(IllegalStateException.class,
-                () -> RuleRegistry.register(doc("registry.clash", "conflicting reason")));
+                () -> RuleRegistry.register(sameIdDifferentDoc));
         assertTrue(e.getMessage().contains("registry.clash"), e.getMessage());
     }
 
