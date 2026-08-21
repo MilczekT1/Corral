@@ -1,28 +1,35 @@
 package io.github.milczekt1.llamaguard;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import com.tngtech.archunit.library.freeze.ViolationStore;
 import io.github.milczekt1.llamaguard.doc.RuleDoc;
 import io.github.milczekt1.llamaguard.doc.RuleRegistry;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Properties;
 import org.junit.jupiter.api.Test;
 
 /**
  * Pins the four things {@link DocumentedRule#guard()} promises: the doc is registered, the
  * description is the doc id, the rule is frozen, and empty {@code should}s are allowed.
  *
- * <p><strong>Known gap: {@code allowEmptyShould(true)} is not asserted here.</strong> ArchUnit
- * exposes no getter for it — the only way to observe it is to evaluate the rule against classes it
- * matches nothing in and see whether it passes or raises, and because {@code guard()} also freezes,
- * evaluating means standing up a throwaway violation store and pointing ArchUnit's configuration at
- * it. That machinery would cost more than the assertion is worth and would couple this test to the
- * freeze store's on-disk format. Recorded here rather than left silent: if that flag is dropped, no
- * test in this repo goes red, and a consumer module with no matching classes starts failing.
+ * <p>ArchUnit exposes no getter for {@code allowEmptyShould}, so the only way to observe it is to
+ * evaluate the rule against classes it matches nothing in. Evaluating a frozen rule needs a store,
+ * which {@link FreezingArchRule#persistIn} supplies without touching configuration or the disk —
+ * see {@link InMemoryViolationStore}. The assertion is two-sided: dropping the flag must actually
+ * break something, or "does not throw" would pass for the wrong reason.
  */
 class DocumentedRuleTest {
 
@@ -83,5 +90,70 @@ class DocumentedRuleTest {
                 "the raw definition() must not already carry the doc id — guard() is what renames it,"
                         + " and this assertion is what would fail if guard() were simplified into a"
                         + " pass-through");
+    }
+
+    @Test
+    void guardAllowsAnEmptyShouldSoAModuleWithNoMatchingClassesStaysGreen() {
+        FreezingArchRule guarded = assertInstanceOf(FreezingArchRule.class, new FixtureRule().guard());
+
+        assertDoesNotThrow(() -> guarded.persistIn(new InMemoryViolationStore()).check(nothingToMatch()),
+                "guard() must allow an empty should — without it, adopting a rule turns every module"
+                        + " with no matching classes red for a reason the consumer cannot act on");
+    }
+
+    /**
+     * The counterpart that gives the assertion above its teeth: the same raw rule, frozen and
+     * evaluated the same way but WITHOUT {@code allowEmptyShould(true)}, must fail. If ArchUnit ever
+     * stops failing on an empty should by default, this test goes red rather than its sibling
+     * quietly passing for the wrong reason.
+     */
+    @Test
+    void withoutAllowEmptyShouldTheSameRuleFailsOnAModuleWithNoMatchingClasses() {
+        FreezingArchRule withoutTheFlag = FreezingArchRule.freeze(
+                FixtureRule.RULE.as("fixture.documented-rule-contract-without-allow-empty-should"));
+
+        assertThrows(AssertionError.class,
+                () -> withoutTheFlag.persistIn(new InMemoryViolationStore()).check(nothingToMatch()));
+    }
+
+    /** No classes at all — the shape of a consumer module the rule's {@code should} cannot match. */
+    private static JavaClasses nothingToMatch() {
+        return new ClassFileImporter().importClasses();
+    }
+
+    /**
+     * A {@link ViolationStore} held in a map, handed to one rule via
+     * {@link FreezingArchRule#persistIn}.
+     *
+     * <p>Keeps these tests off both ArchUnit's global configuration and the filesystem: a store
+     * registered through {@code freeze.store} is process-wide, and Surefire reuses one JVM, so
+     * setting it here would leak into every sibling test.
+     *
+     * <p>An empty store means the rule is unknown, which is the case under test — a rule being
+     * adopted for the first time seeds whatever it finds and passes.
+     */
+    private static final class InMemoryViolationStore implements ViolationStore {
+
+        private final Map<String, List<String>> violationsByRuleDescription = new HashMap<>();
+
+        @Override
+        public void initialize(Properties properties) {
+            // Nothing to configure: the map is the store.
+        }
+
+        @Override
+        public boolean contains(ArchRule rule) {
+            return violationsByRuleDescription.containsKey(rule.getDescription());
+        }
+
+        @Override
+        public void save(ArchRule rule, List<String> violations) {
+            violationsByRuleDescription.put(rule.getDescription(), List.copyOf(violations));
+        }
+
+        @Override
+        public List<String> getViolations(ArchRule rule) {
+            return violationsByRuleDescription.getOrDefault(rule.getDescription(), List.of());
+        }
     }
 }
