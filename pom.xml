@@ -55,27 +55,6 @@
     <sonar.host.url>https://sonarcloud.io</sonar.host.url>
     <sonar.projectKey>MilczekT1_LLamaGuard</sonar.projectKey>
     <sonar.moduleKey>${project.groupId}:${project.artifactId}</sonar.moduleKey>
-    <!--
-      Deliberately broken code, kept for the rules to be tested against. A fixture is written to
-      violate a convention: it holds a test method that never runs, or an empty body, or a name
-      Surefire would skip. Sonar reads those as sloppy tests, which is exactly the verdict the
-      fixture is there to provoke, so the test-hygiene rules are switched off for them rather than
-      "fixed" — a fixture that satisfies Sonar no longer proves the rule that scans it works.
-      Surefire and Failsafe already exclude **/fixtures/**; this is the same exclusion for Sonar.
-    -->
-    <sonar.issue.ignore.multicriteria>fixtureEmptyMethods,fixtureNoAssertions,fixtureTestVisibility,exampleEmptyMethods,exampleNoAssertions</sonar.issue.ignore.multicriteria>
-    <sonar.issue.ignore.multicriteria.fixtureEmptyMethods.ruleKey>java:S1186</sonar.issue.ignore.multicriteria.fixtureEmptyMethods.ruleKey>
-    <sonar.issue.ignore.multicriteria.fixtureEmptyMethods.resourceKey>**/fixtures/**/*</sonar.issue.ignore.multicriteria.fixtureEmptyMethods.resourceKey>
-    <sonar.issue.ignore.multicriteria.fixtureNoAssertions.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.fixtureNoAssertions.ruleKey>
-    <sonar.issue.ignore.multicriteria.fixtureNoAssertions.resourceKey>**/fixtures/**/*</sonar.issue.ignore.multicriteria.fixtureNoAssertions.resourceKey>
-    <sonar.issue.ignore.multicriteria.fixtureTestVisibility.ruleKey>java:S5786</sonar.issue.ignore.multicriteria.fixtureTestVisibility.ruleKey>
-    <sonar.issue.ignore.multicriteria.fixtureTestVisibility.resourceKey>**/fixtures/**/*</sonar.issue.ignore.multicriteria.fixtureTestVisibility.resourceKey>
-    <!-- The consumer example ships one intentionally misnamed test class so the rule has something to flag. -->
-    <sonar.issue.ignore.multicriteria.exampleEmptyMethods.ruleKey>java:S1186</sonar.issue.ignore.multicriteria.exampleEmptyMethods.ruleKey>
-    <sonar.issue.ignore.multicriteria.exampleEmptyMethods.resourceKey>**/InvalidlyNamedTestClass.java</sonar.issue.ignore.multicriteria.exampleEmptyMethods.resourceKey>
-    <sonar.issue.ignore.multicriteria.exampleNoAssertions.ruleKey>java:S2699</sonar.issue.ignore.multicriteria.exampleNoAssertions.ruleKey>
-    <sonar.issue.ignore.multicriteria.exampleNoAssertions.resourceKey>**/InvalidlyNamedTestClass.java</sonar.issue.ignore.multicriteria.exampleNoAssertions.resourceKey>
-
     <sonar.coverage.jacoco.xmlReportPaths>
       ${project.build.directory}/coverage-reports/merged-test-coverage-report/jacoco.xml
     </sonar.coverage.jacoco.xmlReportPaths>
