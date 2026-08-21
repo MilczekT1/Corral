@@ -18,8 +18,14 @@ import lombok.Builder;
 @Builder(builderClassName = "Builder")
 public record RuleDoc(String id, String why, String howToFix, String howNotToFix) {
 
-    /** Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code db.no-spring-transactional}. */
-    private static final Pattern ID_PATTERN = Pattern.compile("^[a-z0-9]+(\\.[a-z0-9-]+)+$");
+    /**
+     * Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code db.no-spring-transactional}.
+     *
+     * <p>Quantifiers are possessive throughout. Nothing here needs to backtrack — a segment stops at
+     * the dot it cannot match — and Java implements greedy repetition of a group by recursing once
+     * per iteration, so the greedy spelling would blow the stack on a long enough input.
+     */
+    private static final Pattern ID_PATTERN = Pattern.compile("^[a-z0-9]++(?:\\.[a-z0-9-]++)++$");
 
     public RuleDoc {
         requireText(id, "id");

@@ -37,7 +37,7 @@ class DocumentedRuleTest {
 
     private static final class FixtureRule implements DocumentedRule {
 
-        private static final ArchRule RULE = noClasses().should().accessField(System.class, "in");
+        private static final ArchRule DEFINITION = noClasses().should().accessField(System.class, "in");
 
         private static final RuleDoc DOC = RuleDoc.builder()
                 .id(DOC_ID)
@@ -47,7 +47,7 @@ class DocumentedRuleTest {
 
         @Override
         public ArchRule definition() {
-            return RULE;
+            return DEFINITION;
         }
 
         @Override
@@ -112,7 +112,7 @@ class DocumentedRuleTest {
     @Test
     void withoutAllowEmptyShouldTheSameRuleFailsOnAModuleWithNoMatchingClasses() {
         ArchRule withoutTheFlag = FreezingArchRule.freeze(
-                        FixtureRule.RULE.as("fixture.documented-rule-contract-without-allow-empty-should"))
+                        FixtureRule.DEFINITION.as("fixture.documented-rule-contract-without-allow-empty-should"))
                 .persistIn(new InMemoryViolationStore());
         JavaClasses noClassesAtAll = nothingToMatch();
 

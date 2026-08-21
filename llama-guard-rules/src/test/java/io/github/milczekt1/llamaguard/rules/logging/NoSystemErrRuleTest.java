@@ -20,14 +20,14 @@ class NoSystemErrRuleTest {
 
     @Test
     void flagsAnyMethodCalledOnStderr() {
-        String report = report(NoSystemErrRule.RULE);
+        String report = report(NoSystemErrRule.DEFINITION);
 
         assertTrue(report.contains("StderrCaller"), report);
     }
 
     @Test
     void staysSilentOnClassesThatWriteToNeitherStream() {
-        String report = report(NoSystemErrRule.RULE);
+        String report = report(NoSystemErrRule.DEFINITION);
 
         assertFalse(report.contains("SilentComponent"), report);
     }
@@ -36,7 +36,7 @@ class NoSystemErrRuleTest {
     void ignoresStdoutWrites() {
         // The sibling rule owns System.out. Separate ids are separate freeze-store keys, so a
         // consumer's stdout debt must not land under this rule's entry.
-        String report = report(NoSystemErrRule.RULE);
+        String report = report(NoSystemErrRule.DEFINITION);
 
         assertFalse(report.contains("PrintlnIntCaller"), report);
         assertFalse(report.contains("PrintfCaller"), report);
@@ -47,7 +47,7 @@ class NoSystemErrRuleTest {
     void doesNotSeePrintStackTrace() {
         // Throwable.printStackTrace() writes to System.err from inside the JDK, so the calling
         // class never accesses the field. The doc argues against it anyway; the rule cannot.
-        String report = report(NoSystemErrRule.RULE);
+        String report = report(NoSystemErrRule.DEFINITION);
 
         assertFalse(report.contains("PrintStackTraceCaller"), report);
     }

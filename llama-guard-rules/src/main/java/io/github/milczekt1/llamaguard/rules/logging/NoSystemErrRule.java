@@ -44,7 +44,7 @@ public final class NoSystemErrRule implements DocumentedRule {
                     the print: the print is the wrong destination, not the wrong intent.""")
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .should().accessField(System.class, "err");
 
     @ArchTest
@@ -52,7 +52,7 @@ public final class NoSystemErrRule implements DocumentedRule {
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

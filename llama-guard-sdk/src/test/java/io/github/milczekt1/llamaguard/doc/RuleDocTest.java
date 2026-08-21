@@ -44,6 +44,14 @@ class RuleDocTest {
     }
 
     @Test
+    void acceptsIdsOfAnyNamespaceDepth() {
+        // The id pattern repeats a group possessively; two segments and ten must behave alike.
+        assertEquals("db.no-spring-transactional", valid().id("db.no-spring-transactional").build().id());
+        assertEquals("db.jpa.no-open-session-in-view", valid().id("db.jpa.no-open-session-in-view").build().id());
+        assertTrue(RuleDoc.isId("a.b.c.d.e.f.g.h.i.j"));
+    }
+
+    @Test
     void rejectsIdsThatWouldMakeUnstableOrUnreadableFreezeKeys() {
         // The id IS the freeze-store key: no spaces, no upper case, must be dot-namespaced.
         RuleDoc.Builder notNamespaced = valid().id("noSpringTransactional");

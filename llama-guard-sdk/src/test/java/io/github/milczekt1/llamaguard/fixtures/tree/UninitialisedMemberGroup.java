@@ -17,8 +17,8 @@ import com.tngtech.archunit.lang.ArchRule;
 public final class UninitialisedMemberGroup {
 
     @ArchTest
-    public static final ArchRule declaredAboveWhatItReads = UninitialisedMemberGroup.RULE;
+    public static final ArchRule declaredAboveWhatItReads = UninitialisedMemberGroup.DEFINITION;
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .should().accessField(System.class, "in").as("fixture.uninitialised");
 }
