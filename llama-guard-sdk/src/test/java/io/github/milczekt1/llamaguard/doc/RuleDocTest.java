@@ -34,17 +34,25 @@ class RuleDocTest {
 
     @Test
     void rejectsBlankRequiredFields() {
-        assertThrows(IllegalArgumentException.class, () -> valid().why("   ").build());
-        assertThrows(IllegalArgumentException.class, () -> valid().howToFix(null).build());
-        assertThrows(IllegalArgumentException.class, () -> valid().id("").build());
+        RuleDoc.Builder whitespaceOnlyWhy = valid().why("   ");
+        RuleDoc.Builder nullHowToFix = valid().howToFix(null);
+        RuleDoc.Builder emptyId = valid().id("");
+
+        assertThrows(IllegalArgumentException.class, whitespaceOnlyWhy::build);
+        assertThrows(IllegalArgumentException.class, nullHowToFix::build);
+        assertThrows(IllegalArgumentException.class, emptyId::build);
     }
 
     @Test
     void rejectsIdsThatWouldMakeUnstableOrUnreadableFreezeKeys() {
         // The id IS the freeze-store key: no spaces, no upper case, must be dot-namespaced.
-        assertThrows(IllegalArgumentException.class, () -> valid().id("noSpringTransactional").build());
-        assertThrows(IllegalArgumentException.class, () -> valid().id("db.No Spring Tx").build());
-        assertThrows(IllegalArgumentException.class, () -> valid().id("DB.no-spring-tx").build());
+        RuleDoc.Builder notNamespaced = valid().id("noSpringTransactional");
+        RuleDoc.Builder containsSpaces = valid().id("db.No Spring Tx");
+        RuleDoc.Builder upperCaseNamespace = valid().id("DB.no-spring-tx");
+
+        assertThrows(IllegalArgumentException.class, notNamespaced::build);
+        assertThrows(IllegalArgumentException.class, containsSpaces::build);
+        assertThrows(IllegalArgumentException.class, upperCaseNamespace::build);
     }
 
 }
