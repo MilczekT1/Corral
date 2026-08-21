@@ -69,7 +69,7 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
         return JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isMetaAnnotatedWith);
     }
 
-    static final ArchRule RULE = classes()
+    static final ArchRule DEFINITION = classes()
             .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
                     TestClassNamingConventionRule::isJUnitTestMethod))
             .and().areNotMemberClasses()
@@ -82,7 +82,7 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

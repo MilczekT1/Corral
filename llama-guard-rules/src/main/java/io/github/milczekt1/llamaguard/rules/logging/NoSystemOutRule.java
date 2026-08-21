@@ -44,7 +44,7 @@ public final class NoSystemOutRule implements DocumentedRule {
                     of logging it: the message was worth writing, it was written to the wrong place.""")
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .should().accessField(System.class, "out");
 
     @ArchTest
@@ -52,7 +52,7 @@ public final class NoSystemOutRule implements DocumentedRule {
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

@@ -48,7 +48,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
                     in Repository or Dao. Both dodge the matcher and leave the problem in place.""")
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .that().haveSimpleNameEndingWith("IT")
             .should(declareAMockedRepositoryOrDaoField());
 
@@ -57,7 +57,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

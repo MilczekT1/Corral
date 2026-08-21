@@ -20,7 +20,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void flagsMockedRepositoryInAClassNamedIT() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertTrue(report.contains("MockingRepositoryIT"), report);
         assertTrue(report.contains("orderRepository"), report);
@@ -28,7 +28,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void flagsMockedDaoInAClassNamedIT() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertTrue(report.contains("MockingDaoIT"), report);
         assertTrue(report.contains("orderDao"), report);
@@ -36,7 +36,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void flagsMockedRepositoryInheritedFromABaseTestClass() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertTrue(report.contains("inheritedOrderRepository"),
                 "a mock parked on a base class still belongs to the IT that inherits it: " + report);
@@ -46,7 +46,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void staysSilentAboutTheBaseClassItself() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertFalse(report.contains("inherited by AbstractMockingRepositoryTestBase"),
                 "the base class is not named IT, so it is not an integration test: " + report);
@@ -54,7 +54,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void allowsMockingNonPersistenceCollaboratorsInIntegrationTests() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertFalse(report.contains("MockingGatewayIT"),
                 "only Repository/Dao types are forbidden: " + report);
@@ -62,7 +62,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void allowsUnitTestsToMockRepositories() {
-        String report = report(NoMockedRepositoryInIntegrationTestRule.RULE);
+        String report = report(NoMockedRepositoryInIntegrationTestRule.DEFINITION);
 
         assertFalse(report.contains("PlainUnitTest"),
                 "the rule targets integration tests only: " + report);

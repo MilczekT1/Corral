@@ -19,7 +19,7 @@ public final class BetaFixtureRule implements DocumentedRule {
             .howToFix("Nothing to fix — this rule is never evaluated against real code.")
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .should().accessField(System.class, "in");
 
     @ArchTest
@@ -27,7 +27,7 @@ public final class BetaFixtureRule implements DocumentedRule {
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

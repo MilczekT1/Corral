@@ -14,13 +14,13 @@ import io.github.milczekt1.llamaguard.doc.RuleRegistry;
  * <pre>{@code
  * public final class NoStdoutInServicesRule implements DocumentedRule {
  *
- *     static final ArchRule RULE = noClasses()...;
+ *     static final ArchRule DEFINITION = noClasses()...;
  *     static final RuleDoc DOC = RuleDoc.builder()...build();
  *
  *     @ArchTest
  *     public static final ArchRule rule = new NoStdoutInServicesRule().guard();
  *
- *     @Override public ArchRule definition() { return RULE; }
+ *     @Override public ArchRule definition() { return DEFINITION; }
  *     @Override public RuleDoc doc() { return DOC; }
  * }
  * }</pre>

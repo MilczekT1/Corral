@@ -1,5 +1,7 @@
 # LLamaGuard
 
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_LLamaGuard)
+
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
 test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
 
@@ -316,19 +318,19 @@ keep in step, and no way to declare a member that consumers never evaluate.
    rule class is recognisable at a glance and never collides with the `*Test` convention its own
    tests follow.
    - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
-     `^[a-z0-9]+(\.[a-z0-9-]+)+$`. Returned from `doc()`.
-   - `static final ArchRule RULE` — the raw rule, package-private. Returned from `definition()`.
+     `^[a-z0-9]++(?:\.[a-z0-9-]++)++$`. Returned from `doc()`.
+   - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
      Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
      rule-correctness tests meaningless.
    - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
      registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`. **Declare it below `DOC` and `RULE`**: it runs during class
+     allows an empty `should`. **Declare it below `DOC` and `DEFINITION`**: it runs during class
      initialisation and reads them. Method order does not matter — only fields initialise.
 2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
    rule class nobody points at is never run.
 3. Add fixtures under `llama-guard-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
    and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
-   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `RULE`, asserting
+   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `DEFINITION`, asserting
    **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
    ever finds nothing.
 4. Assert in the rule's own test that the published field carries the doc id, as

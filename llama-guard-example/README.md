@@ -34,14 +34,14 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
             .howNotToFix(...)
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .that().resideInAPackage("..service..")
             .should().callMethod(PrintStream.class, "println", String.class);
 
     @ArchTest
     public static final ArchRule rule = new NoStdoutInServicesRule().guard();
 
-    @Override public ArchRule definition() { return RULE; }
+    @Override public ArchRule definition() { return DEFINITION; }
 
     @Override public RuleDoc doc() { return DOC; }
 }

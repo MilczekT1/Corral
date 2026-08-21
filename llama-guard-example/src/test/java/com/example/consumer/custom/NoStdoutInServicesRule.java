@@ -38,7 +38,7 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
                     then silence in test configuration.""")
             .build();
 
-    static final ArchRule RULE = noClasses()
+    static final ArchRule DEFINITION = noClasses()
             .that().resideInAPackage("..service..")
             .should().callMethod(PrintStream.class, "println", String.class);
 
@@ -47,7 +47,7 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
     @Override
     public ArchRule definition() {
-        return RULE;
+        return DEFINITION;
     }
 
     @Override

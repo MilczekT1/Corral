@@ -8,6 +8,8 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class NoSystemOutRuleTest {
 
@@ -18,52 +20,44 @@ class NoSystemOutRuleTest {
         return String.join("\n", rule.allowEmptyShould(true).evaluate(FIXTURES).getFailureReport().getDetails());
     }
 
-    @Test
-    void flagsOverloadsOfPrintlnOtherThanTheStringOne() {
-        // The gap that motivated the rule: matching callMethod(println, String.class) misses this.
-        String report = report(NoSystemOutRule.RULE);
+    /**
+     * Every shape of write the field match has to catch:
+     *
+     * <ul>
+     *   <li>{@code PrintlnIntCaller} — the gap that motivated the rule: matching
+     *       {@code callMethod(println, String.class)} misses this overload entirely.
+     *   <li>{@code PrintfCaller} — printf and print are not println at all; only the field access
+     *       reaches them.
+     *   <li>{@code StaticInitializerPrinter} — a write from a static initializer, which the field
+     *       match reports like any other code location.
+     * </ul>
+     */
+    @ParameterizedTest(name = "flags {0}")
+    @ValueSource(strings = {"PrintlnIntCaller", "PrintfCaller", "StaticInitializerPrinter"})
+    void flagsEveryWayOfWritingToTheStream(String fixture) {
+        String report = report(NoSystemOutRule.DEFINITION);
 
-        assertTrue(report.contains("PrintlnIntCaller"), report);
+        assertTrue(report.contains(fixture), report);
     }
 
-    @Test
-    void flagsEveryOtherWayOfWritingToTheStream() {
-        // printf and print are not println at all; the field access is what catches them.
-        String report = report(NoSystemOutRule.RULE);
+    /**
+     * Every shape the rule must leave alone:
+     *
+     * <ul>
+     *   <li>{@code SilentComponent} — touches neither stream.
+     *   <li>{@code StderrCaller} — the sibling rule owns System.err. Two ids mean two freeze-store
+     *       keys, so overlap here would record the same debt twice.
+     *   <li>{@code PrintStackTraceCaller} — known and accepted: {@code Throwable.printStackTrace()}
+     *       touches the field from inside the JDK, so the calling class never accesses it. Pinned so
+     *       the gap is a decision, not a surprise.
+     * </ul>
+     */
+    @ParameterizedTest(name = "stays silent on {0}")
+    @ValueSource(strings = {"SilentComponent", "StderrCaller", "PrintStackTraceCaller"})
+    void staysSilentOnClassesTheRuleDoesNotOwn(String fixture) {
+        String report = report(NoSystemOutRule.DEFINITION);
 
-        assertTrue(report.contains("PrintfCaller"), report);
-    }
-
-    @Test
-    void flagsWritesFromAStaticInitializer() {
-        String report = report(NoSystemOutRule.RULE);
-
-        assertTrue(report.contains("StaticInitializerPrinter"), report);
-    }
-
-    @Test
-    void staysSilentOnClassesThatWriteToNeitherStream() {
-        String report = report(NoSystemOutRule.RULE);
-
-        assertFalse(report.contains("SilentComponent"), report);
-    }
-
-    @Test
-    void ignoresStderrWrites() {
-        // The sibling rule owns System.err. Two ids mean two freeze-store keys, so overlap here
-        // would record the same debt twice.
-        String report = report(NoSystemOutRule.RULE);
-
-        assertFalse(report.contains("StderrCaller"), report);
-    }
-
-    @Test
-    void doesNotSeePrintStackTrace() {
-        // Known and accepted: Throwable.printStackTrace() touches the field from inside the JDK,
-        // so the calling class never accesses it. Pinned so the gap is a decision, not a surprise.
-        String report = report(NoSystemOutRule.RULE);
-
-        assertFalse(report.contains("PrintStackTraceCaller"), report);
+        assertFalse(report.contains(fixture), report);
     }
 
     @Test
