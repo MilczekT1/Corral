@@ -1,11 +1,6 @@
 # LLamaGuard
 
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_LLamaGuard)
-[![Reliability](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=reliability_rating)](https://sonarcloud.io/component_measures?id=MilczekT1_LLamaGuard&metric=reliability_rating)
-[![Security](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=security_rating)](https://sonarcloud.io/component_measures?id=MilczekT1_LLamaGuard&metric=security_rating)
-[![Maintainability](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=sqale_rating)](https://sonarcloud.io/component_measures?id=MilczekT1_LLamaGuard&metric=sqale_rating)
-[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=coverage)](https://sonarcloud.io/component_measures?id=MilczekT1_LLamaGuard&metric=coverage)
-[![Duplication](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=duplicated_lines_density)](https://sonarcloud.io/component_measures?id=MilczekT1_LLamaGuard&metric=duplicated_lines_density)
 
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
 test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
