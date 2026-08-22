@@ -99,7 +99,7 @@ jobs:
           TRIGGER_ACTOR: ${{ github.actor }}
           TRIGGER_ACTOR_ID: ${{ github.actor_id }}
         run: |
-          git commit -a -m "Release LLamaGuard $RELEASE_VERSION" \
+          git commit -a -m "Release Corral $RELEASE_VERSION" \
             -m "Co-authored-by: ${TRIGGER_ACTOR} <${TRIGGER_ACTOR_ID}+${TRIGGER_ACTOR}@users.noreply.github.com>"
           git tag "v$RELEASE_VERSION"
 
@@ -157,7 +157,7 @@ jobs:
         run: ./mvnw versions:set -DnewVersion="$NEXT_VERSION-SNAPSHOT" -DprocessAllModules=true -DgenerateBackupPoms=false ${{ env.MVN_CONFIG }}
 
       - name: Commit next development version
-        run: git commit -a -m "Prepare next release LLamaGuard $NEXT_VERSION-SNAPSHOT"
+        run: git commit -a -m "Prepare next release Corral $NEXT_VERSION-SNAPSHOT"
 
       - name: Push release branch and tag
         run: git push --atomic origin "$RELEASE_BRANCH" "v$RELEASE_VERSION"
@@ -175,13 +175,13 @@ jobs:
           gh pr create \
             --base main \
             --head "$RELEASE_BRANCH" \
-            --title "Release LLamaGuard $RELEASE_VERSION" \
+            --title "Release Corral $RELEASE_VERSION" \
             --body "Automated release PR for \`v$RELEASE_VERSION\`. Triggered by @${TRIGGER_ACTOR}." \
             --assignee "$TRIGGER_ACTOR" || \
           gh pr create \
             --base main \
             --head "$RELEASE_BRANCH" \
-            --title "Release LLamaGuard $RELEASE_VERSION" \
+            --title "Release Corral $RELEASE_VERSION" \
             --body "Automated release PR for \`v$RELEASE_VERSION\`. Triggered by @${TRIGGER_ACTOR}."
 
       - name: Enable auto-merge
