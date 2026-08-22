@@ -38,7 +38,7 @@
   </modules>
 
   <properties>
-    <maven.compiler.release>25</maven.compiler.release>
+    <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <archunit.version>1.4.2</archunit.version>
     <junit.version>5.11.3</junit.version>
