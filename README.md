@@ -284,98 +284,15 @@ and drops the file. Three things to know:
 
 ## Extending
 
-### The shape
+Adding a rule, adding a group, and the package layout that keeps the dependency arrows pointing one
+way are covered in **[CONTRIBUTING.md](CONTRIBUTING.md)**:
 
-One rule, one class. A rule class under `rules/<topic>/` owns everything about that rule; a group
-under `groups/` is a thin wrapper composing rule classes; `AllCentralRules` is a group of groups.
-
-Packages split by role, and the arrows only point one way:
-
-| module | package | holds | depends on |
-|---|---|---|---|
-| `corral-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
-| `corral-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
-| `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
-| `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
-| `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc` |
-| `corral-rules` | `groups` | composition only | `rules/<topic>` |
-
-The module boundary is what enforces the direction: `corral-sdk` has no dependency on
-`corral-rules`, so a framework class importing a concrete rule does not compile.
-
-`store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
-with it, so neither imports the other.
-
-Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
-exactly those fields and nothing else, so the field *is* the membership — there is no second list to
-keep in step, and no way to declare a member that consumers never evaluate.
-
-### Adding a rule to an existing group
-
-1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
-   private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
-   rule class is recognisable at a glance and never collides with the `*Test` convention its own
-   tests follow.
-   - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
-     `^[a-z0-9]++(?:\.[a-z0-9-]++)++$`. Returned from `doc()`.
-   - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
-     Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
-     rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
-     registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`. **Declare it below `DOC` and `DEFINITION`**: it runs during class
-     initialisation and reads them. Method order does not matter — only fields initialise.
-2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
-   rule class nobody points at is never run.
-3. Add fixtures under `corral-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
-   and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
-   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `DEFINITION`, asserting
-   **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
-   ever finds nothing.
-4. Assert in the rule's own test that the published field carries the doc id, as
-   `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
-   `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
-   exists at all, which an interface cannot enforce.
-5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `corral-rules`).
-6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
-
-### A rule in more than one group
-
-Membership is a graph, not a tree: nothing stops two groups naming the same rule class, and over
-time a rule genuinely belonging to two axes (say testing *and* security) will.
-
-That works. It also costs something:
-
-| | |
-|---|---|
-| JUnit nodes | **one per path** — the rule appears once under each group |
-| Rule evaluation | **once per node** — predicates re-run over the same classes |
-| Class import | once — ArchUnit caches `JavaClasses` per `@AnalyzeClasses` |
-| Freeze store | one entry — both nodes share the description, so they cannot disagree |
-
-Nothing deduplicates the nodes: ArchUnit builds one per `@ArchTest` field it reaches, and those
-fields are static. Collapsing them would mean owning node creation, which is not worth it for a
-repeated predicate pass over already-imported classes.
-
-`everyRuleIdIsClaimedByExactlyOneRule` allows this on purpose. It groups published rules by id and
-requires **one distinct rule object** per id — a rule reached by two paths is one object read from
-one `static final` field, while two rules colliding on an id are two. That collision is the real
-hazard, because the id is the freeze-store key, so the two would read each other's recorded
-violations as their own. `RuleRegistry` does not catch it: its guard compares docs, so two rules
-carrying identical documentation pass straight through.
-
-Default to one group per rule and compose by nesting groups. Reach for a second parent when the
-rule really does belong under both.
-
-### Adding a group
-
-`Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
-
-1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
-   `@ArchTest ArchTests` field per member.
-2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
-   consumer ever evaluates it.
+- [The shape](CONTRIBUTING.md#the-shape) — one rule one class, and which package owns what
+- [Adding a rule to an existing group](CONTRIBUTING.md#adding-a-rule-to-an-existing-group)
+- [A rule in more than one group](CONTRIBUTING.md#a-rule-in-more-than-one-group)
+- [Adding a group](CONTRIBUTING.md#adding-a-group)
+- [What breaks consumers](CONTRIBUTING.md#what-breaks-consumers) — rule ids and predicate text are
+  both freeze-store keys, so changing either is a breaking change
 
 ## CI/CD
 
@@ -444,17 +361,18 @@ input is only asserted against what is checked out, never used to check anything
 
 ## Contributing
 
-Uses [Lombok](https://projectlombok.org/). Install your IDE's Lombok plugin, or the IDE reports errors
-on generated members that `mvn verify` compiles cleanly.
+See **[CONTRIBUTING.md](CONTRIBUTING.md)** for build instructions, the Lombok setup, commit
+conventions and what a pull request is expected to cover.
 
-Lombok is wired through `annotationProcessorPaths` in the root `pom.xml`, not just as a dependency —
-JDK 23+ ignores annotation processors that are only on the classpath. Remove that block and
-compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
-misconfiguration cannot pass silently.
+Quick version: `./mvnw verify`. The reactor is `corral-sdk` (the framework), `corral-rules` (the
+rule catalog) and `corral-example` (a working consumer with a committed freeze store, which doubles
+as an end-to-end test of the wiring). Java 17 is the baseline. Install your IDE's
+[Lombok](https://projectlombok.org/) plugin or the IDE reports errors on generated members that
+`mvn verify` compiles cleanly.
 
-Build: `./mvnw verify`. The reactor is `corral-sdk` (the framework), `corral-rules` (the rule
-catalog) and `corral-example` (a working consumer with a committed freeze store, which doubles as
-an end-to-end test of the wiring).
+Participation is governed by our [Code of Conduct](CODE_OF_CONDUCT.md).
+
+Security vulnerabilities go through a [private advisory](SECURITY.md), not a public issue.
 
 ## License
 
