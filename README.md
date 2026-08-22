@@ -1,6 +1,6 @@
-# LLamaGuard
+# Corral
 
-[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_LLamaGuard&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_LLamaGuard)
+[![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral)
 
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
 test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
@@ -25,7 +25,7 @@ flowchart LR
         STORE[("archunit/frozen<br/><i>committed</i>")]
     end
 
-    subgraph rules["llama-guard-rules"]
+    subgraph rules["corral-rules"]
         ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
         LG["LoggingRulesGroup<br/><i>group</i>"]
@@ -35,7 +35,7 @@ flowchart LR
         R4["NoSystemErrRule"]
     end
 
-    subgraph sdk["llama-guard-sdk<br/><i>framework</i>"]
+    subgraph sdk["corral-sdk<br/><i>framework</i>"]
         DR["DocumentedRule"]
         FMT["AgentFriendlyFailureDisplayFormat"]
     end
@@ -57,7 +57,7 @@ Each arrow from a group is an `@ArchTest ArchTests` field; each leaf is an `@Arc
 Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape nests indefinitely —
 `AllCentralRules` is just a group whose members happen to be groups.
 
-The two jars split by role: `llama-guard-sdk` is the framework for authoring rules, `llama-guard-rules`
+The two jars split by role: `corral-sdk` is the framework for authoring rules, `corral-rules`
 is the catalog of rules built on it. Depending on the catalog pulls the framework in transitively;
 depend on the SDK alone to write your own rules without adopting these.
 
@@ -71,7 +71,7 @@ depend on it:
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
-  <artifactId>llama-guard-rules</artifactId>
+  <artifactId>corral-rules</artifactId>
   <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
@@ -94,7 +94,7 @@ class CentralArchitectureTest {
 
 ```properties
 freeze.store.default.path=src/test/resources/archunit/frozen
-failureDisplayFormat=io.github.milczekt1.llamaguard.format.AgentFriendlyFailureDisplayFormat
+failureDisplayFormat=io.github.milczekt1.corral.format.AgentFriendlyFailureDisplayFormat
 ```
 
 **4. Seed the freeze store once, and commit it:**
@@ -199,7 +199,7 @@ The artifact is published to GitHub Packages, which Maven does not know about by
   <repository>
     <id>github</id>
     <name>GitHub Packages</name>
-    <url>https://maven.pkg.github.com/MilczekT1/LLamaGuard</url>
+    <url>https://maven.pkg.github.com/MilczekT1/Corral</url>
     <snapshots><enabled>true</enabled></snapshots>
   </repository>
 </repositories>
@@ -218,7 +218,7 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 </servers>
 ```
 
-Without both pieces the build fails with `Could not find artifact io.github.milczekt1:llama-guard-rules`.
+Without both pieces the build fails with `Could not find artifact io.github.milczekt1:corral-rules`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
 [Release](#release-process) publishes released `x.y.z` versions. Snapshots are published manually:
@@ -236,7 +236,7 @@ you want something to depend on in the meantime.
 |---|---|---|
 | `freeze.store.default.path` | yes | Resolved against the JVM's **working directory**, not the classpath. Maven sets it to the module directory; an IDE run configuration with a different working directory will not find the store. |
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
-| `freeze.store` | optional | Set to `io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
+| `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -249,7 +249,7 @@ you want something to depend on in the meantime.
 
 ### The freeze store
 
-`freeze.store=io.github.milczekt1.llamaguard.store.EmptyOmittingViolationStore` changes two things
+`freeze.store=io.github.milczekt1.corral.store.EmptyOmittingViolationStore` changes two things
 about how the store is written.
 
 **Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
@@ -293,16 +293,16 @@ Packages split by role, and the arrows only point one way:
 
 | module | package | holds | depends on |
 |---|---|---|---|
-| `llama-guard-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
-| `llama-guard-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `llama-guard-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
-| `llama-guard-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
-| `llama-guard-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
-| `llama-guard-rules` | `rules/<topic>` | the rules themselves | root, `doc` |
-| `llama-guard-rules` | `groups` | composition only | `rules/<topic>` |
+| `corral-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
+| `corral-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
+| `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
+| `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
+| `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
+| `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc` |
+| `corral-rules` | `groups` | composition only | `rules/<topic>` |
 
-The module boundary is what enforces the direction: `llama-guard-sdk` has no dependency on
-`llama-guard-rules`, so a framework class importing a concrete rule does not compile.
+The module boundary is what enforces the direction: `corral-sdk` has no dependency on
+`corral-rules`, so a framework class importing a concrete rule does not compile.
 
 `store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
 with it, so neither imports the other.
@@ -313,7 +313,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
 
 ### Adding a rule to an existing group
 
-1. Create `llama-guard-rules/src/main/java/io/github/milczekt1/llamaguard/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
+1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
    private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
    rule class is recognisable at a glance and never collides with the `*Test` convention its own
    tests follow.
@@ -328,7 +328,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
      initialisation and reads them. Method order does not matter — only fields initialise.
 2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
    rule class nobody points at is never run.
-3. Add fixtures under `llama-guard-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
+3. Add fixtures under `corral-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
    and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
    are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `DEFINITION`, asserting
    **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
@@ -337,7 +337,7 @@ keep in step, and no way to declare a member that consumers never evaluate.
    `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
    `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
    exists at all, which an interface cannot enforce.
-5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `llama-guard-rules`).
+5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `corral-rules`).
 6. Add a row to the [Rules](#rules) table. Nothing enforces this — it is on you.
 
 ### A rule in more than one group
@@ -372,7 +372,7 @@ rule really does belong under both.
 
 `Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
 
-1. Create `llama-guard-rules/src/main/java/io/github/milczekt1/llamaguard/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
+1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
    `@ArchTest ArchTests` field per member.
 2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
    consumer ever evaluates it.
@@ -384,7 +384,7 @@ Every push and pull request to `main` runs **Build Pipeline**
 `sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
 which fails the build at `verify` below the thresholds in the root `pom.xml`
 (`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
-`llama-guard-example` overrides them to zero — it is a wiring demo, not a tested component.
+`corral-example` overrides them to zero — it is a wiring demo, not a tested component.
 
 ### Release process
 
@@ -398,7 +398,7 @@ trigger). Only allowlisted users may trigger it.
       workflow appends it).
 3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
    sets the release version and commits + tags `v<version>` on it (crediting you as
-   co-author), publishes `llama-guard-sdk`, `llama-guard-rules` and `llama-guard-parent` to
+   co-author), publishes `corral-sdk`, `corral-rules` and `corral-parent` to
    GitHub Packages — consumers need the parent pom to resolve the managed dependency
    versions — bumps to
    `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
@@ -411,7 +411,7 @@ GitHub Packages cannot be undone, so the tests and the coverage gate run against
 about to be released. The `deploy` step itself then uses `-DskipTests=true` rather than testing
 twice.
 
-`llama-guard-example` is never published — its `maven-deploy-plugin` is skipped, and the
+`corral-example` is never published — its `maven-deploy-plugin` is skipped, and the
 workflow's already-published check skips it for the same reason.
 
 The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
@@ -419,7 +419,7 @@ The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
 
 **One-time setup (maintainer):**
 
-- Create the SonarCloud project `MilczekT1_LLamaGuard` in organization `milczekt1` and store
+- Create the SonarCloud project `MilczekT1_Corral` in organization `milczekt1` and store
   its token as repo secret `SONAR_TOKEN`. This is a first-ever analysis: the project must
   exist before the first scan (import it in the SonarCloud UI, or let the scan auto-provision
   it if the token's user holds *Create Projects* in the organization). The first run has no
@@ -452,8 +452,8 @@ JDK 23+ ignores annotation processors that are only on the classpath. Remove tha
 compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
 misconfiguration cannot pass silently.
 
-Build: `./mvnw verify`. The reactor is `llama-guard-sdk` (the framework), `llama-guard-rules` (the rule
-catalog) and `llama-guard-example` (a working consumer with a committed freeze store, which doubles as
+Build: `./mvnw verify`. The reactor is `corral-sdk` (the framework), `corral-rules` (the rule
+catalog) and `corral-example` (a working consumer with a committed freeze store, which doubles as
 an end-to-end test of the wiring).
 
 ## License
