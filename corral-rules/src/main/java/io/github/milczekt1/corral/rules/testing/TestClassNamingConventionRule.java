@@ -3,11 +3,11 @@ package io.github.milczekt1.corral.rules.testing;
 import static com.tngtech.archunit.base.DescribedPredicate.describe;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
 
-import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
+import io.github.milczekt1.corral.scope.TestScope;
 import java.util.List;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -44,34 +44,25 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
             .build();
 
     /**
-     * The three JUnit 5 roots, matched by FQN string so a consumer without
-     * {@code junit-jupiter-params} still works.
+     * The three JUnit 5 roots this rule selects on, taken from the SDK so there is one definition
+     * of what JUnit executes — see {@link TestScope#JUNIT_TEST_ANNOTATIONS}.
      *
-     * <p>Only roots are listed because the predicate below also matches meta-annotations:
-     * {@code @ParameterizedTest} and {@code @RepeatedTest} are themselves annotated with
-     * {@code @TestTemplate} and are reached through it, as is any project's own composed annotation.
-     * Enumerating the leaves instead would mean this rule silently stops covering whatever JUnit or
-     * the consumer adds next — the exact false negative it exists to catch.
+     * <p>Kept as a field here because this rule's own test pins it, so an SDK-side edit surfaces as
+     * a failure rather than as a silent change in which classes get reported.
      */
-    static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
-            "org.junit.jupiter.api.Test",
-            "org.junit.jupiter.api.TestFactory",
-            "org.junit.jupiter.api.TestTemplate");
+    static final List<String> JUNIT_TEST_ANNOTATIONS = TestScope.JUNIT_TEST_ANNOTATIONS;
 
     /**
-     * {@code isMetaAnnotatedWith} rather than {@code isAnnotatedWith}, and no direct check beside
-     * it: ArchUnit's meta variant "also matches elements that are directly annotated with the given
-     * annotation type", so a plain {@code @Test} method is covered by the same call that reaches
-     * {@code @ParameterizedTest} through {@code @TestTemplate} and a consumer's {@code @FastTest}
-     * through {@code @Test}.
+     * {@link TestScope#isJUnitTestMethod} and <strong>not</strong> {@code TestScope.TEST_CLASSES}:
+     * the class-level predicate is {@code location OR structure}, so it also holds for fixtures and
+     * helpers that declare no test — a different rule under the same id.
+     *
+     * <p>The description text is this rule's own and stays byte-identical to what shipped: it is
+     * rendered into the rule's description, which is the freeze-store matching key.
      */
-    private static boolean isJUnitTestMethod(JavaMethod method) {
-        return JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isMetaAnnotatedWith);
-    }
-
     static final ArchRule DEFINITION = classes()
             .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
-                    TestClassNamingConventionRule::isJUnitTestMethod))
+                    TestScope::isJUnitTestMethod))
             .and().areNotMemberClasses()
             .should().haveSimpleNameEndingWith("Test")
             .orShould().haveSimpleNameEndingWith("Tests")
