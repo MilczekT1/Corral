@@ -4,6 +4,7 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
+import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
 
 /**
  * The contract every rule class implements, in this library and in consumers.
@@ -44,9 +45,13 @@ public interface DocumentedRule {
      * this is what stops a reworded sentence re-seeding every consumer's store — allows an empty
      * {@code should} so a module with no matching classes stays green, and freezes, so that adopting
      * a rule records existing debt instead of blocking in-flight work.
+     *
+     * <p>Also the hook for {@link IgnorePatternsGuard}: every rule class runs this, in every consumer,
+     * with nothing to configure, so it is the one place a whole-catalog kill switch cannot hide from.
      */
     default ArchRule guard() {
         RuleRegistry.register(doc());
-        return FreezingArchRule.freeze(definition().as(doc().id()).allowEmptyShould(true));
+        return IgnorePatternsGuard.interposeOn(
+                FreezingArchRule.freeze(definition().as(doc().id()).allowEmptyShould(true)));
     }
 }

@@ -6,14 +6,17 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import com.tngtech.archunit.library.freeze.ViolationStore;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
+import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -80,6 +83,26 @@ class DocumentedRuleTest {
         assertInstanceOf(FreezingArchRule.class, guarded,
                 "guard() must freeze — an unfrozen rule blocks in-flight work on adoption, and the"
                         + " id would stop being a freeze-store key");
+    }
+
+    /**
+     * The wiring, not the detection — {@code IgnorePatternsGuardTest} owns that. {@code guard()} is
+     * the only hook every consumer runs unconditionally, so deleting this one call would silently
+     * make the check opt-in again; asserted against the compiled bytecode because the check is a
+     * no-op on a clean classpath and therefore invisible to any behavioural assertion here.
+     */
+    @Test
+    void guardInterposesTheIgnorePatternsCheckOnEveryRule() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+
+        assertTrue(guard.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(IgnorePatternsGuard.class)
+                                && call.getName().equals("interposeOn")),
+                "guard() must run the ignore-patterns check — it is the only place a whole-catalog"
+                        + " kill switch cannot hide from");
     }
 
     @Test
