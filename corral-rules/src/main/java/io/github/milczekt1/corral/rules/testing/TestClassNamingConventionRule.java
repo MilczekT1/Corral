@@ -44,22 +44,18 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
             .build();
 
     /**
-     * The three JUnit 5 roots this rule selects on, taken from the SDK so there is one definition of
-     * what JUnit executes rather than a copy per rule. Only roots are listed because the check is by
-     * meta-annotation — see {@link TestScope#JUNIT_TEST_ANNOTATIONS} for why enumerating the leaves
-     * instead reopens the exact false negative this rule exists to catch.
+     * The three JUnit 5 roots this rule selects on, taken from the SDK so there is one definition
+     * of what JUnit executes — see {@link TestScope#JUNIT_TEST_ANNOTATIONS}.
      *
-     * <p>Kept as a field on this class because the list is part of what this rule <em>is</em>: its
-     * own test pins it, so an SDK-side edit to what counts as a test method shows up as a failure
-     * here rather than as a silent change in which classes get reported.
+     * <p>Kept as a field here because this rule's own test pins it, so an SDK-side edit surfaces as
+     * a failure rather than as a silent change in which classes get reported.
      */
     static final List<String> JUNIT_TEST_ANNOTATIONS = TestScope.JUNIT_TEST_ANNOTATIONS;
 
     /**
-     * {@link TestScope#isJUnitTestMethod} and <strong>not</strong> {@code TestScope.TEST_CLASSES}.
-     * The class-level predicate is {@code location OR structure}, so it holds for every fixture,
-     * helper and abstract base compiled into test output — scoping this rule on it would report
-     * classes that declare no test at all, which is a different rule with the same id.
+     * {@link TestScope#isJUnitTestMethod} and <strong>not</strong> {@code TestScope.TEST_CLASSES}:
+     * the class-level predicate is {@code location OR structure}, so it also holds for fixtures and
+     * helpers that declare no test — a different rule under the same id.
      *
      * <p>The description text is this rule's own and stays byte-identical to what shipped: it is
      * rendered into the rule's description, which is the freeze-store matching key.

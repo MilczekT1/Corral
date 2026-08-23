@@ -25,19 +25,17 @@ import org.junit.jupiter.params.provider.ValueSource;
 class TestScopeTest {
 
     /**
-     * A layout none of the three patterns match — Gradle's <em>main</em> output. Importing the
-     * fixtures from here switches the location half off, so what remains is the structure half on
-     * its own, and the same import doubles as the control proving the temporary directory itself
-     * does not accidentally look like test output.
+     * Gradle's <em>main</em> output — matched by none of the patterns. Importing fixtures from here
+     * switches the location half off, isolating the structure half, and doubles as the control that
+     * the temporary directory does not itself look like test output.
      */
     private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
 
     /**
-     * This build is Maven, so it can only ever produce {@code target/test-classes} and
-     * {@code target/classes} for real. The Gradle and IntelliJ layouts are exercised by copying
-     * genuinely compiled class files into a directory tree shaped like the layout under test and
-     * importing from there: the {@code JavaClass} is real, its source URI is real, and the only
-     * thing synthesised is the directory name — which is exactly the input under test.
+     * This build is Maven, so only {@code target/**} occurs for real. Gradle and IntelliJ layouts
+     * are exercised by copying genuinely compiled class files into a tree shaped like the layout
+     * and importing from there — the only synthesised thing is the directory name, which is
+     * precisely the input under test.
      */
     @ParameterizedTest(name = "{0} is test output")
     @ValueSource(strings = {
@@ -56,10 +54,9 @@ class TestScopeTest {
     }
 
     /**
-     * The location half against the layout this build really does produce. Both classes are read out
-     * of this very Maven build: {@code RuleDoc} compiles to {@code target/classes} and the fixture
-     * to {@code target/test-classes}, and neither declares a test method — so location is the only
-     * thing that can be telling them apart.
+     * The location half against the real Maven layout. {@code RuleDoc} compiles to
+     * {@code target/classes} and the fixture to {@code target/test-classes}; neither declares a test
+     * method, so location is the only thing separating them.
      */
     @Test
     void separatesThisBuildsOwnMainOutputFromItsTestOutput() {
@@ -77,13 +74,10 @@ class TestScopeTest {
     }
 
     /**
-     * The structure half with the location half switched off: all three fixtures are imported from a
-     * production-looking directory, so only what they declare can decide.
-     *
-     * <p>{@code ParameterizedTestMethodFixture} is the one that matters most — it holds no
-     * {@code @Test} anywhere and is reached only through {@code @TestTemplate}, so a direct
-     * annotation check would drop it. {@code NoTestMethodsFixture} is the other direction: without
-     * it, a predicate that simply said "yes" would pass every other assertion here.
+     * The structure half alone: all three fixtures imported from a production-looking directory, so
+     * only what they declare can decide. {@code ParameterizedTestMethodFixture} is reached only
+     * through {@code @TestTemplate}; {@code NoTestMethodsFixture} is the negative direction, without
+     * which a predicate that always said "yes" would pass.
      */
     @Test
     void findsTestClassesByDeclaredTestMethodsWhereTheLocationSaysNothing(@TempDir Path outputRoot)
@@ -103,14 +97,11 @@ class TestScopeTest {
     }
 
     /**
-     * A stub class — referenced by imported code but never imported itself — has no source, and must
-     * land on the production side rather than blowing up on the absent {@link java.util.Optional}.
+     * A stub class has no source and must land on the production side rather than blow up.
      *
-     * <p>Producing one takes turning off ArchUnit's classpath resolution, which is process-wide
-     * configuration in a JVM Surefire reuses across every test class, so it is restored in a
-     * {@code finally} whatever happens. The emptiness of the source is asserted rather than assumed:
-     * if ArchUnit ever starts handing stubs a source, this test must go red instead of quietly
-     * asserting nothing.
+     * <p>Producing one needs ArchUnit's classpath resolution off — process-wide config in a JVM
+     * Surefire reuses, so it is restored in a {@code finally}. The empty source is asserted, not
+     * assumed: if ArchUnit ever gives stubs a source, this goes red instead of asserting nothing.
      */
     @Test
     void treatsStubClassesWithNoSourceAsProduction() {
@@ -134,9 +125,9 @@ class TestScopeTest {
     }
 
     /**
-     * Both predicates' descriptions end up inside the rendered description of every rule built on
-     * them, and a rule's description is its freeze-store key. Pinning them here makes a reword show
-     * up as a failing test rather than as a consumer's build failing on code they did not touch.
+     * These descriptions render into every rule built on them, and a rule's description is its
+     * freeze-store key. Pinning them turns a reword into a failing test here rather than a failing
+     * build in a consumer's repo.
      */
     @Test
     void pinsThePredicateDescriptions() {
@@ -145,9 +136,8 @@ class TestScopeTest {
     }
 
     /**
-     * The two scopes must partition, not merely differ: a class in both would be reported by a
-     * test-scoped and a production-scoped rule at once, and a class in neither would be silently
-     * exempt from both.
+     * The scopes must partition, not merely differ: a class in both is reported twice, a class in
+     * neither is silently exempt from both.
      */
     @Test
     void productionScopeIsTheExactComplementOfTestScope(@TempDir Path outputRoot) throws IOException {
@@ -162,10 +152,9 @@ class TestScopeTest {
     }
 
     /**
-     * Copies the already-compiled class files of {@code fixtures} into {@code root/layout}, keeping
-     * their package directories, and imports them from there. Nothing is generated: the bytes are
-     * the ones {@code javac} produced for this build, so the only difference from a normal import is
-     * the directory the source URI points into.
+     * Copies the compiled class files of {@code fixtures} into {@code root/layout}, keeping package
+     * directories, and imports from there. The bytes are the ones {@code javac} produced — only the
+     * directory the source URI points into differs.
      */
     private static JavaClasses importFrom(Path root, String layout, Class<?>... fixtures)
             throws IOException {

@@ -4,11 +4,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * A test class holding no {@code @Test} anywhere: {@code @ParameterizedTest} is itself annotated
- * {@code @TestTemplate} and is only reachable through a meta-annotation walk. A direct annotation
- * check would place this class outside test scope while JUnit runs it happily.
- *
- * <p>Never executed: Surefire excludes {@code **}{@code /fixtures/}{@code **} in this module's POM.
+ * Holds no {@code @Test} anywhere — {@code @ParameterizedTest} is reachable only through the
+ * {@code @TestTemplate} meta-annotation, so a direct annotation check would miss it while JUnit
+ * runs it happily. Never executed: Surefire excludes {@code **}{@code /fixtures/}{@code **}.
  */
 public class ParameterizedTestMethodFixture {
 

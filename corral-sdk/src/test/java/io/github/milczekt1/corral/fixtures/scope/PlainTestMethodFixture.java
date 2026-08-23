@@ -3,10 +3,9 @@ package io.github.milczekt1.corral.fixtures.scope;
 import org.junit.jupiter.api.Test;
 
 /**
- * A class whose only claim to being a test is a directly annotated {@code @Test} method — its name
- * ends in neither {@code Test} nor {@code IT}, so no naming convention would recognise it.
- *
- * <p>Never executed: Surefire excludes {@code **}{@code /fixtures/}{@code **} in this module's POM.
+ * A directly annotated {@code @Test} method, on a class whose name ends in neither {@code Test} nor
+ * {@code IT} — so no naming convention would recognise it. Never executed: Surefire excludes
+ * {@code **}{@code /fixtures/}{@code **}.
  */
 public class PlainTestMethodFixture {
 
