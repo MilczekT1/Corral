@@ -65,6 +65,7 @@ Packages split by role, and the arrows only point one way:
 | `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
 | `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
 | `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
+| `corral-sdk` | `scope` | `TestScope` — shared predicates for what a rule applies to | nothing |
 | `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc` |
 | `corral-rules` | `groups` | composition only | `rules/<topic>` |
 
