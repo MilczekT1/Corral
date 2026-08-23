@@ -18,6 +18,14 @@ public class AntiFixPolicy {
             """
                     Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation\
                      disappear. The store records pre-existing debt only; new violations must be fixed in code.""",
+            """
+                    Do NOT re-run with archunit.freeze.refreeze=true, and do NOT commit\
+                     freeze.store.default.allowStoreCreation=true. Either one converts every current violation in\
+                     every rule into accepted debt at once.""",
+            """
+                    Do NOT add to or create archunit_ignore_patterns.txt. ArchUnit discards anything matching that\
+                     file before this rule, the freeze store, or this message ever sees it, leaving no record\
+                     anywhere. Nothing in this catalog is exempted that way.""",
             "Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.",
             """
                     Do NOT rename a class, field, or package solely to dodge a name-based rule\
