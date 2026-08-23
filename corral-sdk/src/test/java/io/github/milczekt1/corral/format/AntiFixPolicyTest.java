@@ -19,6 +19,21 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
     }
 
+    /**
+     * The escape hatches a reader can only reach by exact name: a file name and two property keys.
+     * Pinned verbatim — paraphrasing one out of the policy would silently un-name it.
+     */
+    @Test
+    void namesEveryEscapeHatchVerbatim() {
+        String all = String.join("\n", AntiFixPolicy.clauses());
+
+        assertTrue(all.contains("archunit/frozen/"), "must forbid editing the freeze store");
+        assertTrue(all.contains("archunit_ignore_patterns.txt"), "must forbid the ignore-patterns file");
+        assertTrue(all.contains("archunit.freeze.refreeze"), "must forbid refreezing");
+        assertTrue(all.contains("freeze.store.default.allowStoreCreation"),
+                "must forbid committing store creation");
+    }
+
     @Test
     void baselineEndsWithTheOnlyAcceptableResolution() {
         String last = AntiFixPolicy.clauses().get(AntiFixPolicy.clauses().size() - 1).toLowerCase();
