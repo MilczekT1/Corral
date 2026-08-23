@@ -87,8 +87,12 @@ public class TestScope {
      * {@code @TestTemplate} and are reached through it, as is a consumer's own composed
      * {@code @FastTest} through {@code @Test}. Enumerating the leaves instead would mean this scope
      * silently stops recognising whatever JUnit or the consumer adds next.
+     *
+     * <p>Published because a rule may need to state the list rather than only apply it — pinning it
+     * in a test, for instance. Immutable, so exposing it hands out no way to change what any rule
+     * built on this class recognises.
      */
-    private static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
+    public static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
             "org.junit.jupiter.api.Test",
             "org.junit.jupiter.api.TestFactory",
             "org.junit.jupiter.api.TestTemplate");
@@ -143,12 +147,25 @@ public class TestScope {
     }
 
     /**
-     * {@code isMetaAnnotatedWith} rather than {@code isAnnotatedWith}, and no direct check beside
+     * Whether a method is one JUnit 5 would execute as a test.
+     *
+     * <p>{@code isMetaAnnotatedWith} rather than {@code isAnnotatedWith}, and no direct check beside
      * it: ArchUnit's meta variant "also matches elements that are directly annotated with the given
      * annotation type", so a plain {@code @Test} method is covered by the same call that reaches
      * {@code @ParameterizedTest} through {@code @TestTemplate}.
+     *
+     * <p>Published as the seam for rules that need JUnit test <em>methods</em> without taking
+     * {@link #TEST_CLASSES} wholesale. A rule scoped on {@code TEST_CLASSES} gets
+     * {@code location OR structure}, which pulls in every fixture and helper compiled into test
+     * output; a rule that means "this class declares a test" — {@code test.class-naming-convention}
+     * is the standing example — must ask this instead, or it silently widens what it reports.
+     *
+     * <p>Deliberately a plain predicate method and not a {@code DescribedPredicate}: the description
+     * a rule wraps this in becomes part of that rule's rendered text, which is a freeze-store
+     * matching key, so each rule must own its own wording rather than inherit one from here that
+     * could later be reworded on its behalf.
      */
-    private static boolean isJUnitTestMethod(JavaMethod method) {
+    public static boolean isJUnitTestMethod(JavaMethod method) {
         return JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isMetaAnnotatedWith);
     }
 }
