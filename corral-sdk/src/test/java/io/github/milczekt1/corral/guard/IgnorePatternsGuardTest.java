@@ -27,10 +27,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * The test JVM's own classpath is fixed and carries no {@code archunit_ignore_patterns.txt}, so the
- * "present" case is produced the way {@code TestScopeTest} produces build layouts: real files in
- * temporary directories, resolved through a real {@link URLClassLoader}. Nothing is mocked, and the
- * absent direction is asserted alongside the present one — on its own it would pass vacuously.
+ * This JVM's classpath is fixed and carries no {@code archunit_ignore_patterns.txt}, so the "present"
+ * case uses real files in temporary directories behind a real {@link URLClassLoader} — the approach
+ * {@code TestScopeTest} takes. Both directions are asserted; the absent one alone passes vacuously.
  */
 class IgnorePatternsGuardTest {
 
@@ -54,9 +53,8 @@ class IgnorePatternsGuardTest {
     }
 
     /**
-     * The supply-chain case from #19: {@code readPatternsFrom} uses {@code getResource}, so the copy
-     * doing the filtering is whichever comes first and need not be the one the consumer knows about.
-     * Reporting only the first would hide exactly the entry worth reporting.
+     * The supply-chain case: {@code getResource} means first match wins, so reporting only the first
+     * would hide the copy actually worth knowing about.
      */
     @Test
     void findsEveryCopyOnTheClassPathNotOnlyTheOneArchUnitReads(@TempDir Path first, @TempDir Path second)
@@ -91,25 +89,26 @@ class IgnorePatternsGuardTest {
         }
     }
 
-    /**
-     * The replacement keeps the id it replaced, so the failure arrives under the test name the
-     * consumer recognises, and nothing chained onto it can soften it back into something that passes.
-     */
+    /** Keeps the id, so the failure arrives under a recognisable test name; nothing chained softens it. */
     @Test
     void theReplacementKeepsTheRuleIdAndCannotBeChainedIntoPassing(@TempDir Path root) throws IOException {
         ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root));
 
+        JavaClasses none = nothingToMatch();
+        ArchRule because = detected.because("we need it");
+        ArchRule allowingEmpty = detected.allowEmptyShould(true);
+
         assertNotSame(INNOCENT_RULE, detected);
         assertEquals(INNOCENT_RULE.getDescription(), detected.getDescription());
         assertEquals("renamed", detected.as("renamed").getDescription());
-        assertThrows(AssertionError.class, () -> detected.because("we need it").check(nothingToMatch()));
-        assertThrows(AssertionError.class, () -> detected.allowEmptyShould(true).check(nothingToMatch()));
-        assertThrows(AssertionError.class, () -> detected.evaluate(nothingToMatch()));
+        assertThrows(AssertionError.class, () -> because.check(none));
+        assertThrows(AssertionError.class, () -> allowingEmpty.check(none));
+        assertThrows(AssertionError.class, () -> detected.evaluate(none));
     }
 
     /**
-     * {@code withThreadLocalScope} rather than {@code setProperty}: the configuration is process-wide,
-     * Surefire reuses one JVM, and ArchUnit exposes no way to unset an arbitrary property again.
+     * {@code withThreadLocalScope} because the configuration is process-wide, Surefire reuses one JVM,
+     * and ArchUnit cannot unset an arbitrary property again.
      */
     @ParameterizedTest(name = "\"{0}\" disarms the check")
     @ValueSource(strings = {"false", "FALSE", "False"})
@@ -134,17 +133,15 @@ class IgnorePatternsGuardTest {
         });
     }
 
-    /**
-     * The default, read through an {@code archunit.properties} this module does not have: a consumer
-     * who configured nothing gets the failing behaviour.
-     */
+    /** A consumer who configured nothing gets the failing behaviour. */
     @Test
     void failsByDefaultWhenThePropertyIsNotConfigured(@TempDir Path root) throws IOException {
         assertEquals("unset", ArchConfiguration.get().getPropertyOrDefault(FAIL_PROPERTY, "unset"),
                 "this module must not configure the property, or the assertion below proves nothing");
+        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root));
+        JavaClasses none = nothingToMatch();
 
-        assertThrows(AssertionError.class,
-                () -> IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root)).check(nothingToMatch()));
+        assertThrows(AssertionError.class, () -> detected.check(none));
     }
 
     /** The absent direction end to end, through the memoised scan of this build's real classpath. */
@@ -153,10 +150,7 @@ class IgnorePatternsGuardTest {
         assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE));
     }
 
-    /**
-     * A classpath that cannot be enumerated must not be reported as clean — that would be the silent
-     * pass this check exists to remove.
-     */
+    /** An unreadable classpath must not report clean — that is the silent pass this check removes. */
     @Test
     void anUnreadableClassPathFailsRatherThanReportingClean() {
         ClassLoader unreadable = new ClassLoader(null) {
@@ -185,7 +179,8 @@ class IgnorePatternsGuardTest {
     }
 
     private static String failureOf(ArchRule rule) {
-        return assertThrows(AssertionError.class, () -> rule.check(nothingToMatch())).getMessage();
+        JavaClasses none = nothingToMatch();
+        return assertThrows(AssertionError.class, () -> rule.check(none)).getMessage();
     }
 
     /** No classes at all: the replacement must fail before it can care what it was handed. */
