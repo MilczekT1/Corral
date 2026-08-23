@@ -104,7 +104,9 @@ public class IgnorePatternsGuard {
                 leaves no record anywhere.
                 Found (ArchUnit reads the first):
                 %s
-                Delete the file, or set %s=false in archunit.properties if it is yours and deliberate.\
+                Delete the file, or set %s=false in archunit.properties if it is yours and deliberate.
+                Setting it to silence a rule you should have fixed restores the silence rather than \
+                resolving it, and is the same move as deleting the test.\
                 """.formatted(IGNORE_PATTERNS_FILE, listed(locations), FAIL_PROPERTY);
     }
 
