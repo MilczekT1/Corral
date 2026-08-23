@@ -1,0 +1,55 @@
+name: Rule proposal
+description: Propose a new rule for the central catalog
+labels: [rule-proposal]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        Not every good rule belongs in the central catalog. See
+        [Is a rule catalog-worthy?](https://github.com/MilczekT1/Corral/blob/main/CONTRIBUTING.md#is-a-rule-catalog-worthy)
+        — a rule that encodes one team's preference is better authored in that team's own namespace
+        with the SDK.
+  - type: input
+    id: rule-id
+    attributes:
+      label: Proposed rule id
+      description: "`<topic>.<kebab-case-rule>`, matching `^[a-z0-9]++(?:\\.[a-z0-9-]++)++$`"
+      placeholder: "spring.no-field-injection"
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: Why this matters
+      description: What goes wrong in a real codebase when this is violated?
+    validations:
+      required: true
+  - type: textarea
+    id: how-to-fix
+    attributes:
+      label: How to fix a violation
+      description: What should someone do when this rule flags their code?
+    validations:
+      required: true
+  - type: textarea
+    id: how-not-to-fix
+    attributes:
+      label: How NOT to fix it
+      description: >
+        The tempting wrong move — deleting the test, widening the scope, suppressing it. This is the
+        part that makes the failure output useful to a coding agent.
+    validations:
+      required: true
+  - type: textarea
+    id: exceptions
+    attributes:
+      label: Legitimate exceptions
+      description: Where is violating this rule actually correct? If there are many, it may not be catalog-worthy.
+  - type: checkboxes
+    id: criteria
+    attributes:
+      label: Catalog criteria
+      options:
+        - label: Broadly applicable — true for most JVM projects, not a house style
+        - label: Objectively checkable — no judgement call about intent
+        - label: Stable — the predicate is unlikely to need rewording, which would break consumers

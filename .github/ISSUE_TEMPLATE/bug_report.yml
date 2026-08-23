@@ -1,0 +1,60 @@
+name: Bug report
+description: Something behaves differently from what the documentation says
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        For a security vulnerability, use the
+        [private advisory form](https://github.com/MilczekT1/Corral/security/advisories/new)
+        instead — not this issue.
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you expected, and what you got instead.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: Smallest set of steps, or a link to a minimal project.
+      placeholder: |
+        1. Add corral-rules to a project
+        2. Add a test class with @AnalyzeClasses(...)
+        3. Run ./mvnw test
+    validations:
+      required: true
+  - type: textarea
+    id: output
+    attributes:
+      label: Failure output
+      description: >
+        The full rule failure block if there is one — WHY / HOW TO FIX / HOW NOT TO FIX included.
+        It identifies the rule by id.
+      render: text
+  - type: input
+    id: corral-version
+    attributes:
+      label: Corral version
+      placeholder: "0.1.0"
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: JDK, Maven or Gradle, and ArchUnit version
+      placeholder: "Temurin 17.0.20, Maven 3.9.9, ArchUnit 1.4.2"
+    validations:
+      required: true
+  - type: checkboxes
+    id: freeze-store
+    attributes:
+      label: Freeze store
+      description: >
+        Freezing is the most common source of surprising behaviour. Rule ids and predicate text are
+        both freeze-store keys, so changing either makes recorded violations stop matching.
+      options:
+        - label: The rule is frozen (there is a committed `stored.rules`)
+        - label: I checked whether the rule id or its predicate text changed since the store was written

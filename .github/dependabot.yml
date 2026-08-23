@@ -8,3 +8,13 @@ updates:
       prefix: "ci"
     labels:
       - dependencies
+
+  - package-ecosystem: maven
+    # Multi-module reactors are handled from the root pom.
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "build"
+    labels:
+      - dependencies
