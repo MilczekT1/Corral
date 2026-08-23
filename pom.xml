@@ -48,7 +48,7 @@
     <lombok.version>1.18.46</lombok.version>
     <jacoco.version>0.8.13</jacoco.version>
     <maven-failsafe-plugin.version>3.5.2</maven-failsafe-plugin.version>
-    <sonar-maven-plugin.version>5.1.0.4751</sonar-maven-plugin.version>
+    <sonar-maven-plugin.version>5.7.0.6970</sonar-maven-plugin.version>
     <versions-maven-plugin.version>2.18.0</versions-maven-plugin.version>
 
     <sonar.organization>milczekt1</sonar.organization>
