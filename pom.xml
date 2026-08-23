@@ -58,6 +58,20 @@
     <sonar.coverage.jacoco.xmlReportPaths>
       ${project.build.directory}/coverage-reports/merged-test-coverage-report/jacoco.xml
     </sonar.coverage.jacoco.xmlReportPaths>
+    <!--
+      Fixtures are inputs a rule is evaluated against, not tests. Surefire and Failsafe already
+      exclude **/fixtures/** from execution, so Sonar's test-code rules do not apply to them: a
+      fixture carries @Test so a predicate has something to detect, it is named for what it is rather
+      than for a runner's selection convention, and an assertion in a method nothing ever runs is
+      noise. This mirrors that Surefire exclusion for the analyser.
+
+      sonar.test.exclusions and not sonar.exclusions: these files are under sonar.tests, and
+      sonar.exclusions only ever filters main sources, so it would silently do nothing here. Not
+      sonar.coverage.exclusions either — that suppresses coverage measurement of MAIN classes, which
+      is the one thing the JaCoCo gate exists to keep honest. Excluding test sources from analysis
+      does not discard coverage: the report maps onto main classes and is read from the XML above.
+    -->
+    <sonar.test.exclusions>**/fixtures/**</sonar.test.exclusions>
 
     <jacoco.lineCoverage.minimum>0.75</jacoco.lineCoverage.minimum>
     <jacoco.branches.minimum>0.70</jacoco.branches.minimum>
