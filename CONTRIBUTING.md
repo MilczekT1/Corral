@@ -35,6 +35,11 @@ misconfiguration cannot pass silently.
 (`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
 `corral-example` overrides them to zero — it is a wiring demo, not a tested component.
 
+**Sonar.** `corral-example` sets `sonar.skip=true` for the same reason: its classes exist to be
+flagged by rules, and its violations are deliberate and committed, so analysing it reports the demo
+as findings. It is still compiled and its tests still run — that module is the end-to-end test of
+the wiring, and breaking it breaks the build.
+
 ## What breaks consumers
 
 Corral's compatibility surface is unusual and sharp. Three of these have **no automated check**, so

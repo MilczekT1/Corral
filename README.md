@@ -366,7 +366,10 @@ Every push and pull request to `main` runs **Build Pipeline**
 `sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
 which fails the build at `verify` below the thresholds in the root `pom.xml`
 (`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
-`corral-example` overrides them to zero — it is a wiring demo, not a tested component.
+`corral-example` overrides them to zero and sets `sonar.skip=true` — it is a wiring demo, not a
+tested component. Its classes exist to be flagged by rules and its violations are deliberate and
+committed, so analysing it would report the demo itself as findings. It is still compiled and its
+tests still run: that module is the end-to-end test of the wiring.
 
 ### Release process
 

@@ -18,6 +18,14 @@
   <description>module with examples</description>
 
   <properties>
+    <!--
+      A wiring demo, not a tested component: its classes exist to be flagged by rules, and its
+      violations are deliberate and committed. Analysing it reports the demo as findings and drags
+      the quality gate around for reasons no one would ever act on. Same reasoning as the coverage
+      thresholds below.
+    -->
+    <sonar.skip>true</sonar.skip>
+
     <jacoco.lineCoverage.minimum>0.0</jacoco.lineCoverage.minimum>
     <jacoco.branches.minimum>0.0</jacoco.branches.minimum>
     <jacoco.classes.maxMissed>100</jacoco.classes.maxMissed>
