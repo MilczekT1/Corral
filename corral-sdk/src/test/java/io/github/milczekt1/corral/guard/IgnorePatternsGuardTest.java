@@ -4,6 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static io.github.milczekt1.corral.guard.IgnorePatternsGuard.FAIL_PROPERTY;
 import static io.github.milczekt1.corral.guard.IgnorePatternsGuard.IGNORE_PATTERNS_FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -169,6 +170,34 @@ class IgnorePatternsGuardTest {
             assertSame(IgnorePatternsGuard.class.getClassLoader(), IgnorePatternsGuard.currentClassLoader());
         } finally {
             current.setContextClassLoader(contextClassLoader);
+        }
+    }
+
+    /**
+     * The premise the whole guard rests on: that ArchUnit really does discard violations matching the
+     * file. Everything else here tests Corral's reaction to the file existing. If ArchUnit ever drops
+     * or renames the feature this goes red, and the guard becomes a tax on consumers for nothing.
+     *
+     * <p>{@code readPatternsFrom} runs per evaluation off the thread-context loader and caches
+     * nothing, so swapping the loader is enough and no other test can be poisoned.
+     */
+    @Test
+    void archUnitReallyDiscardsViolationsMatchingTheFile(@TempDir Path root) throws IOException {
+        JavaClasses someClasses = new ClassFileImporter().importClasses(IgnorePatternsGuard.class);
+        ArchRule alwaysViolated = noClasses().should().haveNameMatching(".*").as("fixture.premise");
+        assertFalse(alwaysViolated.evaluate(someClasses).getFailureReport().isEmpty(),
+                "the fixture rule must fail without the file, or the assertion below proves nothing");
+
+        writeIgnorePatternsIn(root);
+        Thread current = Thread.currentThread();
+        ClassLoader restore = current.getContextClassLoader();
+        try (URLClassLoader withIgnoreFile = classLoaderOver(root)) {
+            current.setContextClassLoader(withIgnoreFile);
+
+            assertTrue(alwaysViolated.evaluate(someClasses).getFailureReport().isEmpty(),
+                    "ArchUnit no longer suppresses violations via " + IGNORE_PATTERNS_FILE);
+        } finally {
+            current.setContextClassLoader(restore);
         }
     }
 
