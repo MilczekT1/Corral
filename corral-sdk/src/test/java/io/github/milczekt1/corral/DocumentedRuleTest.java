@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -138,7 +139,7 @@ class DocumentedRuleTest {
                 .get(DocumentedRule.class)
                 .getMethod("guard");
         List<String> callOrder = guard.getMethodCallsFromSelf().stream()
-                .sorted(Comparator.comparingInt(call -> call.getLineNumber()))
+                .sorted(Comparator.comparingInt(JavaAccess::getLineNumber))
                 .map(call -> call.getTargetOwner().getSimpleName() + "." + call.getName())
                 .toList();
 

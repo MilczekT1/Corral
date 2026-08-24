@@ -48,8 +48,9 @@ class RuleExclusionsResolveTest {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
                 RuleExclusions.parse("fixture.alfa :: a typo for fixture.alpha", "x"));
 
-        String message = assertThrows(AssertionError.class, () -> check.check(nothingToMatch()))
-                .getMessage();
+        JavaClasses none = nothingToMatch();
+
+        String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
 
         assertTrue(message.contains("fixture.alfa"), message);
         assertTrue(message.contains("fixture.alpha"),
@@ -64,8 +65,9 @@ class RuleExclusionsResolveTest {
                 fixture.bta :: another typo
                 """, "x"));
 
-        String message = assertThrows(AssertionError.class, () -> check.check(nothingToMatch()))
-                .getMessage();
+        JavaClasses none = nothingToMatch();
+
+        String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
 
         assertTrue(message.contains("fixture.alfa"), message);
         assertTrue(message.contains("fixture.bta"), message);

@@ -192,10 +192,11 @@ public class RuleExclusions {
      * could be one a transitive test-scoped dependency shipped rather than one the consumer wrote.
      */
     static Loaded load(ClassLoader classLoader) {
-        // RuntimeException too, not only IOException: this runs in a static initialiser, so anything
-        // that escapes becomes an ExceptionInInitializerError — an Error, which sails past every
-        // catch(RuntimeException) guarding the formatter's never-throw contract and leaves
-        // NoClassDefFoundError behind on every later call. A misbehaving URL handler is the way in.
+        // Unchecked failures too, not only IOException: this runs in a static initialiser, so
+        // anything escaping it becomes an ExceptionInInitializerError. That is an Error, so every
+        // guard written against RuntimeException lets it straight through — including the ones
+        // holding up the formatter's never-throw contract — and every later call gets
+        // NoClassDefFoundError instead. A misbehaving URL handler is the realistic way in.
         try {
             return read(classLoader);
         } catch (IOException | RuntimeException e) {
