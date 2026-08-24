@@ -37,6 +37,10 @@ public class AntiFixPolicy {
             "Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.",
             "Do NOT downgrade, remove, reword, or otherwise weaken the rule.",
             """
+                    corral-exclusions.txt removes a rule from your build permanently, because it does not apply\
+                     to this codebase. It is not a way to pass a failing build. Adding a rule to it in the same\
+                     change that made that rule fail is silencing, not excluding, and reads that way in the diff.""",
+            """
                     The ONLY acceptable resolution is changing the production/test code so the rule genuinely\
                      passes — then follow this rule's HOW TO FIX.""");
 

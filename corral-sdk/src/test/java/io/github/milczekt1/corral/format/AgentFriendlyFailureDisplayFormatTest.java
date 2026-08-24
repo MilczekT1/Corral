@@ -70,6 +70,43 @@ class AgentFriendlyFailureDisplayFormatTest {
                 "sections out of order:\n" + out);
     }
 
+    /**
+     * A reader of a failing build must be able to see what is <em>not</em> being enforced. Rendered
+     * on every failure, not only on the excluded rule's own — the excluded rule never fails, so its
+     * own output is exactly where this could never appear.
+     */
+    @Test
+    void listsEveryExclusionInEffect() {
+        List<String> census = List.of(
+                "spring.no-transactional-on-final :: AspectJ load-time weaving. ADR-021.",
+                "logging.no-log4j-api-directly :: the Log4j 2 API is our facade by decision.");
+
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, census);
+
+        assertTrue(out.contains("EXCLUDED IN THIS BUILD"), out);
+        census.forEach(line -> assertTrue(out.contains(line), () -> "missing " + line + " in:\n" + out));
+    }
+
+    @Test
+    void theCensusSitsBetweenTheAntiFixPolicyAndTheOffendingLocations() {
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM,
+                List.of("logging.no-system-out :: stdout is our transport."));
+
+        int policy = out.indexOf("HOW NOT TO FIX (always):");
+        int census = out.indexOf("EXCLUDED IN THIS BUILD");
+        int locations = out.indexOf("Offending locations:");
+
+        assertTrue(policy < census && census < locations, "census out of order:\n" + out);
+    }
+
+    /** The common case is no file at all; a header over an empty list is noise on every failure. */
+    @Test
+    void omitsTheCensusEntirelyWhenNothingIsExcluded() {
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, List.of());
+
+        assertFalse(out.contains("EXCLUDED IN THIS BUILD"), out);
+    }
+
     @Test
     void alwaysRendersTheFullGlobalAntiFixPolicy() {
         String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM);

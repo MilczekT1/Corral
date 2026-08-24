@@ -34,6 +34,29 @@ class AntiFixPolicyTest {
                 "must forbid committing store creation");
         assertTrue(all.contains("corral.ignorePatterns.fail"),
                 "must forbid disarming the ignore-patterns check");
+        assertTrue(all.contains("corral-exclusions.txt"),
+                "must draw the line around the one subtractive mechanism, or it reads as unsanctioned");
+    }
+
+    /**
+     * The exclusions clause is the one an agent under pressure is most likely to lawyer, so the
+     * wording carries its own limits: permanent, not applicable, not a way to pass, and the
+     * same-change tell that makes the abuse visible in the diff.
+     */
+    @Test
+    void theExclusionsClauseDrawsTheLineRatherThanAdvertisingAnEscapeRoute() {
+        String clause = AntiFixPolicy.clauses().stream()
+                .filter(line -> line.contains("corral-exclusions.txt"))
+                .findFirst()
+                .orElseThrow(() -> new AssertionError("no clause mentions corral-exclusions.txt"));
+        String text = clause.toLowerCase();
+
+        assertTrue(text.contains("permanent"), clause);
+        assertTrue(text.contains("does not apply"), clause);
+        assertTrue(text.contains("not a way to pass a failing build"), clause);
+        assertTrue(text.contains("same change"),
+                "the abuse is adding a line in the change that made the rule fail: " + clause);
+        assertTrue(text.contains("silencing"), clause);
     }
 
     @Test

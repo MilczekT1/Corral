@@ -42,7 +42,7 @@ they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. | nothing |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also breaks any consumer excluding that id: an exclusion naming no registered rule fails the build. | nothing |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
@@ -63,7 +63,8 @@ Packages split by role, and the arrows only point one way:
 | `corral-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
 | `corral-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
 | `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
-| `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc` |
+| `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc`, `exclude` |
+| `corral-sdk` | `exclude` | `Exclusion`, `RuleExclusions` — the consumer's `corral-exclusions.txt` | `doc` |
 | `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
 | `corral-sdk` | `scope` | `TestScope` — shared predicates for what a rule applies to | nothing |
 | `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc`, `scope` |
@@ -73,7 +74,8 @@ The module boundary is what enforces the direction: `corral-sdk` has no dependen
 `corral-rules`, so a framework class importing a concrete rule does not compile.
 
 `store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
-with it, so neither imports the other.
+with it, so neither imports the other. `format` reads `exclude` in one direction only — to print the
+census of what is not being enforced — and `exclude` knows nothing about rendering.
 
 Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
 exactly those fields and nothing else, so the field *is* the membership — there is no second list to
