@@ -97,6 +97,11 @@ freeze.store.default.path=src/test/resources/archunit/frozen
 failureDisplayFormat=io.github.milczekt1.corral.format.AgentFriendlyFailureDisplayFormat
 ```
 
+> `archunit_ignore_patterns.txt` silently deletes violations before Corral ever sees them, so Corral
+> fails the build when that file is on the classpath — add `corral.ignorePatterns.fail=false` to the
+> block above if the file is yours and deliberate. Every copy found is named, because ArchUnit reads
+> only the first and it may belong to a dependency rather than to you.
+
 **4. Seed the freeze store once, and commit it:**
 
 ```bash
@@ -135,6 +140,8 @@ HOW NOT TO FIX (always):
   - Do NOT add to or create archunit_ignore_patterns.txt. ArchUnit discards anything
     matching that file before this rule, the freeze store, or this message ever sees
     it, leaving no record anywhere…
+  - Do NOT set corral.ignorePatterns.fail=false to make that check go away. It exists
+    to report the file above, so disarming it restores the silence…
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by
     disabling the test.
   - …
@@ -243,6 +250,7 @@ you want something to depend on in the meantime.
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
 | `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
+| `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from

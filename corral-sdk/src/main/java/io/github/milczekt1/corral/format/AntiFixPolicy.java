@@ -26,6 +26,10 @@ public class AntiFixPolicy {
                     Do NOT add to or create archunit_ignore_patterns.txt. ArchUnit discards anything matching that\
                      file before this rule, the freeze store, or this message ever sees it, leaving no record\
                      anywhere. Nothing in this catalog is exempted that way.""",
+            """
+                    Do NOT set corral.ignorePatterns.fail=false to make that check go away. It exists to report\
+                     the file above, so disarming it restores the silence rather than resolving it. That property\
+                     is for a file you put there deliberately, for your own rules.""",
             "Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.",
             """
                     Do NOT rename a class, field, or package solely to dodge a name-based rule\
