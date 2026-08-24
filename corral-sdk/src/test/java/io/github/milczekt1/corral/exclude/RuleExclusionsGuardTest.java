@@ -73,24 +73,6 @@ class RuleExclusionsGuardTest {
         assertFalse(excluded.evaluate(everything).hasViolation());
     }
 
-    /**
-     * The whole point of the mechanism: nine of ten rules are unaffected. Not identity — a rule no
-     * line names still carries the unknown-id check — but the violations it reports must be
-     * byte-identical, because those lines are what the freeze store matches on.
-     */
-    @Test
-    void aRuleNoLineNamesReportsExactlyWhatItWouldHaveWithoutTheFile() {
-        ArchRule other = noClasses().should().haveNameMatching(".*").as(OTHER_ID);
-        JavaClasses everything = someClasses();
-
-        ArchRule applied = RuleExclusions.applyTo(other, OTHER_ID, EXCLUDING);
-
-        assertEquals(other.evaluate(everything).getFailureReport().getDetails(),
-                applied.evaluate(everything).getFailureReport().getDetails());
-        assertEquals(OTHER_ID, applied.getDescription());
-        assertThrows(AssertionError.class, () -> applied.check(everything));
-    }
-
     @Test
     void withNoFileAtAllEveryRuleIsHandedBackUntouched() {
         assertSame(ALWAYS_VIOLATED,
@@ -153,25 +135,33 @@ class RuleExclusionsGuardTest {
     }
 
     /**
-     * An id no rule registers is a typo or a rule that has been renamed. Either way it excludes
-     * nothing, and letting it pass silently is how a consumer discovers years later that the rule
-     * they thought was off has been on — or, worse, that the one they turned off came back.
+     * A run that does not load every rule-declaring class sees a partial {@link RuleRegistry} — one
+     * test class from the IDE gutter, a single {@code -Dtest=...}, a forked-per-class Surefire. A
+     * valid exclusion naming a rule that run never loads must NOT be treated as a typo, and must not
+     * fail the rules that did run. Corral advertises "runnable at any granularity"; this is that.
      */
     @Test
-    void anIdNoRuleRegistersFailsRatherThanExcludingNothing() {
-        Loaded unknown = RuleExclusions.parse(
-                "fixture.no-such-rule :: names a rule that does not exist", "file:/somewhere/x.txt");
-        assertFalse(unknown.isBroken(), "it parses fine — it is only unknown once rules have registered");
+    void aRunThatNeverLoadsTheExcludedRuleStillPasses() {
+        Loaded namesARuleNotInThisRun = RuleExclusions.parse(
+                "fixture.absent-from-this-run :: a real rule, in a group this run does not wire",
+                "file:/somewhere/x.txt");
+        ArchRule other = noClasses().should().haveNameMatching(".*").as(OTHER_ID);
+        JavaClasses everything = someClasses();
 
-        String message = RuleExclusions.unknownIdProblem(unknown, List.of(EXCLUDED_ID, OTHER_ID));
+        ArchRule applied = RuleExclusions.applyTo(other, OTHER_ID, namesARuleNotInThisRun);
 
-        assertTrue(message.contains("fixture.no-such-rule"), message);
-        assertTrue(message.contains(EXCLUDED_ID), () -> "must list what the ids could have been: " + message);
+        assertEquals(other.evaluate(everything).getFailureReport().getDetails(),
+                applied.evaluate(everything).getFailureReport().getDetails(),
+                "a rule that ran must report exactly what it would have, not fail on another"
+                        + " rule's exclusion being unresolvable in this run");
     }
 
+    /** With the unknown-id check gone from evaluation, an unnamed rule is untouched again. */
     @Test
-    void anIdThatIsRegisteredIsNotReportedAsUnknown() {
-        assertNull(RuleExclusions.unknownIdProblem(EXCLUDING, List.of(EXCLUDED_ID, OTHER_ID)));
+    void aRuleNoLineNamesIsHandedBackUntouched() {
+        ArchRule other = noClasses().should().haveNameMatching(".*").as(OTHER_ID);
+
+        assertSame(other, RuleExclusions.applyTo(other, OTHER_ID, EXCLUDING));
     }
 
     /**

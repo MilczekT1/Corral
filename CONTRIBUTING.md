@@ -69,7 +69,7 @@ Packages split by role, and the arrows only point one way:
 | `corral-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
 | `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
 | `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc`, `exclude` |
-| `corral-sdk` | `exclude` | `Exclusion`, `RuleExclusions` — the consumer's `corral-exclusions.txt` | `doc` |
+| `corral-sdk` | `exclude` | `Exclusion`, `RuleExclusions` — the consumer's `corral-exclusions.txt` | `doc`, `reflect` |
 | `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
 | `corral-sdk` | `scope` | `TestScope` — shared predicates for what a rule applies to | nothing |
 | `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc`, `scope` |
@@ -80,7 +80,9 @@ The module boundary is what enforces the direction: `corral-sdk` has no dependen
 
 `store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
 with it, so neither imports the other. `format` reads `exclude` in one direction only — to print the
-census of what is not being enforced — and `exclude` knows nothing about rendering.
+census of what is not being enforced — and `exclude` knows nothing about rendering. `exclude` reads
+`reflect` for one thing: walking a wired root is the only way to get a *complete* set of rule ids,
+which `RuleRegistry` cannot give mid-run.
 
 Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
 exactly those fields and nothing else, so the field *is* the membership — there is no second list to

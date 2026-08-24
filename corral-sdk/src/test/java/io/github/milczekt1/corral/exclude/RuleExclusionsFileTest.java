@@ -1,6 +1,7 @@
 package io.github.milczekt1.corral.exclude;
 
 import static io.github.milczekt1.corral.exclude.RuleExclusions.EXCLUSIONS_FILE;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -200,6 +201,29 @@ class RuleExclusionsFileTest {
             assertTrue(loaded.entries().isEmpty(),
                     () -> "an ambiguous file must exclude nothing: " + loaded);
         }
+    }
+
+    /**
+     * {@code load} runs in a static initialiser, so anything it lets escape becomes an
+     * {@code ExceptionInInitializerError} — an {@link Error}, which sails past every
+     * {@code catch (RuntimeException)} guarding the formatter's never-throw contract, and leaves
+     * {@code NoClassDefFoundError} behind on every later call. A URL handler that throws unchecked
+     * is the realistic route in.
+     */
+    @Test
+    void anUncheckedFailureWhileReadingIsAProblemRatherThanEscaping() {
+        ClassLoader throwsUnchecked = new ClassLoader(null) {
+            @Override
+            public Enumeration<URL> getResources(String name) {
+                throw new IllegalStateException("a URL handler misbehaved");
+            }
+        };
+
+        Loaded loaded = assertDoesNotThrow(() -> RuleExclusions.load(throwsUnchecked));
+
+        assertNotNull(loaded.problem());
+        assertTrue(loaded.problem().contains(EXCLUSIONS_FILE), loaded::problem);
+        assertTrue(loaded.entries().isEmpty());
     }
 
     /** A classpath that cannot be enumerated cannot be declared free of exclusions either. */

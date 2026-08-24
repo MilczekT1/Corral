@@ -137,7 +137,7 @@ Three things are worth trying while you are in there, because each one fails on 
 
 | Edit | What happens |
 |---|---|
-| Misspell the id (`logging.no-system-errr`) | Every rule fails, naming the id and listing the ids that *are* registered. An exclusion that names nothing removes nothing. |
+| Misspell the id (`logging.no-system-errr`) | `corral.exclusions-resolve` fails, naming the id and listing the ids this build knows. An exclusion that names nothing removes nothing. Run the whole class, not one leaf — that check only runs when the catalog root is wired. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
