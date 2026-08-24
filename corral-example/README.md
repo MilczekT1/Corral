@@ -11,7 +11,7 @@ rule this project owns.
 | `archunit/frozen/` | The committed freeze store. Five entries, three files named after their rule ids — the clean rules have no file. |
 | `corral-exclusions.txt` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `logging.no-system-out`. |
-| `diagnostics/DiagnosticsReporter` | A violation that is **not** debt — `logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green. |
+| `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
 
@@ -103,7 +103,7 @@ HOW NOT TO FIX (always):
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.
 
 EXCLUDED IN THIS BUILD (corral-exclusions.txt — these rules are not enforced here):
-  - logging.no-system-err :: This module demonstrates exclusion, and DiagnosticsReporter is the demo.
+  - logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 
 Offending locations:
   Method <com.example.consumer.service.ChattyService.shout(java.lang.String)> calls method <java.io.PrintStream.println(java.lang.String)> in (ChattyService.java:4)
@@ -120,15 +120,20 @@ Three things to read off it:
 
 ## Excluding a rule
 
-`logging.no-system-err` is frozen **clean** in this store, so `DiagnosticsReporter` writing to stderr
-is a new violation and fails the build. One committed line keeps it green:
+`logging.no-system-err` is frozen **clean** in this store, so `StderrWriterAllowedByExclusion`
+writing to stderr is a new violation and fails the build. One committed line keeps it green:
 
 ```text
-logging.no-system-err :: This module demonstrates exclusion, and DiagnosticsReporter is the demo.
+logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 ```
 
-Delete it and run `mvn test` to watch the rule bite. Three things are worth trying while you are in
-there, because each one fails on purpose:
+Delete it and run `mvn clean test` to watch the rule bite — `clean` matters, because Maven copies
+test resources into `target/test-classes` but never removes ones you deleted, and Corral reads the
+file off the classpath. Without it the stale copy keeps excluding the rule and the build stays
+green for the wrong reason. The two edits below change the file rather than remove it, so plain
+`mvn test` is enough for those.
+
+Three things are worth trying while you are in there, because each one fails on purpose:
 
 | Edit | What happens |
 |---|---|

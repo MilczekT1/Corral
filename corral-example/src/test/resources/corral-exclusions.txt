@@ -9,4 +9,4 @@
 # This is NOT a pause button. An excluded rule records nothing, so any violation added while it is
 # off resurfaces as new the day the line is deleted. See "Excluding a rule" in the README.
 
-logging.no-system-err :: This module demonstrates exclusion, and DiagnosticsReporter is the demo.
+logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
