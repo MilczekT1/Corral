@@ -27,9 +27,9 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * This JVM's classpath is fixed and carries no {@code archunit_ignore_patterns.txt}, so the "present"
- * case uses real files in temporary directories behind a real {@link URLClassLoader} — the approach
- * {@code TestScopeTest} takes. Both directions are asserted; the absent one alone passes vacuously.
+ * This JVM carries no {@code archunit_ignore_patterns.txt}, so the "present" case uses real files in
+ * temp directories behind a real {@link URLClassLoader}. Both directions asserted — the absent one
+ * alone passes vacuously.
  */
 class IgnorePatternsGuardTest {
 
@@ -52,10 +52,7 @@ class IgnorePatternsGuardTest {
         }
     }
 
-    /**
-     * The supply-chain case: {@code getResource} means first match wins, so reporting only the first
-     * would hide the copy actually worth knowing about.
-     */
+    /** First match wins, so reporting only it would hide the copy worth knowing about. */
     @Test
     void findsEveryCopyOnTheClassPathNotOnlyTheOneArchUnitReads(@TempDir Path first, @TempDir Path second)
             throws IOException {
@@ -106,10 +103,7 @@ class IgnorePatternsGuardTest {
         assertThrows(AssertionError.class, () -> detected.evaluate(none));
     }
 
-    /**
-     * {@code withThreadLocalScope} because the configuration is process-wide, Surefire reuses one JVM,
-     * and ArchUnit cannot unset an arbitrary property again.
-     */
+    /** {@code withThreadLocalScope}: config is process-wide, Surefire reuses the JVM, and it cannot be unset. */
     @ParameterizedTest(name = "\"{0}\" disarms the check")
     @ValueSource(strings = {"false", "FALSE", "False"})
     void theFailPropertySetToFalseSuppressesTheFailure(String value, @TempDir Path root) throws IOException {

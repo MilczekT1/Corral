@@ -15,23 +15,14 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 /**
- * Fails the build when {@value #IGNORE_PATTERNS_FILE} is on the classpath.
+ * Fails the build when {@value #IGNORE_PATTERNS_FILE} is on the classpath. ArchUnit reads that file
+ * in {@code EvaluationResult}'s constructor and discards matching violations before
+ * {@code FreezingArchRule}, the freeze store or any failure message sees them, so one {@code .*}
+ * silences the catalog while every rule reports green.
  *
- * <p>ArchUnit reads that file inside {@code EvaluationResult}'s constructor and discards matching
- * violations before {@code FreezingArchRule}, the freeze store, or any failure message sees them.
- * One {@code .*} silences the whole catalog and every rule still reports green.
- *
- * <p>Three shapes were rejected, each because it reproduces the silence it is meant to remove:
- *
- * <ul>
- *   <li><strong>An ArchUnit rule</strong> — its violation would be filtered by the file it detects.
- *       {@link Detected} throws from {@link ArchRule#check} instead, building no
- *       {@link EvaluationResult}, so nothing on the filtering path sees it.
- *   <li><strong>Throwing when the rule is built</strong> — {@code guard()} runs during static
- *       initialisation, and the consumer gets only {@code TestEngine with ID 'archunit' failed to
- *       discover tests}, cause dropped. Deferring to evaluation prints the message in full.
- *   <li><strong>A log warning</strong> — Corral ships no slf4j binding, so it can surface for nobody.
- * </ul>
+ * <p>{@link Detected} throws from {@link ArchRule#check} rather than being a rule (its violation
+ * would be filtered by the file it detects) and rather than throwing from {@code guard()} (static
+ * initialisation reaches the consumer as {@code failed to discover tests}, cause dropped).
  */
 @UtilityClass
 public class IgnorePatternsGuard {
@@ -39,9 +30,8 @@ public class IgnorePatternsGuard {
     static final String IGNORE_PATTERNS_FILE = "archunit_ignore_patterns.txt";
 
     /**
-     * Absent file and absent key both mean "fail". {@link ArchConfiguration} loads
-     * {@code archunit.properties} whole, so a {@code corral.}-prefixed key is readable there; only
-     * the system-property form needs ArchUnit's prefix
+     * Absent file and absent key both mean "fail". Readable from {@code archunit.properties} despite
+     * the prefix; only the system-property form needs ArchUnit's
      * ({@code -Darchunit.corral.ignorePatterns.fail=false}).
      */
     static final String FAIL_PROPERTY = "corral.ignorePatterns.fail";
@@ -49,10 +39,7 @@ public class IgnorePatternsGuard {
     /** Scanned once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
     private static final List<URL> LOCATIONS = locate(currentClassLoader());
 
-    /**
-     * {@code rule} unchanged, or — when the file is on the classpath and the check is armed — a rule
-     * that fails with {@link #messageFor} instead of evaluating.
-     */
+    /** {@code rule} unchanged, or one that fails with {@link #messageFor} when the file is found. */
     public static ArchRule interposeOn(ArchRule rule) {
         return interposeOn(rule, LOCATIONS);
     }
@@ -63,18 +50,14 @@ public class IgnorePatternsGuard {
                 : new Detected(rule.getDescription(), messageFor(locations));
     }
 
-    /**
-     * Only the literal {@code false} disarms the check. A typo ({@code no}, {@code 0}, an empty
-     * value) leaves it armed rather than quietly reproducing the failure mode it guards against.
-     */
+    /** Only the literal {@code false} disarms it — a typo leaves it armed rather than silently open. */
     private static boolean failEnabled() {
         return !"false".equalsIgnoreCase(ArchConfiguration.get().getPropertyOrDefault(FAIL_PROPERTY, "true"));
     }
 
     /**
-     * {@code getResources}, plural: ArchUnit uses {@code getResource}, so first match wins and the
-     * copy doing the filtering may be one the consumer never put there — a transitive test-scoped
-     * dependency shipping that filename disarms every rule downstream.
+     * Plural: ArchUnit uses {@code getResource}, so first match wins and the copy doing the filtering
+     * may be one a transitive dependency shipped, not one the consumer put there.
      */
     static List<URL> locate(ClassLoader classLoader) {
         try {
@@ -109,10 +92,7 @@ public class IgnorePatternsGuard {
         return locations.stream().map(location -> "  " + location).collect(joining(System.lineSeparator()));
     }
 
-    /**
-     * Keeps the id it replaced, so the failure arrives under the test name the consumer recognises,
-     * and evaluates nothing — every entry point throws the same message.
-     */
+    /** Keeps the id it replaced, so the failure arrives under a recognisable test name. */
     @RequiredArgsConstructor
     private static final class Detected implements ArchRule {
 
