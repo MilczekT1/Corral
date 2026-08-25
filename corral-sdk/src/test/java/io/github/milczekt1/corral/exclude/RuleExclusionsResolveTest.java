@@ -32,8 +32,6 @@ class RuleExclusionsResolveTest {
     /** {@code FixtureRootGroup} publishes {@code fixture.alpha} and {@code fixture.beta}. */
     private static final Class<?> ROOT = FixtureRootGroup.class;
 
-    private static final String CONSUMER_OWNED_ID = "fixture.resolve-consumer-owned";
-
     @Test
     void anIdReachableFromTheWiredRootResolves() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
