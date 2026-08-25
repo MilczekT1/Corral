@@ -6,6 +6,7 @@ import com.tngtech.archunit.lang.FailureMessages;
 import com.tngtech.archunit.lang.Priority;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
+import io.github.milczekt1.corral.exclude.RuleExclusions;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -85,6 +86,14 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
 
     /** Package-private seam: rendering a documented rule, testable with a plain list. */
     String render(RuleDoc doc, List<String> violationLines, Priority priority) {
+        return render(doc, violationLines, priority, censusSafely());
+    }
+
+    /**
+     * Package-private seam taking the census explicitly, so it is testable without a file on the
+     * classpath.
+     */
+    String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census) {
         try {
             String nl = System.lineSeparator();
             List<String> lines = violationLines == null ? List.of() : violationLines;
@@ -108,6 +117,18 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             }
             out.append(nl);
 
+            // Rendered on every failure, not only the excluded rule's: an excluded rule never fails,
+            // so its own output is the one place this could never appear.
+            List<String> exclusions = census == null ? List.of() : census;
+            if (!exclusions.isEmpty()) {
+                out.append("EXCLUDED IN THIS BUILD (").append(RuleExclusions.EXCLUSIONS_FILE)
+                        .append(" — these rules are not enforced here):").append(nl);
+                for (String exclusion : exclusions) {
+                    out.append(INDENT).append("- ").append(exclusion).append(nl);
+                }
+                out.append(nl);
+            }
+
             out.append("Offending locations:").append(nl);
             for (String line : lines) {
                 out.append(INDENT).append(line).append(nl);
@@ -116,6 +137,16 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         } catch (RuntimeException e) {
             debug("Rich rendering of a documented rule failed; using the last-resort format", e);
             return lastResortFormat(idOf(doc), priority, "rich rendering threw");
+        }
+    }
+
+    /** The formatter must never throw, and reading the census walks consumer-supplied state. */
+    private static List<String> censusSafely() {
+        try {
+            return RuleExclusions.census();
+        } catch (RuntimeException e) {
+            debug("Reading the exclusion census threw; omitting it from this failure", e);
+            return List.of();
         }
     }
 

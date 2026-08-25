@@ -1,0 +1,12 @@
+# Rules this codebase permanently opts out of, because they do not apply here.
+#
+#   <rule-id> :: <reason>
+#
+# The id must be one a rule actually registers — a typo or a renamed rule fails the build rather
+# than quietly excluding nothing. A reason is mandatory: Corral cannot judge whether it is a good
+# one, but it can make its absence fatal. Every exclusion in effect is printed on any rule failure.
+#
+# This is NOT a pause button. An excluded rule records nothing, so any violation added while it is
+# off resurfaces as new the day the line is deleted. See "Excluding a rule" in the README.
+
+logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.

@@ -14,6 +14,7 @@ test-scoped dependency, one thin test class, and your architecture rules stop be
 | **Failures teach** | A violation prints why the rule exists, how to fix it, and how *not* to fake a fix — written for whoever (or whatever) reads the build log. |
 | **Runnable at any granularity** | The wiring produces a real JUnit tree, so you can run the whole suite, one group, or a single rule from the IDE gutter. |
 | **Composable** | A rule is a class, a group wraps rules, a group can wrap groups. Nests to any depth. |
+| **One rule off, catalog on** | A rule that is wrong for your codebase — not "not yet", but never — goes in `corral-exclusions.txt` with a reason. You keep the single wiring field, and keep receiving new rules as the catalog grows. |
 | **Guarded against silent decay** | The ways this could quietly stop enforcing anything — a rule registered but never evaluated, a group added but never wired — are covered by tests that fail loudly. |
 
 ## How it fits together
@@ -144,6 +145,8 @@ HOW NOT TO FIX (always):
     to report the file above, so disarming it restores the silence…
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by
     disabling the test.
+  - corral-exclusions.txt removes a rule from your build permanently, because it does
+    not apply to this codebase. It is not a way to pass a failing build…
   - …
 
 Offending locations:
@@ -163,6 +166,7 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 | `test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
 | `test.class-naming-convention` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 | `logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
+| `corral.exclusions-resolve` | `AllCentralRules` | Every line of `corral-exclusions.txt` names an id this build wires. Not an architecture rule — it guards the exclusion mechanism itself, and only runs when the catalog root is wired. |
 | `logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
 
 This table is maintained by hand; nothing in the build checks it.
@@ -201,6 +205,64 @@ Two consequences follow, and they are the questions people actually ask:
 > rewrites every message it produces — the frozen entries stop matching and the same old violations
 > resurface as new ones. That is a breaking change for consumers on the same footing as renaming an
 > id: they must re-freeze. Batch predicate changes into a release and say so in the notes.
+
+## Excluding a rule
+
+Some rules are simply wrong for some codebases. `spring.no-transactional-on-final` is wrong under
+AspectJ load-time weaving, where the annotation genuinely does apply. `logging.no-log4j-api-directly`
+is wrong for a project whose facade *is* the Log4j 2 API. No per-violation carve-out helps: the whole
+codebase disagrees with the rule's premise.
+
+Without a way to say that, the only option is to stop using `AllCentralRules` and enumerate the rules
+you do want — which costs you the thing the single field was for. **You stop receiving new rules**,
+and every catalog release becomes a manual diff against your wiring.
+
+Instead, name the rule in `src/test/resources/corral-exclusions.txt`, beside `archunit.properties`:
+
+```text
+# <rule-id> :: <reason>
+spring.no-transactional-on-final :: AspectJ load-time weaving; the annotation applies. ADR-021.
+logging.no-log4j-api-directly    :: The Log4j 2 API is our facade by decision.
+```
+
+The named rules evaluate nothing and pass. Every other rule is untouched, and you keep
+`ArchTests.in(AllCentralRules.class)` — you have removed one rule, not opted out of the mechanism
+that delivers them. With no file present nothing changes for anyone.
+
+This is deliberately blunt: it can only remove a whole rule, never one violation. A change that
+disables a rule entirely is loud in review, unlike a suppression that hides one violation and looks
+small.
+
+**The guardrails:**
+
+| | |
+|---|---|
+| The id must be a **catalog rule** `AllCentralRules` publishes | A typo excludes nothing while reading as though it did, and a rule renamed upstream would silently come back on. Both fail the build, listing the excludable ids. Checked by `corral.exclusions-resolve` — see below. |
+| A **reason is mandatory** | A line without `::` and non-empty text after it is a parse error. Corral cannot judge whether a reason is a good one; it can make its absence fatal. |
+| A file that cannot be read **excludes nothing and fails everything** | A file that is not understood must not be trusted to remove a rule. Every broken line is reported at once, with its line number. |
+| Resolved with `getResources` (**plural**) | More than one copy on the classpath fails, naming each. Otherwise first-match-wins decides which rules you enforce, and the winner could belong to a test-scoped dependency rather than to you. |
+| Every exclusion in effect is **printed on any rule failure** | Under `EXCLUDED IN THIS BUILD`, so whoever reads a failing build sees what is *not* being enforced — including on rules the file never named, since an excluded rule never fails and so can never print it itself. |
+
+**This file names catalog rules.** A rule *you* wrote is not removed here — stop wiring it, by
+deleting its `@ArchTest` field from your group. That is why `corral.exclusions-resolve` accepts only
+ids reachable from `AllCentralRules`: it walks that tree, which is the one set of ids that is the
+same in every run. Validating against "whatever has registered so far" would make the verdict depend
+on which tests happened to run, and a check that answers differently run to run is worse than one
+with a stated limit.
+
+The check runs wherever `AllCentralRules` is wired, so a run of one leaf from the IDE gutter applies
+your exclusions without verifying them. `corral.exclusions-resolve` itself cannot be excluded.
+
+> **An exclusion is not a pause button.** An excluded rule records nothing while it is off, so any
+> violation the codebase acquires meanwhile is *new* the day you delete the line — and the build
+> fails on code nobody touched that day. Corral keeps the frozen entries intact (the exclusion wraps
+> the frozen rule rather than replacing it, so the store is never rewritten as clean), but it cannot
+> record what it never evaluated. Re-enable a rule the way you adopt one: expect to re-freeze, and
+> read the diff.
+
+Adding a rule to this file in the same change that made it fail is silencing, not excluding — and
+reads that way in the diff. The [anti-fix policy](#what-a-failure-looks-like) says so on every
+failure.
 
 ## Install
 
@@ -250,6 +312,7 @@ you want something to depend on in the meantime.
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
 | `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
+| `corral-exclusions.txt` | optional | Not a property — a file beside `archunit.properties`. Removes named rules from your build permanently; see [Excluding a rule](#excluding-a-rule). |
 | `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -314,7 +377,10 @@ Every push and pull request to `main` runs **Build Pipeline**
 `sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
 which fails the build at `verify` below the thresholds in the root `pom.xml`
 (`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
-`corral-example` overrides them to zero — it is a wiring demo, not a tested component.
+`corral-example` overrides them to zero and sets `sonar.skip=true` — it is a wiring demo, not a
+tested component. Its classes exist to be flagged by rules and its violations are deliberate and
+committed, so analysing it would report the demo itself as findings. It is still compiled and its
+tests still run: that module is the end-to-end test of the wiring.
 
 ### Release process
 

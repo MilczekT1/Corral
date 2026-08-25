@@ -51,6 +51,7 @@ class AllCentralRulesTest {
                 "test.class-naming-convention",
                 "test.no-mocked-repository-in-integration-test",
                 "logging.no-system-out",
-                "logging.no-system-err"), ids);
+                "logging.no-system-err",
+                "corral.exclusions-resolve"), ids);
     }
 }

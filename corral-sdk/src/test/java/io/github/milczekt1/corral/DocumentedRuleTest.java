@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.core.domain.JavaAccess;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaMethod;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
@@ -16,7 +17,9 @@ import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import com.tngtech.archunit.library.freeze.ViolationStore;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
+import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -103,6 +106,50 @@ class DocumentedRuleTest {
                                 && call.getName().equals("interposeOn")),
                 "guard() must run the ignore-patterns check — it is the only place a whole-catalog"
                         + " kill switch cannot hide from");
+    }
+
+    /**
+     * The wiring, not the mechanism — {@code RuleExclusionsGuardTest} owns that. Asserted against
+     * the compiled bytecode for the same reason as the check above: with no exclusions file on this
+     * build's classpath the call is a pass-through, and therefore invisible to any behavioural
+     * assertion here.
+     */
+    @Test
+    void guardAppliesExclusionsToEveryRule() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+
+        assertTrue(guard.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(RuleExclusions.class)
+                                && call.getName().equals("applyTo")),
+                "guard() must apply exclusions — it is the one place every rule passes through");
+    }
+
+    /**
+     * Order matters in one direction: the exclusion wrapper must sit OUTSIDE the freeze, so an
+     * excluded rule never reaches the store. Inside, it would be re-recorded as clean, deleting
+     * every frozen entry and resurfacing them all when the rule is switched back on.
+     */
+    @Test
+    void exclusionsAreAppliedOutsideTheFreezeSoAnExcludedRuleNeverTouchesTheStore() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+        List<String> callOrder = guard.getMethodCallsFromSelf().stream()
+                .sorted(Comparator.comparingInt(JavaAccess::getLineNumber))
+                .map(call -> call.getTargetOwner().getSimpleName() + "." + call.getName())
+                .toList();
+
+        int freeze = callOrder.indexOf("FreezingArchRule.freeze");
+        int apply = callOrder.indexOf("RuleExclusions.applyTo");
+
+        assertTrue(freeze >= 0 && apply >= 0, () -> "expected both calls, got " + callOrder);
+        assertTrue(freeze < apply,
+                () -> "freeze(...) must be evaluated before applyTo wraps it, so the exclusion sits"
+                        + " outside the freeze: " + callOrder);
     }
 
     @Test
