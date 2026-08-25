@@ -237,18 +237,21 @@ small.
 
 | | |
 |---|---|
-| The id must be one your build **actually wires** | A typo excludes nothing while reading as though it did, and a rule renamed upstream would silently come back on. Both fail the build, naming the ids it does know. Checked by `corral.exclusions-resolve`, a rule that rides along on `AllCentralRules` — see below. |
+| The id must be a **catalog rule** `AllCentralRules` publishes | A typo excludes nothing while reading as though it did, and a rule renamed upstream would silently come back on. Both fail the build, listing the excludable ids. Checked by `corral.exclusions-resolve` — see below. |
 | A **reason is mandatory** | A line without `::` and non-empty text after it is a parse error. Corral cannot judge whether a reason is a good one; it can make its absence fatal. |
 | A file that cannot be read **excludes nothing and fails everything** | A file that is not understood must not be trusted to remove a rule. Every broken line is reported at once, with its line number. |
 | Resolved with `getResources` (**plural**) | More than one copy on the classpath fails, naming each. Otherwise first-match-wins decides which rules you enforce, and the winner could belong to a test-scoped dependency rather than to you. |
 | Every exclusion in effect is **printed on any rule failure** | Under `EXCLUDED IN THIS BUILD`, so whoever reads a failing build sees what is *not* being enforced — including on rules the file never named, since an excluded rule never fails and so can never print it itself. |
 
-**Where the id check runs, and why it is not on every rule.** A rule being evaluated can only see
-the rules loaded before it, so a run that wires one group — a single test class, one leaf from the
-IDE gutter — would call every other group's exclusions typos. `corral.exclusions-resolve` therefore
-lives on `AllCentralRules`, where a walk of the wired tree sees the whole catalog at once. The
-consequence worth knowing: **a partial run does not verify your exclusions.** They still take effect;
-nothing validates them until a run that wires the catalog, which is your CI build.
+**This file names catalog rules.** A rule *you* wrote is not removed here — stop wiring it, by
+deleting its `@ArchTest` field from your group. That is why `corral.exclusions-resolve` accepts only
+ids reachable from `AllCentralRules`: it walks that tree, which is the one set of ids that is the
+same in every run. Validating against "whatever has registered so far" would make the verdict depend
+on which tests happened to run, and a check that answers differently run to run is worse than one
+with a stated limit.
+
+The check runs wherever `AllCentralRules` is wired, so a run of one leaf from the IDE gutter applies
+your exclusions without verifying them. `corral.exclusions-resolve` itself cannot be excluded.
 
 > **An exclusion is not a pause button.** An excluded rule records nothing while it is off, so any
 > violation the codebase acquires meanwhile is *new* the day you delete the line — and the build

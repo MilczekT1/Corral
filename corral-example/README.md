@@ -137,8 +137,9 @@ Three things are worth trying while you are in there, because each one fails on 
 
 | Edit | What happens |
 |---|---|
-| Misspell the id (`logging.no-system-errr`) | `corral.exclusions-resolve` fails, naming the id and listing the ids this build knows. An exclusion that names nothing removes nothing. Run the whole class, not one leaf — that check only runs when the catalog root is wired. |
+| Misspell the id (`logging.no-system-errr`) | `corral.exclusions-resolve` fails with its own WHY / HOW TO FIX, naming the id and listing the excludable ones. Run the whole class, not one leaf — that check runs where `AllCentralRules` is wired. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
+| Name this module's own `acme.no-stdout-in-services` | Fails: the file removes rules from the catalog you wire, and a rule you own is removed by not wiring it. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
 Note what does **not** happen: the freeze store is not rewritten. The exclusion wraps the frozen

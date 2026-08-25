@@ -142,6 +142,23 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.problem().contains("logging.no-system-out"), loaded::problem);
     }
 
+    /**
+     * Notepad and friends write a BOM. {@code String.strip()} does not remove it —
+     * {@code Character.isWhitespace('\uFEFF')} is false — so without this the first line fails to
+     * match either a comment or an id, and the whole file is rejected over a character that is
+     * invisible in the error message quoting it.
+     */
+    @Test
+    void aByteOrderMarkOnTheFirstLineIsNotAParseError() {
+        Loaded commented = RuleExclusions.parse("\uFEFF# just a comment\nlogging.no-system-out :: ours",
+                SOURCE);
+        Loaded idFirst = RuleExclusions.parse("\uFEFFlogging.no-system-out :: ours", SOURCE);
+
+        assertNull(commented.problem(), commented::problem);
+        assertNull(idFirst.problem(), idFirst::problem);
+        assertEquals(List.of(new Exclusion("logging.no-system-out", "ours")), idFirst.entries());
+    }
+
     @Test
     void aFileOfNothingButCommentsExcludesNothingAndIsNotAnError() {
         Loaded loaded = RuleExclusions.parse("# nothing to say yet\n", SOURCE);

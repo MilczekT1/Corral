@@ -2,18 +2,21 @@ package io.github.milczekt1.corral.exclude;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.EvaluationResult;
+import io.github.milczekt1.corral.format.AgentFriendlyFailureDisplayFormat;
 import io.github.milczekt1.corral.exclude.RuleExclusions.Loaded;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.fixtures.tree.FixtureRootGroup;
 import io.github.milczekt1.corral.reflect.PublishedRules;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
@@ -79,28 +82,100 @@ class RuleExclusionsResolveTest {
      * their wiring evaluated it.
      */
     /**
-     * Registered here rather than relied on from a sibling test: the registry is process-wide and
-     * Surefire reuses one JVM, so leaning on another class having run first is exactly the
-     * order-dependence {@code PublishedRules} warns about.
+     * The check must not depend on what else happened to load in this JVM. Unioning the process-wide
+     * registry in made it run-dependent: an id registered by a rule class that a partial run never
+     * loads was reported as a typo, failing a build that a full run passed. Walking the root is
+     * deterministic, so the verdict is the same in every run.
      */
-    @BeforeAll
-    static void registerAConsumerOwnedRuleId() {
+    @Test
+    void theVerdictDoesNotDependOnWhatElseIsRegisteredInThisJvm() {
+        String registeredButNotPublished = "fixture.resolve-registered-elsewhere";
         RuleRegistry.register(RuleDoc.builder()
-                .id(CONSUMER_OWNED_ID)
-                .why("Stands in for a rule the consumer wrote themselves.")
+                .id(registeredButNotPublished)
+                .why("Registered by some other class that happened to load first.")
                 .howToFix("N/A — this is a test fixture, not a real rule.")
                 .build());
-    }
-
-    @Test
-    void anIdRegisteredByAConsumersOwnRuleResolvesEvenThoughTheRootDoesNotPublishIt() {
-        assertFalse(PublishedRules.idsOf(ROOT).contains(CONSUMER_OWNED_ID),
+        assertFalse(PublishedRules.idsOf(ROOT).contains(registeredButNotPublished),
                 "the root must NOT publish this id, or the test proves nothing");
 
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                RuleExclusions.parse(CONSUMER_OWNED_ID + " :: my own rule", "x"));
+                RuleExclusions.parse(registeredButNotPublished + " :: my own rule", "x"));
+        JavaClasses none = nothingToMatch();
 
-        assertDoesNotThrow(() -> check.check(nothingToMatch()));
+        assertThrows(AssertionError.class, () -> check.check(none),
+                "an id the wired root does not publish must fail identically whether or not some"
+                        + " other class in this JVM registered it");
+    }
+
+    /** A consumer who names their own rule needs to be told the actual remedy, not just "unknown". */
+    @Test
+    void theFailureSaysWhatToDoAboutARuleTheConsumerOwns() {
+        ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
+                RuleExclusions.parse("fixture.mine :: my own rule", "x"));
+        JavaClasses none = nothingToMatch();
+
+        String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
+
+        assertTrue(message.contains("stop wiring"),
+                () -> "a rule you own is removed by not wiring it, not by excluding it: " + message);
+    }
+
+    /**
+     * The guard cannot be turned off by the file it guards. It is published from the same root it
+     * walks, so without this it would look like a perfectly resolvable id.
+     */
+    @Test
+    void theResolveCheckItselfCannotBeExcluded() {
+        Loaded loaded = RuleExclusions.parse(
+                "corral.exclusions-resolve :: we do not want this guard", "x");
+
+        assertNotNull(loaded.problem(), "excluding the guard must not parse as an ordinary line");
+        assertTrue(loaded.problem().contains("corral.exclusions-resolve"), loaded::problem);
+        assertTrue(loaded.entries().isEmpty(),
+                () -> "it must never reach the census, which would print it as not enforced: " + loaded);
+    }
+
+    /**
+     * The doc exists to be read. Thrown as a bare {@link AssertionError} it never reaches
+     * {@code AgentFriendlyFailureDisplayFormat}, and registering it would only be satisfying the
+     * completeness test rather than telling a consumer anything.
+     */
+    @Test
+    void theFailureRendersTheRulesOwnGuidance() {
+        RuleRegistry.register(RuleExclusions.resolveDoc());
+        ArchConfiguration.get().setProperty(
+                "failureDisplayFormat", AgentFriendlyFailureDisplayFormat.class.getName());
+        try {
+            ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
+                    RuleExclusions.parse("fixture.alfa :: a typo", "x"));
+            JavaClasses none = nothingToMatch();
+
+            String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
+
+            assertTrue(message.contains("WHY:"), () -> "no WHY section:\n" + message);
+            assertTrue(message.contains("HOW TO FIX:"), () -> "no HOW TO FIX section:\n" + message);
+            assertTrue(message.contains("fixture.alfa"), message);
+        } finally {
+            ArchConfiguration.get().reset();
+        }
+    }
+
+    /**
+     * What makes the rendering above possible, asserted without depending on the consumer having
+     * configured a formatter: the failure travels as a violation on an {@link EvaluationResult}, not
+     * as a thrown {@code AssertionError} that no formatter ever sees.
+     */
+    @Test
+    void theFailureTravelsAsAViolationRatherThanAThrownError() {
+        ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
+                RuleExclusions.parse("fixture.alfa :: a typo", "x"));
+
+        EvaluationResult result = check.evaluate(nothingToMatch());
+
+        assertTrue(result.hasViolation(), "nothing for a failure format to render");
+        assertTrue(result.getFailureReport().getDetails().stream()
+                        .anyMatch(line -> line.contains("fixture.alfa")),
+                () -> "violation lines: " + result.getFailureReport().getDetails());
     }
 
     @Test

@@ -5,8 +5,10 @@ import static java.util.stream.Collectors.joining;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.reflect.PublishedRules;
@@ -44,6 +46,9 @@ public class RuleExclusions {
     private static final String SEPARATOR = "::";
 
     private static final String COMMENT = "#";
+
+    /** Ids this file may not name, because excluding them would disable the file's own guardrails. */
+    private static final Set<String> NOT_EXCLUDABLE = Set.of("corral.exclusions-resolve");
 
     /** Read once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
     private static final Loaded STATE = load(currentClassLoader());
@@ -140,13 +145,20 @@ public class RuleExclusions {
      * reachable {@code @ArchTest} field, which forces each rule class to initialise, so the ids it
      * yields are complete for that root by construction — unlike the registry mid-run.
      *
-     * <p>The registry is unioned in anyway, for a consumer excluding a rule they wrote themselves:
-     * no catalog root publishes it, but their own wiring has registered it by the time this runs.
-     * That direction is best-effort by nature, and it can only ever let an id through, never
-     * manufacture a failure.
+     * <p>Only the walk — deliberately not unioned with {@link RuleRegistry}. The registry holds
+     * whatever loaded in this JVM, so including it made the verdict depend on which tests ran: an id
+     * belonging to a consumer's own rule passed a full build and failed a run that wired this root
+     * without loading that rule's class. A check that answers differently run to run is worse than
+     * one with a stated limit, and the limit here is stateable: exclusions name rules this root
+     * publishes.
      */
     public static ArchRule resolvedAgainst(Class<?> wiredRoot) {
         return resolvedAgainst(wiredRoot, STATE);
+    }
+
+    /** The doc {@link #resolvedAgainst} publishes; exposed so tests can register it deliberately. */
+    static RuleDoc resolveDoc() {
+        return RESOLVE_DOC;
     }
 
     static ArchRule resolvedAgainst(Class<?> wiredRoot, Loaded state) {
@@ -178,12 +190,14 @@ public class RuleExclusions {
                 .toList();
 
         return unresolved.isEmpty() ? null : """
-                %s excludes %s, which nothing this build wires publishes or registers under that id. \
-                An exclusion that names nothing removes nothing, and reads in the diff as though it \
-                did — so it fails rather than passing quietly. Either the id is a typo, or the rule \
-                was renamed and its exclusion needs renaming with it.
-                Ids this build knows:
-                %s\
+                %s excludes %s, which no rule wired here publishes under that id. An exclusion that \
+                names nothing removes nothing, and reads in the diff as though it did — so it fails \
+                rather than passing quietly. Either the id is a typo, or the rule was renamed and its \
+                exclusion needs renaming with it.
+                Excludable ids:
+                %s
+                This file removes rules from the catalog you wire. A rule you wrote yourself is not \
+                excluded here — stop wiring it, by removing its @ArchTest field from your group.\
                 """.formatted(EXCLUSIONS_FILE, quoted(unresolved), listedText(knownIds.stream().sorted().toList()));
     }
 
@@ -231,7 +245,7 @@ public class RuleExclusions {
         Set<String> idsSeen = new LinkedHashSet<>();
         int lineNumber = 0;
 
-        for (String rawLine : contents.lines().toList()) {
+        for (String rawLine : withoutByteOrderMark(contents).lines().toList()) {
             lineNumber++;
             String line = rawLine.strip();
             if (line.isEmpty() || line.startsWith(COMMENT)) {
@@ -239,6 +253,12 @@ public class RuleExclusions {
             }
             try {
                 Exclusion exclusion = parseLine(line);
+                if (NOT_EXCLUDABLE.contains(exclusion.ruleId())) {
+                    throw new IllegalArgumentException("'" + exclusion.ruleId() + "' is the check that"
+                            + " every line here names a real rule; excluding it would switch off the"
+                            + " guard on this very file, and would print it in the build log as a rule"
+                            + " that is not enforced when it still is");
+                }
                 if (!idsSeen.add(exclusion.ruleId())) {
                     throw new IllegalArgumentException("'" + exclusion.ruleId()
                             + "' is excluded more than once — which reason is in effect is unanswerable");
@@ -253,6 +273,15 @@ public class RuleExclusions {
         return problems.isEmpty()
                 ? Loaded.of(entries)
                 : Loaded.broken(brokenFileMessage(source, problems));
+    }
+
+    /**
+     * {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. Left in
+     * place, a first line written by an editor that emits a BOM matches neither a comment nor an id,
+     * and the whole file is rejected over a character invisible in the message quoting it.
+     */
+    private static String withoutByteOrderMark(String contents) {
+        return contents.startsWith("\uFEFF") ? contents.substring(1) : contents;
     }
 
     private static Exclusion parseLine(String line) {
@@ -364,28 +393,35 @@ public class RuleExclusions {
         private final Class<?> wiredRoot;
         private final Loaded state;
 
+        /**
+         * Through ArchUnit rather than by throwing: {@code assertNoViolation} renders the failure
+         * with the configured {@code failureDisplayFormat}, which is what puts {@link #RESOLVE_DOC}'s
+         * WHY and HOW TO FIX in front of the consumer. Thrown raw, the doc would exist only to
+         * satisfy the catalog's completeness test.
+         */
         @Override
         public void check(JavaClasses classes) {
-            if (state.isBroken() || state.entries().isEmpty()) {
-                return;
-            }
-            String problem = unresolvedIdProblem(state, knownIds());
-            if (problem != null) {
-                throw new AssertionError(problem);
-            }
+            ArchRule.Assertions.assertNoViolation(evaluate(classes));
         }
 
-        /** The walk first: it initialises the rule classes whose registration the union relies on. */
+        /** The guard is published by this root too, and it is not a rule anyone may switch off. */
         private Set<String> knownIds() {
             Set<String> known = new LinkedHashSet<>(PublishedRules.idsOf(wiredRoot));
-            RuleRegistry.all().forEach(doc -> known.add(doc.id()));
+            known.remove(RESOLVE_DOC.id());
             return known;
         }
 
+        /** Silent for a file that could not be parsed: every rule is already failing with that. */
         @Override
         public EvaluationResult evaluate(JavaClasses classes) {
-            check(classes);
-            return new EvaluationResult(this, Priority.MEDIUM);
+            ConditionEvents events = ConditionEvents.Factory.create();
+            if (!state.isBroken() && !state.entries().isEmpty()) {
+                String problem = unresolvedIdProblem(state, knownIds());
+                if (problem != null) {
+                    events.add(SimpleConditionEvent.violated(this, problem));
+                }
+            }
+            return new EvaluationResult(this, events, Priority.MEDIUM);
         }
 
         @Override
