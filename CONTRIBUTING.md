@@ -249,9 +249,14 @@ evaluates it, and `RuleExclusions.resolvedAgainst` validates against what a cons
 actually publishes, not against the registry. Update
 `corral-rules/src/test/resources/published-rule-ids.txt` so both ids appear — the retired one (still
 published, now as a signpost) and the replacement — since `PublishedRuleIdsTest` pins this file and
-fails until the diff matches. Nothing to do in `RuleIdGrammarTest` itself: it exempts every id in
-`DeprecatedRule.retiredIds()` from the namespace and polarity checks automatically, because
-`supersededBy` records the id there the moment it registers.
+fails until the diff matches. Extend the expected id set in
+`AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`, which asserts the wired root's ids
+exactly, so a newly wired signpost fails it until it is listed.
+
+Nothing to do in `RuleIdGrammarTest` itself: it exempts every id in `DeprecatedRule.retiredIds()`
+from the namespace and polarity checks automatically, because `supersededBy` records the id there the
+moment it registers. That exemption is why a retired id may keep a shape the grammar would otherwise
+reject — it predates the grammar, the `corral.` prefix included.
 
 ## Commit conventions
 
