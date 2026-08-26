@@ -161,6 +161,30 @@ class EmptyOmittingViolationStoreTest {
     }
 
 
+    @Test
+    void theIndexIsWrittenInSortedOrderWhateverTheRunningJdkDoes() throws Exception {
+        // Properties.store() sorts by key only since JDK 21; on 17-20 it writes hash-bucket order,
+        // which reshuffles wholesale when the map resizes. The store is committed by consumers, so
+        // its line order must be a property of this class, not of the JRE running the build.
+        List<String> ids = List.of(
+                "spring.no-field-injection", "api.no-array-return-types", "test.no-thread-sleep",
+                "logging.no-system-out", "jakarta.no-final-entity", "naming.no-impl-suffix",
+                "concurrency.no-thread-sleep", "security.no-runtime-exec", "java.no-legacy-date-api",
+                "lombok.no-builder-with-setters", "jackson.no-default-typing", "layering.no-package-cycles",
+                "exception.no-error-subclass", "corral.exclusions-resolve");
+        for (String id : ids) {
+            store.save(ruleNamed(id), List.of("Class <Foo> violates " + id));
+        }
+
+        List<String> keys = Files.readAllLines(storeDir.resolve("stored.rules")).stream()
+                .filter(line -> !line.startsWith("#"))
+                .map(line -> line.split("=")[0])
+                .toList();
+
+        assertEquals(keys.stream().sorted().toList(), keys,
+                "stored.rules must be sorted so a consumer's committed store yields a reviewable diff");
+    }
+
     /**
      * Counts rule violation files only, excluding the {@code stored.rules} index itself — chosen
      * over counting the index as a rule-violation file because it lets the assertions read as plain

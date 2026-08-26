@@ -4,15 +4,22 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.TextFileBasedViolationStore;
 import com.tngtech.archunit.library.freeze.ViolationStore;
 import io.github.milczekt1.corral.doc.RuleDoc;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.Comparator;
+import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
+import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 /**
  * A {@link ViolationStore} that keeps the {@code stored.rules} index complete but writes no file for
@@ -87,6 +94,57 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         if (violations.isEmpty()) {
             deleteViolationFileOf(rule);
         }
+        rewriteIndexSorted();
+    }
+
+    /**
+     * Rewrites {@code stored.rules} with its lines in key order.
+     *
+     * <p>{@link java.util.Properties#store} sorts by key only from JDK 21. On 17-20 it writes the
+     * iteration order of its internal map, which reshuffles wholesale whenever that map resizes — so a
+     * consumer's committed store would produce an unreviewable diff on upgrade, on some JDKs and not
+     * others. Writing the file here makes the order a property of this store instead of the JRE.
+     *
+     * <p>Runs after the delegate's own write, which is what creates the entry being reordered.
+     */
+    private void rewriteIndexSorted() {
+        Path indexFile = storePath.resolve(INDEX_FILE);
+        if (!Files.exists(indexFile)) {
+            return;
+        }
+        try {
+            Files.write(indexFile, sortedLines(readIndex()));
+        } catch (IOException e) {
+            throw new UncheckedIOException("Could not rewrite " + indexFile + " in sorted order", e);
+        }
+    }
+
+    /**
+     * Renders {@code index} as {@code key=value} lines in key order, with the header comment
+     * {@link Properties#store} would normally emit stripped out.
+     *
+     * <p>A rule frozen without a {@link RuleDoc} keeps its description — a whole sentence, with
+     * spaces and punctuation — as the index key. {@link Properties#load} treats an unescaped space in
+     * a key as the key/value delimiter, so hand-building {@code "key=value"} strings truncates such a
+     * key at its first word. Routing through a key-sorted {@link Properties#store} instead reuses its
+     * escaping, so every key and value round-trips through {@link Properties#load} regardless of what
+     * characters it contains.
+     */
+    private static List<String> sortedLines(Properties index) throws IOException {
+        Properties sortedByKey = new Properties() {
+            @Override
+            public Set<Map.Entry<Object, Object>> entrySet() {
+                return super.entrySet().stream()
+                        .sorted(Comparator.comparing(entry -> (String) entry.getKey()))
+                        .collect(Collectors.toCollection(LinkedHashSet::new));
+            }
+        };
+        sortedByKey.putAll(index);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        sortedByKey.store(out, null);
+        return out.toString(StandardCharsets.ISO_8859_1).lines()
+                .filter(line -> !line.startsWith("#"))
+                .toList();
     }
 
     /** No file means zero known violations — the clean-rule case, not a missing store. */
