@@ -14,7 +14,7 @@ import lombok.NoArgsConstructor;
 public final class BetaFixtureRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("fixture.beta")
+            .id("test.no-beta-fixture")
             .why("Test fixture. Gives the reflection walk a second, distinct leaf.")
             .howToFix("Nothing to fix — this rule is never evaluated against real code.")
             .build();

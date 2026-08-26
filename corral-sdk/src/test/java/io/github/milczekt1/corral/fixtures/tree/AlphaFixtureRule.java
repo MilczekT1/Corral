@@ -11,14 +11,14 @@ import lombok.NoArgsConstructor;
 
 /**
  * A rule that exists only to be found by a reflection walk. Never evaluated, so what it forbids is
- * irrelevant — only its id, which lives in the {@code fixture.} namespace so it cannot collide with
- * a real rule in the process-wide {@code RuleRegistry}.
+ * irrelevant — only its id, which carries a {@code -fixture} suffix distinct enough not to collide
+ * with a real rule in the process-wide {@code RuleRegistry}.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AlphaFixtureRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("fixture.alpha")
+            .id("test.no-alpha-fixture")
             .why("Test fixture. Gives the reflection walk a leaf to find.")
             .howToFix("Nothing to fix — this rule is never evaluated against real code.")
             .build();

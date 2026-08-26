@@ -31,8 +31,8 @@ import org.junit.jupiter.api.Test;
  */
 class RuleExclusionsGuardTest {
 
-    private static final String EXCLUDED_ID = "fixture.excluded-rule";
-    private static final String OTHER_ID = "fixture.other-rule";
+    private static final String EXCLUDED_ID = "test.no-guard-excluded-fixture";
+    private static final String OTHER_ID = "test.no-guard-other-fixture";
 
     /** Violated by every class there is, so "evaluated nothing" is distinguishable from "found nothing". */
     private static final ArchRule ALWAYS_VIOLATED =

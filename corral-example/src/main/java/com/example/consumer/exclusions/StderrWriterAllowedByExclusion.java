@@ -10,7 +10,7 @@ package com.example.consumer.exclusions;
  * allowed by an exclusion which is no longer there.
  *
  * <p>Outside {@code ..service..} deliberately, so the consumer's own
- * {@code acme.no-stdout-in-services} rule does not fire on the same line and blur which rule is
+ * {@code logging.no-stdout-in-services} rule does not fire on the same line and blur which rule is
  * being demonstrated.
  */
 public class StderrWriterAllowedByExclusion {

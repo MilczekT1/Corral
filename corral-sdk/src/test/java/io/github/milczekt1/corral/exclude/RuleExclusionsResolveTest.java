@@ -29,13 +29,13 @@ import org.junit.jupiter.api.Test;
  */
 class RuleExclusionsResolveTest {
 
-    /** {@code FixtureRootGroup} publishes {@code fixture.alpha} and {@code fixture.beta}. */
+    /** {@code FixtureRootGroup} publishes {@code test.no-alpha-fixture} and {@code test.no-beta-fixture}. */
     private static final Class<?> ROOT = FixtureRootGroup.class;
 
     @Test
     void anIdReachableFromTheWiredRootResolves() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                RuleExclusions.parse("fixture.alpha :: does not apply here", "x"));
+                RuleExclusions.parse("test.no-alpha-fixture :: does not apply here", "x"));
 
         assertDoesNotThrow(() -> check.check(nothingToMatch()));
     }
@@ -47,14 +47,14 @@ class RuleExclusionsResolveTest {
     @Test
     void anIdReachableFromNowhereFailsAndListsWhatIsAvailable() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                RuleExclusions.parse("fixture.alfa :: a typo for fixture.alpha", "x"));
+                RuleExclusions.parse("test.no-alfa-fixture :: a typo for test.no-alpha-fixture", "x"));
 
         JavaClasses none = nothingToMatch();
 
         String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
 
-        assertTrue(message.contains("fixture.alfa"), message);
-        assertTrue(message.contains("fixture.alpha"),
+        assertTrue(message.contains("test.no-alfa-fixture"), message);
+        assertTrue(message.contains("test.no-alpha-fixture"),
                 () -> "must list the ids it could have meant: " + message);
     }
 
@@ -62,16 +62,16 @@ class RuleExclusionsResolveTest {
     @Test
     void everyUnresolvedIdIsReportedNotOnlyTheFirst() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT, RuleExclusions.parse("""
-                fixture.alfa :: one typo
-                fixture.bta :: another typo
+                test.no-alfa-fixture :: one typo
+                test.no-bta-fixture :: another typo
                 """, "x"));
 
         JavaClasses none = nothingToMatch();
 
         String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
 
-        assertTrue(message.contains("fixture.alfa"), message);
-        assertTrue(message.contains("fixture.bta"), message);
+        assertTrue(message.contains("test.no-alfa-fixture"), message);
+        assertTrue(message.contains("test.no-bta-fixture"), message);
     }
 
     /**
@@ -87,7 +87,7 @@ class RuleExclusionsResolveTest {
      */
     @Test
     void theVerdictDoesNotDependOnWhatElseIsRegisteredInThisJvm() {
-        String registeredButNotPublished = "fixture.resolve-registered-elsewhere";
+        String registeredButNotPublished = "test.no-resolve-registered-elsewhere-fixture";
         RuleRegistry.register(RuleDoc.builder()
                 .id(registeredButNotPublished)
                 .why("Registered by some other class that happened to load first.")
@@ -145,14 +145,14 @@ class RuleExclusionsResolveTest {
                 "failureDisplayFormat", AgentFriendlyFailureDisplayFormat.class.getName());
         try {
             ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                    RuleExclusions.parse("fixture.alfa :: a typo", "x"));
+                    RuleExclusions.parse("test.no-alfa-fixture :: a typo", "x"));
             JavaClasses none = nothingToMatch();
 
             String message = assertThrows(AssertionError.class, () -> check.check(none)).getMessage();
 
             assertTrue(message.contains("WHY:"), () -> "no WHY section:\n" + message);
             assertTrue(message.contains("HOW TO FIX:"), () -> "no HOW TO FIX section:\n" + message);
-            assertTrue(message.contains("fixture.alfa"), message);
+            assertTrue(message.contains("test.no-alfa-fixture"), message);
         } finally {
             ArchConfiguration.get().reset();
         }
@@ -166,13 +166,13 @@ class RuleExclusionsResolveTest {
     @Test
     void theFailureTravelsAsAViolationRatherThanAThrownError() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                RuleExclusions.parse("fixture.alfa :: a typo", "x"));
+                RuleExclusions.parse("test.no-alfa-fixture :: a typo", "x"));
 
         EvaluationResult result = check.evaluate(nothingToMatch());
 
         assertTrue(result.hasViolation(), "nothing for a failure format to render");
         assertTrue(result.getFailureReport().getDetails().stream()
-                        .anyMatch(line -> line.contains("fixture.alfa")),
+                        .anyMatch(line -> line.contains("test.no-alfa-fixture")),
                 () -> "violation lines: " + result.getFailureReport().getDetails());
     }
 
@@ -187,7 +187,7 @@ class RuleExclusionsResolveTest {
     @Test
     void abrokenFilePassesHereBecauseEveryRuleIsAlreadyFailing() {
         ArchRule check = RuleExclusions.resolvedAgainst(ROOT,
-                RuleExclusions.parse("fixture.alpha", "x"));
+                RuleExclusions.parse("test.no-alpha-fixture", "x"));
 
         assertDoesNotThrow(() -> check.check(nothingToMatch()));
     }

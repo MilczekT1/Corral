@@ -29,14 +29,14 @@ class AgentFriendlyFailureDisplayFormatTest {
             "Class <com.example.StockService> is annotated with @Transactional in (StockService.java:8)");
 
     private static final RuleDoc DOCUMENTED = RuleDoc.builder()
-            .id("format.documented-rule")
+            .id("test.no-documented-rule-fixture")
             .why("This rule exists to protect invariant X.")
             .howToFix("Do Y instead.")
             .howNotToFix("Do NOT simply swap in Z — every variant is banned.")
             .build();
 
     private static final RuleDoc TERSE = RuleDoc.builder()
-            .id("format.terse-rule")
+            .id("test.no-terse-rule-fixture")
             .why("Because invariant W matters.")
             .howToFix("Fix it by doing V.")
             .build();
@@ -45,7 +45,7 @@ class AgentFriendlyFailureDisplayFormatTest {
     void rendersEverySectionForADocumentedRule() {
         String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM);
 
-        assertTrue(out.contains("Architecture Violation [format.documented-rule]"), out);
+        assertTrue(out.contains("Architecture Violation [test.no-documented-rule-fixture]"), out);
         assertTrue(out.contains("WHY:"), out);
         assertTrue(out.contains("This rule exists to protect invariant X."), out);
         assertTrue(out.contains("HOW TO FIX:"), out);
@@ -206,7 +206,7 @@ class AgentFriendlyFailureDisplayFormatTest {
     @Test
     void formatFailureDecoratesADocumentedRule() {
         RuleDoc doc = RuleDoc.builder()
-                .id("format.end-to-end-documented")
+                .id("test.no-end-to-end-documented-fixture")
                 .why("Because the invariant matters.")
                 .howToFix("Do the right thing.")
                 .howNotToFix("Do NOT suppress it.")
@@ -217,7 +217,7 @@ class AgentFriendlyFailureDisplayFormatTest {
                 "Class <com.example.A> is wrong in (A.java:1)",
                 "Class <com.example.B> is wrong in (B.java:2)");
 
-        assertTrue(out.contains("Architecture Violation [format.end-to-end-documented]"), out);
+        assertTrue(out.contains("Architecture Violation [test.no-end-to-end-documented-fixture]"), out);
         assertTrue(out.contains("Because the invariant matters."), out);
         assertTrue(out.contains("HOW NOT TO FIX (always):"), out);
         assertTrue(out.contains("(A.java:1)"), out);

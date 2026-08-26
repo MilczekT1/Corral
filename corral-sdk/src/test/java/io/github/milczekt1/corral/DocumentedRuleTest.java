@@ -39,7 +39,7 @@ import org.junit.jupiter.api.Test;
  */
 class DocumentedRuleTest {
 
-    private static final String DOC_ID = "fixture.documented-rule-contract";
+    private static final String DOC_ID = "test.no-documented-rule-contract-fixture";
 
     private static final class FixtureRule implements DocumentedRule {
 

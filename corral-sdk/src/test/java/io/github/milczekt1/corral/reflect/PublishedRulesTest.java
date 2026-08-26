@@ -39,12 +39,12 @@ class PublishedRulesTest {
         // Alpha twice (via the leaf group and directly), beta once. A walk that stopped at depth one
         // would see only the direct alpha.
         assertEquals(3, found.size(), "walk did not descend through the nested group");
-        assertEquals(Set.of("fixture.alpha", "fixture.beta"), descriptionsOf(found));
+        assertEquals(Set.of("test.no-alpha-fixture", "test.no-beta-fixture"), descriptionsOf(found));
     }
 
     @Test
     void idsOfIsDistinctEvenWhenARuleIsReachableTwice() {
-        assertEquals(Set.of("fixture.alpha", "fixture.beta"),
+        assertEquals(Set.of("test.no-alpha-fixture", "test.no-beta-fixture"),
                 PublishedRules.idsOf(FixtureRootGroup.class));
     }
 
@@ -68,7 +68,7 @@ class PublishedRulesTest {
     @Test
     void aRuleClassIsAValidRootOfItsOwn() {
         // ArchTests.in(X) treats a rule class and a group identically, so the walk must too.
-        assertEquals(Set.of("fixture.alpha"), PublishedRules.idsOf(AlphaFixtureRule.class));
+        assertEquals(Set.of("test.no-alpha-fixture"), PublishedRules.idsOf(AlphaFixtureRule.class));
     }
 
     @Test
@@ -95,7 +95,7 @@ class PublishedRulesTest {
         // any other, so the leaf behind it is published too.
         assertEquals(
                 Set.of("fixture.inherited-from-superclass", "fixture.inherited-from-interface",
-                        "fixture.beta"),
+                        "test.no-beta-fixture"),
                 PublishedRules.idsOf(InheritingFixtureGroup.class));
     }
 
