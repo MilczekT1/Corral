@@ -42,12 +42,12 @@ the wiring, and breaking it breaks the build.
 
 ## What breaks consumers
 
-Corral's compatibility surface is unusual and sharp. Three of these have **no automated check**, so
+Corral's compatibility surface is unusual and sharp. Two of these have **no automated check**, so
 they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also breaks any consumer excluding that id: an exclusion naming no registered rule fails the build. | nothing |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also breaks any consumer excluding that id: an exclusion naming no registered rule fails the build. | `PublishedRuleIdsTest` — the change shows as a diff in `published-rule-ids.txt` |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |

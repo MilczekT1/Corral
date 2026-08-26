@@ -1,0 +1,12 @@
+# Every rule id consumers evaluate, one per line, sorted.
+#
+# A rule id is the freeze-store key in every consumer's repo. Renaming or removing one orphans their
+# recorded violations: the rule re-seeds clean and the build goes green with nothing enforced.
+# A change to this file is therefore a breaking change — deprecate the old id instead of renaming it.
+#
+# Generated from PublishedRules.idsOf(AllCentralRules.class); pinned by PublishedRuleIdsTest.
+corral.exclusions-resolve
+logging.no-system-err
+logging.no-system-out
+test.class-names-must-end-with-test-or-it
+test.no-mocked-repository-in-integration-test
