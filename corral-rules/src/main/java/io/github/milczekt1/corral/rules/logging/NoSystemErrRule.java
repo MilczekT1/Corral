@@ -39,7 +39,7 @@ public final class NoSystemErrRule implements DocumentedRule {
                     routine, log.warn says so more accurately than a stack trace on stderr ever did.""")
             .howNotToFix("""
                     Do NOT swap System.err for System.out to satisfy this rule — the sibling rule \
-                    logging.no-system-out catches that too, and it only makes the failure harder to find. \
+                    corral.logging.no-system-out catches that too, and it only makes the failure harder to find. \
                     Do NOT swallow the exception, or narrow the catch until it disappears, just to remove \
                     the print: the print is the wrong destination, not the wrong intent.""")
             .build();

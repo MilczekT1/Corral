@@ -27,7 +27,7 @@ import lombok.Builder;
 public record RuleDoc(String id, String why, String howToFix, String howNotToFix) {
 
     /**
-     * Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code logging.no-system-out}.
+     * Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code acme.no-stdout-in-services}.
      *
      * <p>Quantifiers are possessive throughout. Nothing here needs to backtrack — a segment stops at
      * the dot it cannot match — and Java implements greedy repetition of a group by recursing once
