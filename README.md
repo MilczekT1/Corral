@@ -174,11 +174,11 @@ This table is maintained by hand; nothing in the build checks it.
 > **Rule ids are freeze-store keys.** Changing an id orphans every consumer's frozen entry, so treat
 > it as a breaking change.
 >
-> An id is a dot-namespaced, kebab-cased shape such as `logging.no-system-out` or
-> `test.mockito.no-static-mocking`, and every slug carries exactly one of two markers: `no-` for a
-> prohibition, `-must-` for an obligation. Ids are never renamed, only deprecated — the old one stays
-> registered, always passing, naming its replacement. The full grammar and the reason renaming is
-> unsafe are in [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
+> An id is a dot-namespaced, kebab-cased shape, and every slug carries exactly one of two markers:
+> `no-` for a prohibition (`logging.no-system-out`) or `-must-` for an obligation
+> (`test.class-names-must-end-with-test-or-it`). Ids are never renamed, only deprecated — the old one
+> stays registered, always passing, naming its replacement. The full grammar and the reason renaming
+> is unsafe are in [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
 
 ## How freezing decides
 

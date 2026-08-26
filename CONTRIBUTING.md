@@ -192,18 +192,19 @@ is closed and the closure is enforced, not a style convention:
   exempt from the rule below. Consumers must not author under it.
 
 **Tie-break when a predicate touches a library:** the prefix is the non-JDK library whose *correct
-use* the rule asserts, not any library the predicate merely detects. `layering.no-test-libraries-in-production`
-names JUnit and Mockito but stays `layering.*` — those libraries are a detection signal for what the
-rule actually polices (test code leaking into production), not the thing being asserted correct.
+use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
+libraries leaking into production code, for instance, would name JUnit and Mockito only to detect
+them — it polices layering, not correct use of either library — so it would stay `layering.*` rather
+than take on either library's prefix.
 
 **Exactly two polarity markers.** A slug either starts with `no-` (a prohibition) or contains
 `-must-`, read as `<subject>-must-<predicate>` (`fields-must-be-final`: the subject is fields, the
 predicate is being final). Six inconsistent forms across the early catalog collapsed into these two
 so a slug's intent is legible without opening the rule.
 
-**Caps:** depth ≤ 3 segments, and a third segment is legal only when segment 2 is a library or a Java
-version — anything finer-grained belongs in a group, which can be reorganised, not in the id, which
-cannot once a consumer has frozen it. Length ≤ 60 characters.
+**Caps:** depth ≤ 3 segments, and a third segment is legal only when segment 2 is a library —
+today, exactly `mockito`, `powermock` or `junit`. Anything finer-grained belongs in a group, which can
+be reorganised, not in the id, which cannot once a consumer has frozen it. Length ≤ 60 characters.
 
 **The check is split across two layers, deliberately.** `RuleDoc`'s constructor
 (`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
