@@ -46,7 +46,7 @@ class RuleDocTest {
 
     @Test
     void acceptsIdsOfAnyNamespaceDepth() {
-        // The id pattern repeats a group possessively; two segments and ten must behave alike.
+        // The id pattern repeats a group possessively; two segments and three must behave alike.
         assertEquals("logging.no-system-out", valid().id("logging.no-system-out").build().id());
         assertEquals("test.mockito.no-static-mocking", valid().id("test.mockito.no-static-mocking").build().id());
         assertTrue(RuleDoc.isId("a.b.c.d.e.f.g.h.i.j"));
@@ -64,39 +64,36 @@ class RuleDocTest {
         assertThrows(IllegalArgumentException.class, upperCaseNamespace::build);
     }
 
+    /**
+     * {@code RuleDoc} is public SDK surface: a consumer's {@code DocumentedRule} builds one with
+     * their own namespace, not Corral's. What namespace is allowed, and whether a slug carries a
+     * polarity marker, is catalog taxonomy for Corral's own rules — enforced by {@code corral-rules}'
+     * {@code RuleIdGrammarTest} against {@code AllCentralRules} only, never here.
+     */
     @Test
-    void acceptsEveryShapeTheGrammarAllows() {
-        assertDoesNotThrow(() -> valid().id("api.no-array-return-types").build());
-        assertDoesNotThrow(() -> valid().id("test.mockito.no-static-mocking").build());
-        assertDoesNotThrow(() -> valid().id("exception.fields-must-be-final").build());
-        assertDoesNotThrow(() -> valid().id("java21.no-blocking-in-virtual-thread").build());
-        assertDoesNotThrow(() -> valid().id("corral.exclusions-resolve").build(),
-                "corral.* holds Corral's own meta-checks and is exempt from the polarity marker");
+    void acceptsAnyNamespaceAndSlugAConsumerChooses() {
+        assertDoesNotThrow(() -> valid().id("acme.no-stdout-in-services").build(),
+                "a consumer's own namespace must keep working — that is the whole point of the SDK");
+        assertDoesNotThrow(() -> valid().id("db.no-spring-transactional").build());
+        assertDoesNotThrow(() -> valid().id("naming.lowercase-packages").build(),
+                "RuleDoc itself has no opinion on polarity markers");
+        assertDoesNotThrow(() -> valid().id("corral.exclusions-resolve").build());
     }
 
     @Test
-    void rejectsASegmentOutsideTheClosedVocabulary() {
-        // The vocabulary is closed so that "which bucket" never becomes an editorial argument, which
-        // is what produces renames — and a rename is a silent loss of enforcement.
+    void acceptsAnIdWithExactlyThreeSegments() {
+        assertDoesNotThrow(() -> valid().id("spring.data.no-repository-in-controller").build(),
+                "a third segment is a hygiene, not a taxonomy, question at this layer");
+    }
+
+    @Test
+    void rejectsAnIdWithMoreThanThreeSegments() {
+        // The id becomes a file name in every consumer's freeze store, so depth is a hygiene cap
+        // that binds every rule author, not catalog taxonomy for what a segment may contain.
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> valid().id("persistence.no-final-entity").build());
+                () -> valid().id("spring.data.jpa.no-repository-in-controller").build());
 
-        assertTrue(thrown.getMessage().contains("persistence"), thrown.getMessage());
-    }
-
-    @Test
-    void rejectsASlugWithNoPolarityMarker() {
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> valid().id("naming.lowercase-packages").build());
-
-        assertTrue(thrown.getMessage().contains("no-"), thrown.getMessage());
-    }
-
-    @Test
-    void rejectsAThirdSegmentThatIsNotALibraryOrJavaVersion() {
-        // A sub-concern in the key is mutable taxonomy in an immutable slot. Groups exist for that.
-        assertThrows(IllegalArgumentException.class,
-                () -> valid().id("spring.data.no-repository-in-controller").build());
+        assertTrue(thrown.getMessage().contains("3"), thrown.getMessage());
     }
 
     @Test

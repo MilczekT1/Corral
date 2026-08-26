@@ -1,4 +1,4 @@
-logging.no-stdout-in-services=logging.no-stdout-in-services
+acme.no-stdout-in-services=acme.no-stdout-in-services
 logging.no-system-err=logging.no-system-err
 logging.no-system-out=logging.no-system-out
 test.class-names-must-end-with-test-or-it=test.class-names-must-end-with-test-or-it

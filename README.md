@@ -335,7 +335,7 @@ reading a store means resolving names through `stored.rules` first:
 archunit/frozen/
 ├── stored.rules
 ├── test.class-names-must-end-with-test-or-it  # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
-└── logging.no-stdout-in-services
+└── acme.no-stdout-in-services
 ```
 
 `git log -p archunit/frozen/test.class-names-must-end-with-test-or-it` is then that rule's debt history. Only ids

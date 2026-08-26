@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public final class NoStdoutInServicesRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("logging.no-stdout-in-services")
+            .id("acme.no-stdout-in-services")
             .why("""
                     Writing to stdout from a service bypasses the logging setup entirely: no level, no \
                     correlation id, no way to turn it off in production or capture it in tests.""")
