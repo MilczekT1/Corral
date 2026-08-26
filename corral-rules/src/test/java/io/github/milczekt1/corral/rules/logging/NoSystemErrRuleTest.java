@@ -54,6 +54,6 @@ class NoSystemErrRuleTest {
 
     @Test
     void publicRuleIsFrozenAndIdPinned() {
-        assertEquals("logging.no-system-err", NoSystemErrRule.rule.getDescription());
+        assertEquals("corral.logging.no-system-err", NoSystemErrRule.rule.getDescription());
     }
 }

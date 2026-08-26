@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public final class NoSystemOutRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("logging.no-system-out")
+            .id("corral.logging.no-system-out")
             .why("""
                     A write to System.out bypasses the logging configuration entirely: no level, no logger \
                     name, no structured context, no appender. It cannot be filtered, routed, shipped to an \

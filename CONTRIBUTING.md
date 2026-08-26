@@ -170,53 +170,66 @@ exists so you can author those without forking anything.
 ## Rule ids
 
 An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumers)), so its grammar
-is closed and the closure is enforced, not a style convention:
+is closed and the closure is enforced, not a style convention.
+
+**Every id Corral publishes starts with the `corral.` vendor prefix.** Corral can enforce its own ids
+against its own catalog test (`RuleIdGrammarTest`), but it deliberately cannot enforce a consumer's —
+`RuleDoc` is public SDK surface, narrowed to universal hygiene precisely so a consumer keeps their own
+namespace. That freedom means a consumer authoring rules with `corral-sdk` reaches for the same
+generic words Corral's own catalog used to claim — `test`, `logging`, `api`, `security`, `naming`.
+Before the prefix, a collision there was prevented only by a runtime `RuleRegistry.register` throw
+that forced the *consumer* to rename *their* rule. Taking `corral.` for every id this library
+publishes makes the collision structurally impossible instead, and leaves the entire generic
+namespace to consumers. A consumer's own rule needs no prefix at all — `corral-example`'s
+`acme.no-stdout-in-services` is exactly that case, and it must keep working.
 
 | Shape | When | Example |
 |---|---|---|
-| `test.<slug>` | test scope, no specific library | `test.no-thread-sleep` |
-| `test.<library>.<slug>` | test scope, library-specific | `test.mockito.no-static-mocking` |
-| `<library>.<slug>` | production code using a library | `spring.no-field-injection` |
-| `java<N>.<slug>` | an API or feature that exists only from JDK N | — |
-| `java.<slug>` | JDK misuse valid on every supported JDK | `java.no-legacy-date-api` |
-| `<concern>.<slug>` | language or design, no library involved | `api.no-array-return-types` |
+| `corral.<slug>` | Corral's own framework meta-check | `corral.exclusions-resolve` |
+| `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
+| `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
 
-**Segment 1 is a closed vocabulary**, in five kinds:
+**Segment 1 is always `corral`** — provenance, not taxonomy. **Segment 2 is a closed vocabulary**, in
+four kinds:
 
+- **concern** — `api`, `concurrency`, `exception`, `layering`, `logging`, `naming`, `security`, `test`
 - **library** — `jackson`, `jakarta`, `lombok`, `spring`
-- **scope** — `test`
 - **JDK** — `java`, plus `java<N>` for a version-gated API
-- **concern** — `api`, `concurrency`, `exception`, `layering`, `logging`, `naming`, `security`
-- **framework** — `corral`, reserved for Corral's own meta-checks (`corral.exclusions-resolve` is the
-  only one today). It asserts nothing about consumer code, so it carries no polarity marker and is
-  exempt from the rule below. Consumers must not author under it.
+- **meta** — the one exception: a depth-2 `corral.<slug>` id has no segment-2 concern at all, the slug
+  itself sits at segment 2 (`corral.exclusions-resolve` is the only one today). It asserts nothing
+  about consumer code, so it carries no polarity marker and is exempt from the rule below.
 
-**Tie-break when a predicate touches a library:** the prefix is the non-JDK library whose *correct
-use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
+**Segment 3, when present, is a library qualifier** — today, exactly `mockito`, `powermock` or
+`junit`.
+
+**Tie-break when a predicate touches a library:** the segment-3 qualifier is the non-JDK library whose
+*correct use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
 libraries leaking into production code, for instance, would name JUnit and Mockito only to detect
-them — it polices layering, not correct use of either library — so it would stay `layering.*` rather
-than take on either library's prefix.
+them — it polices layering, not correct use of either library — so it would stay `corral.layering.*`
+rather than take on either library's qualifier.
 
 **Exactly two polarity markers.** A slug either starts with `no-` (a prohibition) or contains
 `-must-`, read as `<subject>-must-<predicate>` (`fields-must-be-final`: the subject is fields, the
 predicate is being final). Six inconsistent forms across the early catalog collapsed into these two
 so a slug's intent is legible without opening the rule.
 
-**Caps:** depth ≤ 3 segments, and a third segment is legal only when segment 2 is a library —
-today, exactly `mockito`, `powermock` or `junit`. Anything finer-grained belongs in a group, which can
-be reorganised, not in the id, which cannot once a consumer has frozen it. Length ≤ 60 characters.
+**Caps:** depth ≤ 4 segments, and a fourth segment is legal only when segment 3 is a library
+qualifier — today, exactly `mockito`, `powermock` or `junit`. Anything finer-grained belongs in a
+group, which can be reorganised, not in the id, which cannot once a consumer has frozen it. Length ≤
+72 characters — segment 1 is a fixed vendor prefix on top, so the taxonomy budget below it is
+unchanged from before the prefix existed.
 
 **The check is split across two layers, deliberately.** `RuleDoc`'s constructor
 (`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
 hygiene that binds every id, including a consumer's own, because the id becomes a *file name* in
-every consumer's freeze store (see [The freeze store](README.md#the-freeze-store)). The closed
-namespace, the polarity marker and the third-segment qualifier list are enforced separately, by
-`RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from `AllCentralRules` — this
-catalog, not the world. `corral-sdk` is published precisely so a consumer can author rules in their
-own namespace ("[a rule that encodes one team's preference is better off in that team's own rule
-namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside `RuleDoc` itself would
-revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly that case, and it
-must keep working.
+every consumer's freeze store (see [The freeze store](README.md#the-freeze-store)). The vendor
+prefix, the concern vocabulary, the polarity marker and the qualifier-segment list are enforced
+separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
+`AllCentralRules` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can
+author rules in their own namespace ("[a rule that encodes one team's preference is better off in
+that team's own rule namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside
+`RuleDoc` itself would revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly
+that case, and it must keep working.
 
 **Deprecate, never rename.** ArchUnit's `ViolationStore` SPI is four methods —
 `initialize(Properties)`, `contains(ArchRule)`, `save(ArchRule, List)`, `getViolations(ArchRule)` —

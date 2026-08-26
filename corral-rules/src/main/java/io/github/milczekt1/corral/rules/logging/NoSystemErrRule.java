@@ -25,7 +25,7 @@ import lombok.NoArgsConstructor;
 public final class NoSystemErrRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("logging.no-system-err")
+            .id("corral.logging.no-system-err")
             .why("""
                     System.err is the worse of the two streams to write to: it is where stack traces get \
                     dumped, so the failures most worth alerting on are exactly the ones that end up outside \

@@ -17,13 +17,15 @@ them, it does not restate them.
 
 ## The steps, in order
 
-1. **Choose the id.** Grammar, closed namespace and caps are in
-   [CONTRIBUTING.md § Rule ids](../../../CONTRIBUTING.md#rule-ids). The one judgment call: the
-   segment-1 prefix is the non-JDK **library whose correct use the rule asserts**, not a library the
-   predicate merely uses to *detect* something. A rule that flags JUnit/Mockito types leaking into
-   production code names them only to find them — it polices layering, not either library's correct
-   use — so it stays `layering.*`, not `test.*` or `mockito.*`. Ask "what is this rule actually
-   asserting about?", not "what classes does the predicate mention?".
+1. **Choose the id.** Grammar, closed vocabulary and caps are in
+   [CONTRIBUTING.md § Rule ids](../../../CONTRIBUTING.md#rule-ids). Segment 1 is always the fixed
+   `corral.` vendor prefix — never a judgment call. The one judgment call: the segment-2 concern (or,
+   for a library-specific rule, the segment-3 qualifier after it) is the non-JDK **library whose
+   correct use the rule asserts**, not a library the predicate merely uses to *detect* something. A
+   rule that flags JUnit/Mockito types leaking into production code names them only to find them — it
+   polices layering, not either library's correct use — so it stays `corral.layering.*`, not
+   `corral.test.*` or `corral.test.mockito.*`. Ask "what is this rule actually asserting about?", not
+   "what classes does the predicate mention?".
 
 2. **Create the rule class** at
    `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<Name>Rule.java` — a

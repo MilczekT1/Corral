@@ -35,9 +35,20 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
      */
     private static final Pattern ID_PATTERN = Pattern.compile("^[a-z0-9]++(?:\\.[a-z0-9-]++)++$");
 
-    private static final int MAX_ID_LENGTH = 60;
+    /**
+     * Segment 1 of an id is a vendor prefix (e.g. {@code corral}), not taxonomy, so it is not part of
+     * the budget a rule author spends — it is simply added on top. 60 was the old cap with no prefix;
+     * this is that budget plus room for a short, stable vendor segment and its dot, with headroom to
+     * spare rather than none.
+     */
+    private static final int MAX_ID_LENGTH = 72;
 
-    private static final int MAX_ID_SEGMENTS = 3;
+    /**
+     * Segment 1 of an id is a vendor prefix (e.g. {@code corral}), not taxonomy. The taxonomy budget
+     * a rule author spends is unchanged at 3 segments — namespace, and up to two more for
+     * concern/qualifier/slug shape — so this cap is 3 plus the one prefix segment.
+     */
+    private static final int MAX_ID_SEGMENTS = 4;
 
     public RuleDoc {
         requireText(id, "id");

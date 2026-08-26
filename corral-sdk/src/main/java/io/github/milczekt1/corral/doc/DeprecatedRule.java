@@ -22,7 +22,7 @@ import lombok.experimental.UtilityClass;
  * <pre>{@code
  * @ArchTest
  * public static final ArchRule oldName = DeprecatedRule.supersededBy(
- *         "test.class-naming-convention", "test.class-names-must-end-with-test-or-it",
+ *         "test.class-naming-convention", "corral.test.class-names-must-end-with-test-or-it",
  *         "renamed to carry a polarity marker");
  * }</pre>
  */

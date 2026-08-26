@@ -10,8 +10,8 @@ rule this project owns.
 | `custom/CustomArchitectureTest` | Wiring your own rules alongside the library's. |
 | `archunit/frozen/` | The committed freeze store. Five entries, three files named after their rule ids — the clean rules have no file. |
 | `corral-exclusions.txt` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
-| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `logging.no-system-out`. |
-| `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
+| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
+| `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
 
@@ -103,7 +103,7 @@ HOW NOT TO FIX (always):
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.
 
 EXCLUDED IN THIS BUILD (corral-exclusions.txt — these rules are not enforced here):
-  - logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
+  - corral.logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 
 Offending locations:
   Method <com.example.consumer.service.ChattyService.shout(java.lang.String)> calls method <java.io.PrintStream.println(java.lang.String)> in (ChattyService.java:4)
@@ -120,11 +120,11 @@ Three things to read off it:
 
 ## Excluding a rule
 
-`logging.no-system-err` is frozen **clean** in this store, so `StderrWriterAllowedByExclusion`
+`corral.logging.no-system-err` is frozen **clean** in this store, so `StderrWriterAllowedByExclusion`
 writing to stderr is a new violation and fails the build. One committed line keeps it green:
 
 ```text
-logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
+corral.logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 ```
 
 Delete it and run `mvn clean test` to watch the rule bite — `clean` matters, because Maven copies
@@ -137,13 +137,13 @@ Three things are worth trying while you are in there, because each one fails on 
 
 | Edit | What happens |
 |---|---|
-| Misspell the id (`logging.no-system-errr`) | `corral.exclusions-resolve` fails with its own WHY / HOW TO FIX, naming the id and listing the excludable ones. Run the whole class, not one leaf — that check runs where `AllCentralRules` is wired. |
+| Misspell the id (`corral.logging.no-system-errr`) | `corral.exclusions-resolve` fails with its own WHY / HOW TO FIX, naming the id and listing the excludable ones. Run the whole class, not one leaf — that check runs where `AllCentralRules` is wired. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
 | Name this module's own `acme.no-stdout-in-services` | Fails: the file removes rules from the catalog you wire, and a rule you own is removed by not wiring it. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
 Note what does **not** happen: the freeze store is not rewritten. The exclusion wraps the frozen
-rule rather than replacing it, so `logging.no-system-err` keeps its `stored.rules` entry and nothing
+rule rather than replacing it, so `corral.logging.no-system-err` keeps its `stored.rules` entry and nothing
 is deleted. What Corral cannot do is record violations it never evaluated — so anything this module
 acquires while the rule is off is *new* the day the line goes away. Exclusion is not a pause button.
 

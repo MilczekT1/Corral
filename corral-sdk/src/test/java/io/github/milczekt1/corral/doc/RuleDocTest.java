@@ -63,7 +63,7 @@ class RuleDocTest {
         assertTrue(RuleDoc.isIdWithinCaps("logging.no-system-out"));
         assertTrue(RuleDoc.isId("a.b.c.d.e.f.g.h.i.j"), "isId itself stays shape-only");
         assertFalse(RuleDoc.isIdWithinCaps("a.b.c.d.e.f.g.h.i.j"), "but isIdWithinCaps caps depth");
-        assertFalse(RuleDoc.isIdWithinCaps("security." + "a".repeat(60)), "and caps length");
+        assertFalse(RuleDoc.isIdWithinCaps("security." + "a".repeat(70)), "and caps length");
         assertFalse(RuleDoc.isIdWithinCaps(null));
         assertFalse(RuleDoc.isIdWithinCaps("not an id"));
     }
@@ -103,23 +103,23 @@ class RuleDocTest {
     }
 
     @Test
-    void rejectsAnIdWithMoreThanThreeSegments() {
+    void rejectsAnIdWithMoreThanFourSegments() {
         // The id becomes a file name in every consumer's freeze store, so depth is a hygiene cap
         // that binds every rule author, not catalog taxonomy for what a segment may contain.
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> valid().id("spring.data.jpa.no-repository-in-controller").build());
+                () -> valid().id("spring.data.jpa.mockito.no-repository-in-controller").build());
 
-        assertTrue(thrown.getMessage().contains("3"), thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("4"), thrown.getMessage());
     }
 
     @Test
-    void rejectsAnIdLongerThanSixtyCharacters() {
-        String tooLong = "security." + "a".repeat(60);
+    void rejectsAnIdLongerThanSeventyTwoCharacters() {
+        String tooLong = "security." + "a".repeat(70);
 
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> valid().id(tooLong).build());
 
-        assertTrue(thrown.getMessage().contains("60"), thrown.getMessage());
+        assertTrue(thrown.getMessage().contains("72"), thrown.getMessage());
     }
 
 }

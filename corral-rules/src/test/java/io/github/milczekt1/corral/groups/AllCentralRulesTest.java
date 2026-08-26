@@ -48,10 +48,10 @@ class AllCentralRulesTest {
         Set<String> ids = PublishedRules.idsOf(AllCentralRules.class);
 
         assertEquals(Set.of(
-                "test.class-names-must-end-with-test-or-it",
-                "test.no-mocked-repository-in-integration-test",
-                "logging.no-system-out",
-                "logging.no-system-err",
+                "corral.test.class-names-must-end-with-test-or-it",
+                "corral.test.no-mocked-repository-in-integration-test",
+                "corral.logging.no-system-out",
+                "corral.logging.no-system-err",
                 "corral.exclusions-resolve"), ids);
     }
 }

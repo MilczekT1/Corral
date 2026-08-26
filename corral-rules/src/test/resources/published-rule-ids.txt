@@ -6,7 +6,7 @@
 #
 # Generated from PublishedRules.idsOf(AllCentralRules.class); pinned by PublishedRuleIdsTest.
 corral.exclusions-resolve
-logging.no-system-err
-logging.no-system-out
-test.class-names-must-end-with-test-or-it
-test.no-mocked-repository-in-integration-test
+corral.logging.no-system-err
+corral.logging.no-system-out
+corral.test.class-names-must-end-with-test-or-it
+corral.test.no-mocked-repository-in-integration-test

@@ -58,7 +58,7 @@ public class EmptyOmittingViolationStore implements ViolationStore {
 
     /**
      * Names a rule's file after its id, so
-     * {@code git log -p archunit/frozen/test.class-names-must-end-with-test-or-it}
+     * {@code git log -p archunit/frozen/corral.test.class-names-must-end-with-test-or-it}
      * reads as that rule's debt history instead of requiring a UUID lookup in the index.
      *
      * <p>Only ids qualify: {@code freeze.store} is global, so this store also serves rules frozen

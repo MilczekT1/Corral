@@ -16,7 +16,7 @@ import lombok.experimental.UtilityClass;
  *
  * <p><strong>Not the class name.</strong> Every Corral rule is independently optional and Corral
  * freezes violations, so a consumer can freeze
- * {@code test.class-names-must-end-with-test-or-it}'s violations as debt: it passes green forever
+ * {@code corral.test.class-names-must-end-with-test-or-it}'s violations as debt: it passes green forever
  * while the convention it guarantees stays false, silently unarming every name-scoped rule.
  *
  * <p>A class is a test class when <strong>either</strong> half matches; neither is sufficient alone.

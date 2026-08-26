@@ -94,6 +94,6 @@ class TestClassNamingConventionRuleTest {
 
     @Test
     void publicRuleIsFrozenAndIdPinned() {
-        assertEquals("test.class-names-must-end-with-test-or-it", TestClassNamingConventionRule.rule.getDescription());
+        assertEquals("corral.test.class-names-must-end-with-test-or-it", TestClassNamingConventionRule.rule.getDescription());
     }
 }

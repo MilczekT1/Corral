@@ -32,7 +32,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
             "org.springframework.boot.test.mock.mockito.MockBean");
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("test.no-mocked-repository-in-integration-test")
+            .id("corral.test.no-mocked-repository-in-integration-test")
             .why("""
                     An integration test exists to prove the real wiring works — schema, queries, mapping \
                     and transactions included. Mocking the repository or dao removes exactly the layer the \

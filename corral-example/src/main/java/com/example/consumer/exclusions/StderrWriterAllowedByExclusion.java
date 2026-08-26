@@ -1,7 +1,7 @@
 package com.example.consumer.exclusions;
 
 /**
- * Writes to stderr, which {@code logging.no-system-err} forbids — and which this module excludes.
+ * Writes to stderr, which {@code corral.logging.no-system-err} forbids — and which this module excludes.
  *
  * <p>The name is the point. That rule is frozen <em>clean</em> in this module's store, so this class
  * is a NEW violation and fails the build on its own. The one line in

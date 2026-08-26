@@ -80,7 +80,7 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
 
     @Test
     void publicRuleIsFrozenAndIdPinned() {
-        assertEquals("test.no-mocked-repository-in-integration-test",
+        assertEquals("corral.test.no-mocked-repository-in-integration-test",
                 NoMockedRepositoryInIntegrationTestRule.rule.getDescription());
     }
 }

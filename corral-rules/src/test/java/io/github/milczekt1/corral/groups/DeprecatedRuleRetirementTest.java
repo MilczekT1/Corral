@@ -39,6 +39,6 @@ class DeprecatedRuleRetirementTest {
         // same rule to agree with the original.
         RuleIdGrammarTest.assertNamespaceGrammar(ids);
         RuleIdGrammarTest.assertPolarityGrammar(ids);
-        RuleIdGrammarTest.assertThirdSegmentGrammar(ids);
+        RuleIdGrammarTest.assertQualifierSegmentGrammar(ids);
     }
 }

@@ -22,6 +22,6 @@ public class RetiredRuleFixtureGroup {
 
     @ArchTest
     public static final ArchRule retired = DeprecatedRule.supersededBy(
-            RETIRED_ID, "test.class-names-must-end-with-test-or-it",
+            RETIRED_ID, "corral.test.class-names-must-end-with-test-or-it",
             "fixture: proves the retirement path stays usable end to end");
 }

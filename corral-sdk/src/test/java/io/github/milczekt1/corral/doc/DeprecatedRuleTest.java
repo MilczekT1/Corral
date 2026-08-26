@@ -16,7 +16,7 @@ class DeprecatedRuleTest {
     @Test
     void aDeprecatedRuleKeepsItsIdAsTheDescriptionSoExclusionsStillResolve() {
         ArchRule retired = DeprecatedRule.supersededBy(
-                "test.class-naming-convention", "test.class-names-must-end-with-test-or-it",
+                "test.class-naming-convention", "corral.test.class-names-must-end-with-test-or-it",
                 "renamed to carry a polarity marker");
 
         assertEquals("test.class-naming-convention", retired.getDescription());
@@ -25,7 +25,7 @@ class DeprecatedRuleTest {
     @Test
     void aDeprecatedRuleAlwaysPasses() {
         ArchRule retired = DeprecatedRule.supersededBy(
-                "test.class-naming-convention", "test.class-names-must-end-with-test-or-it",
+                "test.class-naming-convention", "corral.test.class-names-must-end-with-test-or-it",
                 "renamed to carry a polarity marker");
 
         assertDoesNotThrow(() -> retired.check(ANY));
@@ -34,11 +34,11 @@ class DeprecatedRuleTest {
     @Test
     void theReplacementIsNamedInTheDocSoTheBuildLogPointsSomewhere() {
         DeprecatedRule.supersededBy("test.class-naming-convention",
-                "test.class-names-must-end-with-test-or-it", "renamed to carry a polarity marker");
+                "corral.test.class-names-must-end-with-test-or-it", "renamed to carry a polarity marker");
 
         RuleDoc doc = RuleRegistry.find("test.class-naming-convention").orElseThrow();
 
-        assertTrue(doc.howToFix().contains("test.class-names-must-end-with-test-or-it"),
+        assertTrue(doc.howToFix().contains("corral.test.class-names-must-end-with-test-or-it"),
                 doc.howToFix());
     }
 }

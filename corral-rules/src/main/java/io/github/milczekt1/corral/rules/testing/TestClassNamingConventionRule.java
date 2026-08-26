@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public final class TestClassNamingConventionRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("test.class-names-must-end-with-test-or-it")
+            .id("corral.test.class-names-must-end-with-test-or-it")
             .why("""
                     Most build tools select which top-level classes to run by class-name convention (Maven's \
                     Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \

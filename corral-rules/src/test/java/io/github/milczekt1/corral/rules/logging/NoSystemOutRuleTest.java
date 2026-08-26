@@ -62,6 +62,6 @@ class NoSystemOutRuleTest {
 
     @Test
     void publicRuleIsFrozenAndIdPinned() {
-        assertEquals("logging.no-system-out", NoSystemOutRule.rule.getDescription());
+        assertEquals("corral.logging.no-system-out", NoSystemOutRule.rule.getDescription());
     }
 }
