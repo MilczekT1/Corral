@@ -115,7 +115,7 @@ Existing violations are now debt. Only new ones fail.
 ## What a failure looks like
 
 ```text
-Architecture Violation [test.class-naming-convention] [Priority: MEDIUM]
+Architecture Violation [test.class-names-must-end-with-test-or-it] [Priority: MEDIUM]
 
 WHY:
   Most build tools select which top-level classes to run by class-name convention
@@ -164,7 +164,7 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 | Rule id | Group | What it enforces |
 |---|---|---|
 | `test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
-| `test.class-naming-convention` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
+| `test.class-names-must-end-with-test-or-it` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 | `logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
 | `corral.exclusions-resolve` | `AllCentralRules` | Every line of `corral-exclusions.txt` names an id this build wires. Not an architecture rule — it guards the exclusion mechanism itself, and only runs when the catalog root is wired. |
 | `logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
@@ -334,11 +334,11 @@ reading a store means resolving names through `stored.rules` first:
 ```text
 archunit/frozen/
 ├── stored.rules
-├── test.class-naming-convention        # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
+├── test.class-names-must-end-with-test-or-it  # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
 └── acme.no-stdout-in-services
 ```
 
-`git log -p archunit/frozen/test.class-naming-convention` is then that rule's debt history. Only ids
+`git log -p archunit/frozen/test.class-names-must-end-with-test-or-it` is then that rule's debt history. Only ids
 get this treatment: the store is global, so it also serves rules frozen without a `RuleDoc`, whose
 descriptions are whole sentences — those keep a UUID. Names are assigned once, when a rule is first
 frozen, so existing stores keep their UUIDs and keep working.

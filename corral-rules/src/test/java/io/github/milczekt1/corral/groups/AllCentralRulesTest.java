@@ -48,7 +48,7 @@ class AllCentralRulesTest {
         Set<String> ids = PublishedRules.idsOf(AllCentralRules.class);
 
         assertEquals(Set.of(
-                "test.class-naming-convention",
+                "test.class-names-must-end-with-test-or-it",
                 "test.no-mocked-repository-in-integration-test",
                 "logging.no-system-out",
                 "logging.no-system-err",
