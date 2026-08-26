@@ -94,8 +94,9 @@ keep in step, and no way to declare a member that consumers never evaluate.
    private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
    rule class is recognisable at a glance and never collides with the `*Test` convention its own
    tests follow.
-   - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
-     `^[a-z0-9]++(?:\.[a-z0-9-]++)++$`. Returned from `doc()`.
+   - `static final RuleDoc DOC` — the id follows the grammar in [Rule ids](#rule-ids): a closed
+     segment-1 namespace, a `no-`/`-must-` polarity marker on the slug, depth ≤ 3, length ≤ 60.
+     Returned from `doc()`.
    - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
      Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
      rule-correctness tests meaningless.
@@ -165,6 +166,68 @@ Not every good rule belongs here. A rule earns a place in the central catalog wh
 
 A rule that encodes one team's preference is better off in that team's own rule namespace. The SDK
 exists so you can author those without forking anything.
+
+## Rule ids
+
+An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumers)), so its grammar
+is closed and the closure is enforced, not a style convention:
+
+| Shape | When | Example |
+|---|---|---|
+| `test.<slug>` | test scope, no specific library | `test.no-thread-sleep` |
+| `test.<library>.<slug>` | test scope, library-specific | `test.mockito.no-static-mocking` |
+| `<library>.<slug>` | production code using a library | `spring.no-field-injection` |
+| `java<N>.<slug>` | an API or feature that exists only from JDK N | — |
+| `java.<slug>` | JDK misuse valid on every supported JDK | `java.no-legacy-date-api` |
+| `<concern>.<slug>` | language or design, no library involved | `api.no-array-return-types` |
+
+**Segment 1 is a closed vocabulary**, in four kinds:
+
+- **library** — `jackson`, `jakarta`, `lombok`, `spring`
+- **scope** — `test`
+- **JDK** — `java`, plus `java<N>` for a version-gated API
+- **concern** — `api`, `concurrency`, `exception`, `layering`, `logging`, `naming`, `security`
+- **framework** — `corral`, reserved for Corral's own meta-checks (`corral.exclusions-resolve` is the
+  only one today). It asserts nothing about consumer code, so it carries no polarity marker and is
+  exempt from the rule below. Consumers must not author under it.
+
+**Tie-break when a predicate touches a library:** the prefix is the non-JDK library whose *correct
+use* the rule asserts, not any library the predicate merely detects. `layering.no-test-libraries-in-production`
+names JUnit and Mockito but stays `layering.*` — those libraries are a detection signal for what the
+rule actually polices (test code leaking into production), not the thing being asserted correct.
+
+**Exactly two polarity markers.** A slug either starts with `no-` (a prohibition) or contains
+`-must-`, read as `<subject>-must-<predicate>` (`fields-must-be-final`: the subject is fields, the
+predicate is being final). Six inconsistent forms across the early catalog collapsed into these two
+so a slug's intent is legible without opening the rule.
+
+**Caps:** depth ≤ 3 segments, and a third segment is legal only when segment 2 is a library or a Java
+version — anything finer-grained belongs in a group, which can be reorganised, not in the id, which
+cannot once a consumer has frozen it. Length ≤ 60 characters.
+
+**The check is split across two layers, deliberately.** `RuleDoc`'s constructor
+(`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
+hygiene that binds every id, including a consumer's own, because the id becomes a *file name* in
+every consumer's freeze store (see [The freeze store](README.md#the-freeze-store)). The closed
+namespace, the polarity marker and the third-segment qualifier list are enforced separately, by
+`RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from `AllCentralRules` — this
+catalog, not the world. `corral-sdk` is published precisely so a consumer can author rules in their
+own namespace ("[a rule that encodes one team's preference is better off in that team's own rule
+namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside `RuleDoc` itself would
+revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly that case, and it
+must keep working.
+
+**Deprecate, never rename.** ArchUnit's `ViolationStore` SPI is four methods —
+`initialize(Properties)`, `contains(ArchRule)`, `save(ArchRule, List)`, `getViolations(ArchRule)` —
+with no rename verb and nowhere to pass a former id. This was observed on this branch: renaming one
+rule id left the regenerated `stored.rules` holding *both* the new entry and a stale, orphaned line
+for the old one, because ArchUnit's store never prunes index entries it no longer recognises. The old
+entry lingers doing nothing, the new id seeds fresh and passes, and the build is green while
+enforcing nothing on the rule you meant to keep evaluating. A rename cannot be made safe against that
+SPI, so Corral does not do it: retire an id with `DeprecatedRule.supersededBy(retiredId,
+replacementId, why)` in `corral-sdk`. It keeps the retired id registered as an always-passing rule
+that names its replacement, so an exclusion still naming the retired id keeps resolving, and it is
+deliberately never frozen — freezing it would claim it is enforced, and it is not.
 
 ## Commit conventions
 
