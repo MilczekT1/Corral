@@ -52,6 +52,22 @@ class RuleDocTest {
         assertTrue(RuleDoc.isId("a.b.c.d.e.f.g.h.i.j"));
     }
 
+    /**
+     * {@code isId} alone is intentionally weaker than the constructor: it backs the constructor's
+     * shape-only error path, so a too-long or too-deep string still counts as "id-shaped". A caller
+     * that also needs the caps enforced — {@code EmptyOmittingViolationStore}'s filename gate — uses
+     * {@code isIdWithinCaps} instead.
+     */
+    @Test
+    void isIdWithinCapsAlsoEnforcesTheLengthAndSegmentCaps() {
+        assertTrue(RuleDoc.isIdWithinCaps("logging.no-system-out"));
+        assertTrue(RuleDoc.isId("a.b.c.d.e.f.g.h.i.j"), "isId itself stays shape-only");
+        assertFalse(RuleDoc.isIdWithinCaps("a.b.c.d.e.f.g.h.i.j"), "but isIdWithinCaps caps depth");
+        assertFalse(RuleDoc.isIdWithinCaps("security." + "a".repeat(60)), "and caps length");
+        assertFalse(RuleDoc.isIdWithinCaps(null));
+        assertFalse(RuleDoc.isIdWithinCaps("not an id"));
+    }
+
     @Test
     void rejectsIdsThatWouldMakeUnstableOrUnreadableFreezeKeys() {
         // The id IS the freeze-store key: no spaces, no upper case, must be dot-namespaced.

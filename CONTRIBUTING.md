@@ -181,7 +181,7 @@ is closed and the closure is enforced, not a style convention:
 | `java.<slug>` | JDK misuse valid on every supported JDK | `java.no-legacy-date-api` |
 | `<concern>.<slug>` | language or design, no library involved | `api.no-array-return-types` |
 
-**Segment 1 is a closed vocabulary**, in four kinds:
+**Segment 1 is a closed vocabulary**, in five kinds:
 
 - **library** — `jackson`, `jakarta`, `lombok`, `spring`
 - **scope** — `test`
@@ -229,6 +229,16 @@ SPI, so Corral does not do it: retire an id with `DeprecatedRule.supersededBy(re
 replacementId, why)` in `corral-sdk`. It keeps the retired id registered as an always-passing rule
 that names its replacement, so an exclusion still naming the retired id keeps resolving, and it is
 deliberately never frozen — freezing it would claim it is enforced, and it is not.
+
+A retirement touches three files. Wire the `@ArchTest ArchRule` field carrying `supersededBy(...)`
+into the group that used to publish the old id — unwired, it registers a doc but nothing ever
+evaluates it, and `RuleExclusions.resolvedAgainst` validates against what a consumer's wired root
+actually publishes, not against the registry. Update
+`corral-rules/src/test/resources/published-rule-ids.txt` so both ids appear — the retired one (still
+published, now as a signpost) and the replacement — since `PublishedRuleIdsTest` pins this file and
+fails until the diff matches. Nothing to do in `RuleIdGrammarTest` itself: it exempts every id in
+`DeprecatedRule.retiredIds()` from the namespace and polarity checks automatically, because
+`supersededBy` records the id there the moment it registers.
 
 ## Commit conventions
 

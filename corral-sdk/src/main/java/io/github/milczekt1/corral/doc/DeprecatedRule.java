@@ -4,6 +4,9 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import java.util.Collections;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -27,6 +30,19 @@ import lombok.experimental.UtilityClass;
 public class DeprecatedRule {
 
     /**
+     * Every id ever passed as {@code retiredId} to {@link #supersededBy}, this JVM's lifetime.
+     *
+     * <p>A retired id predates whatever grammar the catalog enforces today — it was legal under an
+     * older or no convention at all, and {@code supersededBy}'s whole point is that it can never be
+     * renamed to comply. {@code RuleIdGrammarTest} needs to tell "retired" from "wrong" before it
+     * fails an id, and this set is how: an id here is exempted, not grandfathered by accident.
+     *
+     * <p>{@code ConcurrentHashMap}-backed, mirroring {@link RuleRegistry}'s {@code DOCS} map — Surefire
+     * reuses one JVM across test classes, so registration and lookup can race across them.
+     */
+    private static final Set<String> RETIRED_IDS = ConcurrentHashMap.newKeySet();
+
+    /**
      * Registers {@code retiredId} pointing at {@code replacementId} and returns a rule that always
      * passes.
      *
@@ -42,7 +58,15 @@ public class DeprecatedRule {
                         + retiredId + "' any more, and it stays listed only so an exclusion naming"
                         + " it keeps resolving.")
                 .build());
+        RETIRED_IDS.add(retiredId);
         return new Retired(retiredId);
+    }
+
+    /**
+     * Every id retired so far, for a grammar check to exempt. See {@link #RETIRED_IDS}.
+     */
+    public static Set<String> retiredIds() {
+        return Collections.unmodifiableSet(RETIRED_IDS);
     }
 
     private static final class Retired implements ArchRule {

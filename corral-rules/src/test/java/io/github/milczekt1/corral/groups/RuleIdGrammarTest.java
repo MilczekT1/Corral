@@ -1,7 +1,9 @@
 package io.github.milczekt1.corral.groups;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import io.github.milczekt1.corral.doc.DeprecatedRule;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.Set;
 import java.util.regex.Pattern;
@@ -21,6 +23,19 @@ import org.junit.jupiter.api.Test;
  * below is closed on purpose, so that "which bucket" never becomes an editorial argument —
  * relitigating it is exactly what produces a rename, and a rename silently stops enforcement in every
  * consumer that froze the old id.
+ *
+ * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
+ * checks below — it predates the grammar and can never be renamed to comply, that being the entire
+ * point of retiring rather than renaming. It still has to pass the third-segment check: a retired id
+ * is still a freeze-store file name.
+ *
+ * <p>The namespace and polarity checks below call {@link DeprecatedRule#retiredIds()} <em>after</em>
+ * {@link #publishedIds()} has already run. That ordering is not a race to "fix" by reading
+ * {@code retiredIds()} earlier: {@code publishedIds()} reads {@link AllCentralRules}'s
+ * {@code @ArchTest} fields, which forces every member class — including one holding a
+ * {@code DeprecatedRule.supersededBy(...)} call in a field initialiser — to run its static
+ * initialiser first. By the time this method returns, every retirement it could possibly report has
+ * already registered.
  */
 class RuleIdGrammarTest {
 
@@ -45,9 +60,45 @@ class RuleIdGrammarTest {
         return PublishedRules.idsOf(AllCentralRules.class);
     }
 
+    /**
+     * Guards the three tests below against the vacuous pass a wholly empty catalog would otherwise
+     * produce: a bare {@code for} loop over an empty set asserts nothing and reports green. This does
+     * not replace {@code PublishedRuleIdsTest} — it means this class does not depend on that other
+     * test existing to catch the same failure.
+     */
+    @Test
+    void publishedIdsIsNotEmpty() {
+        assertFalse(publishedIds().isEmpty(),
+                "AllCentralRules published no id at all — the other tests here iterate this same set"
+                        + " and would pass vacuously if it were empty");
+    }
+
     @Test
     void everyPublishedIdStartsWithAClosedNamespace() {
-        for (String id : publishedIds()) {
+        assertNamespaceGrammar(publishedIds());
+    }
+
+    @Test
+    void everyPublishedSlugCarriesAPolarityMarkerExceptCorralsOwnMetaChecks() {
+        assertPolarityGrammar(publishedIds());
+    }
+
+    @Test
+    void aThirdSegmentIsOnlyALibraryQualifier() {
+        assertThirdSegmentGrammar(publishedIds());
+    }
+
+    /**
+     * Package-private so {@code DeprecatedRuleRetirementTest} can run the very check this class runs
+     * against a fixture retirement, instead of re-implementing the rule and risking the two drifting
+     * apart.
+     */
+    static void assertNamespaceGrammar(Set<String> ids) {
+        Set<String> retiredIds = DeprecatedRule.retiredIds();
+        for (String id : ids) {
+            if (retiredIds.contains(id)) {
+                continue; // predates the grammar; see DeprecatedRule.retiredIds().
+            }
             String namespace = id.split("\\.")[0];
 
             assertTrue(NAMESPACES.contains(namespace) || JAVA_VERSION.matcher(namespace).matches(),
@@ -59,9 +110,12 @@ class RuleIdGrammarTest {
         }
     }
 
-    @Test
-    void everyPublishedSlugCarriesAPolarityMarkerExceptCorralsOwnMetaChecks() {
-        for (String id : publishedIds()) {
+    static void assertPolarityGrammar(Set<String> ids) {
+        Set<String> retiredIds = DeprecatedRule.retiredIds();
+        for (String id : ids) {
+            if (retiredIds.contains(id)) {
+                continue; // predates the grammar; see DeprecatedRule.retiredIds().
+            }
             String[] segments = id.split("\\.");
             String namespace = segments[0];
             String slug = segments[segments.length - 1];
@@ -77,9 +131,8 @@ class RuleIdGrammarTest {
         }
     }
 
-    @Test
-    void aThirdSegmentIsOnlyALibraryQualifier() {
-        for (String id : publishedIds()) {
+    static void assertThirdSegmentGrammar(Set<String> ids) {
+        for (String id : ids) {
             String[] segments = id.split("\\.");
 
             if (segments.length == 3) {

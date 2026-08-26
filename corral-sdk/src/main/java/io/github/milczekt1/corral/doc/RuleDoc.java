@@ -62,6 +62,21 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         return text != null && ID_PATTERN.matcher(text).matches();
     }
 
+    /**
+     * Whether {@code text} is a legal id AND obeys the length and segment caps — the stronger check a
+     * caller needs before trusting {@code text} as something bounded, such as a file name.
+     *
+     * <p>{@link #isId} alone is not that check: it applies only {@code ID_PATTERN}, not
+     * {@code MAX_ID_LENGTH} or {@code MAX_ID_SEGMENTS}, because it also backs the constructor's shape
+     * error, which must fire on shape alone so its message stays specific. A rule frozen without a
+     * {@code RuleDoc} — see {@code EmptyOmittingViolationStore} — can carry a description that merely
+     * looks dot/kebab-shaped; gated on {@link #isId} alone, that description becomes an unbounded-length
+     * file name.
+     */
+    public static boolean isIdWithinCaps(String text) {
+        return isId(text) && text.length() <= MAX_ID_LENGTH && text.split("\\.").length <= MAX_ID_SEGMENTS;
+    }
+
     private static void throwOnInvalidId(String id) {
         if (!ID_PATTERN.matcher(id).matches()) {
             throw new IllegalArgumentException(

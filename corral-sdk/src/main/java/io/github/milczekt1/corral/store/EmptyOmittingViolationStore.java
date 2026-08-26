@@ -66,11 +66,16 @@ public class EmptyOmittingViolationStore implements ViolationStore {
      * bound. Those keep ArchUnit's UUID. An id is lower-case, dot-and-hyphen only and short, so it is
      * safe as a file name on any filesystem.
      *
+     * <p>Gated on {@link RuleDoc#isIdWithinCaps}, not {@link RuleDoc#isId} alone: {@code isId} checks
+     * only the shape regex, not {@code RuleDoc}'s own length and segment caps, so a rule frozen without
+     * a {@code RuleDoc} whose description merely happens to be dot/kebab-shaped would otherwise become
+     * an unbounded-length file name — exactly the invariant this Javadoc's first sentence claims.
+     *
      * <p>Applied only to a rule with no index entry yet: {@code TextFileBasedViolationStore} reuses an
      * existing entry's file name. Stores written before this keep their UUIDs and keep working.
      */
     static String fileNameFor(String ruleDescription) {
-        return RuleDoc.isId(ruleDescription) ? ruleDescription : UUID.randomUUID().toString();
+        return RuleDoc.isIdWithinCaps(ruleDescription) ? ruleDescription : UUID.randomUUID().toString();
     }
 
     @Override

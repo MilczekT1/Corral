@@ -120,6 +120,25 @@ class EmptyOmittingViolationStoreTest {
     }
 
     @Test
+    void anOverlongIdShapedDescriptionFallsBackToAUuid() throws Exception {
+        // A rule frozen without a RuleDoc is not bound by RuleDoc's constructor at all, so its
+        // description can be dot/kebab-shaped and still exceed the length or segment caps that a
+        // real id could never violate. fileNameFor must catch that itself, or the file name it
+        // produces is unbounded — the exact invariant EmptyOmittingViolationStore.fileNameFor's
+        // Javadoc claims for every id.
+        String tooLong = "test.documented-rule-" + "a".repeat(60);
+        ArchRule overlong = ruleNamed(tooLong);
+
+        store.save(overlong, List.of("Class <Foo> is bad"));
+
+        assertTrue(Files.notExists(storeDir.resolve(tooLong)),
+                "an overlong id-shaped description must not reach the filesystem as a file name");
+        String generated = indexEntryFor(overlong.getDescription());
+        assertTrue(generated.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"),
+                "an overlong id-shaped description must map to a UUID: " + generated);
+    }
+
+    @Test
     void aRuleFrozenCleanIsStillContainedSoItsFirstViolationFails() {
         // No file must not mean "unknown rule". FreezingArchRule seeds-and-passes anything the store
         // does not contain, so if this ever returns false a clean rule's first real violation would

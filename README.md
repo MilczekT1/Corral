@@ -176,9 +176,11 @@ This table is maintained by hand; nothing in the build checks it.
 >
 > An id is a dot-namespaced, kebab-cased shape, and every slug carries exactly one of two markers:
 > `no-` for a prohibition (`logging.no-system-out`) or `-must-` for an obligation
-> (`test.class-names-must-end-with-test-or-it`). Ids are never renamed, only deprecated — the old one
-> stays registered, always passing, naming its replacement. The full grammar and the reason renaming
-> is unsafe are in [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
+> (`test.class-names-must-end-with-test-or-it`) — except Corral's own `corral.*` meta-checks (e.g.
+> `corral.exclusions-resolve`, above), which assert nothing about consumer code and so carry neither.
+> Ids are never renamed, only deprecated — the old one stays registered, always passing, naming its
+> replacement. The full grammar and the reason renaming is unsafe are in
+> [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
 
 ## How freezing decides
 
