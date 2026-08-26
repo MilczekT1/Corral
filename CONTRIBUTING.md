@@ -94,9 +94,9 @@ keep in step, and no way to declare a member that consumers never evaluate.
    private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
    rule class is recognisable at a glance and never collides with the `*Test` convention its own
    tests follow.
-   - `static final RuleDoc DOC` — the id follows the grammar in [Rule ids](#rule-ids): a closed
-     segment-1 namespace, a `no-`/`-must-` polarity marker on the slug, depth ≤ 3, length ≤ 60.
-     Returned from `doc()`.
+   - `static final RuleDoc DOC` — the id follows the grammar in [Rule ids](#rule-ids): the `corral.`
+     vendor prefix, a closed segment-2 concern, a `no-`/`-must-` polarity marker on the slug,
+     depth ≤ 4, length ≤ 72. Returned from `doc()`.
    - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
      Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
      rule-correctness tests meaningless.

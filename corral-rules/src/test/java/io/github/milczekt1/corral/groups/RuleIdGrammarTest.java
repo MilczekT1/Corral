@@ -132,7 +132,9 @@ class RuleIdGrammarTest {
             String[] segments = id.split("\\.");
             String slug = segments[segments.length - 1];
             boolean marked = slug.startsWith("no-") || slug.contains("-must-");
-            boolean metaCheck = segments.length == 2;
+            // depth-2 under the corral vendor prefix: a framework meta-check, which asserts nothing
+            // about consumer code, so it carries no polarity marker.
+            boolean metaCheck = segments.length == 2 && VENDOR_PREFIX.equals(segments[0]);
 
             assertTrue(marked || metaCheck,
                     () -> "id '" + id + "' has no polarity marker: a slug either starts with 'no-'"
