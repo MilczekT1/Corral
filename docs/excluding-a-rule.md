@@ -1,10 +1,25 @@
 # Excluding a rule
 
-**A rule is wrong for your codebase — not "not yet", but never.**
+## What it is
 
-Withdrawing an id for everyone instead? See [retiring a rule](retiring-a-rule.md).
+Permanently removes **one Corral rule** from your build. The rule still exists and stays enforced for
+everyone else — you keep `ArchTests.in(AllCentralRules.class)`, so new rules still arrive on upgrade.
+You removed a rule, not the mechanism that delivers them.
 
-## Do it
+Withdrawing an id for *everyone* is a different thing: [retiring a rule](retiring-a-rule.md).
+
+## When to use it
+
+| | |
+|---|---|
+| ✅ | The rule's premise is **false here** — it assumes something about your stack that isn't true, and no per-violation carve-out helps |
+| ✅ | The thing it forbids **is your design** — a deliberate, documented decision the whole codebase depends on |
+| ❌ | You break it today and mean to fix it later — freezing already handles that |
+| ❌ | One violation is legitimate — exclusion is whole-rule only |
+
+**The test:** would you still exclude it in a brand-new, empty repo? If not, it isn't an exclusion.
+
+## How to exclude
 
 One line in `src/test/resources/corral-exclusions.txt`, beside `archunit.properties`:
 
@@ -13,8 +28,7 @@ One line in `src/test/resources/corral-exclusions.txt`, beside `archunit.propert
 corral.logging.no-system-err :: We ship a CLI; stderr is the interface. ADR-021.
 ```
 
-That rule now passes without evaluating; everything else is untouched. You keep
-`ArchTests.in(AllCentralRules.class)`, so new rules still arrive on upgrade. No file, no change.
+That rule now passes without evaluating; everything else is untouched. No file, no change.
 
 | | |
 |---|---|
