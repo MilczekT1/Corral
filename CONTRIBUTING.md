@@ -47,7 +47,7 @@ they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also breaks any consumer excluding that id: an exclusion naming no registered rule fails the build. | `PublishedRuleIdsTest` — the change shows as a diff in `published-rule-ids.txt` |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | `PublishedRuleIdsTest` — the change shows as a diff in `published-rule-ids.txt` |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
@@ -168,7 +168,7 @@ namespace to consumers. A consumer's own rule needs no prefix at all — `corral
 
 | Shape | When | Example |
 |---|---|---|
-| `corral.<slug>` | Corral's own framework meta-check | `corral.exclusions-must-name-real-rules` |
+| `corral.<slug>` | Corral's own framework meta-check | (none published today) |
 | `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
 | `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
 
@@ -179,9 +179,11 @@ four kinds:
 - **library** — `jackson`, `jakarta`, `lombok`, `spring`
 - **JDK** — `java`, plus `java<N>` for a version-gated API
 - **meta** — the one exception: a depth-2 `corral.<slug>` id has no segment-2 concern at all, the slug
-  itself sits at segment 2 (`corral.exclusions-must-name-real-rules` is the only one today). It still
-  needs a polarity marker like any other id — see the rule below — it simply asserts something about
-  the consumer's configuration rather than their code.
+  itself sits at segment 2. Nothing published today takes this shape — the framework's own former
+  meta-check, `corral.exclusions-must-name-real-rules`, was replaced by an unconditional SDK warning
+  that needs no wired root and so is no longer published as a rule at all — but the grammar still
+  supports it for a future one. It would still need a polarity marker like any other id — see the
+  rule below.
 
 **Segment 3, when present, is a library qualifier** — today, exactly `mockito`, `powermock` or
 `junit`.

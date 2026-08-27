@@ -21,9 +21,9 @@ import org.junit.jupiter.api.Test;
  *
  * <p>Every id Corral publishes starts with the {@code corral} vendor prefix at segment 1 — see
  * CONTRIBUTING — so a consumer choosing their own namespace can never collide with Corral's. Segment 2
- * is either a closed concern vocabulary (a catalog rule, {@code corral.<concern>.<slug>}) or, for the
- * sole framework meta-check {@code corral.exclusions-must-name-real-rules}, the slug itself
- * ({@code corral.<slug>}).
+ * is a closed concern vocabulary (a catalog rule, {@code corral.<concern>.<slug>}); the grammar also
+ * supports a depth-2 {@code corral.<slug>} shape for a framework meta-check with no concern segment at
+ * all, though nothing published today takes that shape — see CONTRIBUTING.
  *
  * <p>An id is the freeze-store key: it cannot change once a consumer has frozen it. The vocabulary
  * below is closed on purpose, so that "which bucket" never becomes an editorial argument —
@@ -138,7 +138,7 @@ class RuleIdGrammarTest {
                             + " (a prohibition) or contains '-must-' (an obligation, read as"
                             + " <subject>-must-<predicate>, e.g. fields-must-be-final). Every"
                             + " published id needs one, including a depth-2 corral.<slug> framework"
-                            + " meta-check like corral.exclusions-must-name-real-rules.");
+                            + " meta-check, were one ever published.");
         }
     }
 

@@ -128,6 +128,27 @@ class DocumentedRuleTest {
     }
 
     /**
+     * The wiring, not the mechanism — {@code RuleExclusionsWarningTest} owns that. Asserted against
+     * the compiled bytecode for the same reason as the checks above: on a clean classpath with no
+     * unmatched exclusion the call changes nothing observable, so it is invisible to any behavioural
+     * assertion here. This is the one place a partial run — a single leaf, a hand-picked set of
+     * groups — still gets the unknown-id warning without wiring a root.
+     */
+    @Test
+    void guardWarnsOnUnmatchedExclusionsOnEveryRule() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+
+        assertTrue(guard.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(RuleExclusions.class)
+                                && call.getName().equals("warnUnmatchedExclusionsOnFirstEvaluation")),
+                "guard() must warn on an unmatched exclusion — it is the one place every rule passes"
+                        + " through, so it is the one place that needs no wired root");
+    }
+
+    /**
      * Order matters in one direction: the exclusion wrapper must sit OUTSIDE the freeze, so an
      * excluded rule never reaches the store. Inside, it would be re-recorded as clean, deleting
      * every frozen entry and resurfacing them all when the rule is switched back on.

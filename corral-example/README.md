@@ -137,7 +137,7 @@ Three things are worth trying while you are in there, because each one fails on 
 
 | Edit | What happens |
 |---|---|
-| Misspell the id (`corral.logging.no-system-errr`) | `corral.exclusions-must-name-real-rules` fails with its own WHY / HOW TO FIX, naming the id and listing the excludable ones. Run the whole class, not one leaf — that check runs where `AllCentralRules` is wired. |
+| Misspell the id (`corral.logging.no-system-errr`) | The build stays green, but logs a warning naming the id: an exclusion that matches no rule removes nothing while reading in the diff as though it did. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
 | Name this module's own `acme.no-stdout-in-services` | Fails: the file removes rules from the catalog you wire, and a rule you own is removed by not wiring it. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |

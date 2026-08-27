@@ -33,7 +33,7 @@ That rule now passes without evaluating; everything else is untouched. No file, 
 | | |
 |---|---|
 | A reason is **mandatory** | Corral can't judge if it's a good one, but it can make its absence fatal |
-| The id must be one Corral publishes | A typo removes nothing while reading as though it did, so it fails the build |
+| An id that matches no rule in the run **logs a warning** | A typo, or a rule renamed or retired upstream, removes nothing while reading as though it did |
 | Whole rules only, never one violation | Switching a rule off should be loud in review |
 
 Every exclusion in effect is printed under `EXCLUDED IN THIS BUILD` on any rule failure, so a
@@ -49,18 +49,13 @@ as debt; only new ones fail.
 
 ## Your own rules
 
-Exclusion is an **SDK** feature, not a Corral one. Any catalog built on `corral-sdk` gets it — if you
-publish rules for your own teams, wire the guard against your own root and your consumers exclude
-your ids exactly the same way:
+Exclusion is an **SDK** feature, not a Corral one. Any catalog built on `corral-sdk` gets it
+automatically, with nothing to wire — every rule that goes through `DocumentedRule.guard()`, yours or
+Corral's, carries the same spell-checker for the file: the first rule evaluated in the run logs a
+warning naming any excluded id that matched no rule.
 
-```java
-@ArchTest
-static final ArchRule exclusionsMustNameRealRules = RuleExclusions.resolvedAgainst(AcmeRules.class);
-```
-
-That guard is a spell-checker for the file: it fails the build when a line names an id nothing
-publishes, so a typo or a renamed rule can't silently exclude nothing.
-
-**One limitation.** If you wire Corral's catalog *and* your own rules, this file can only name
-Corral's — Corral's guard validates against Corral's ids. To drop one of your own rules, delete its
-`@ArchTest` field from your group.
+It needs no wired root, so it works exactly the same whether your consumers evaluate the whole
+catalog, a hand-picked set of groups, or a single rule from an IDE gutter. What it cannot do is turn
+that warning into a build failure — telling a typo from a rule genuinely absent from a partial run
+needs the complete rule set, which only a full run has. Read the warning as "matched no rule *in this
+run*": accurate always, actionable on a full run.

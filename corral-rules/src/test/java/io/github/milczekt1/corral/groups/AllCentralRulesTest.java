@@ -51,7 +51,6 @@ class AllCentralRulesTest {
                 "corral.test.class-names-must-end-with-test-or-it",
                 "corral.test.no-mocked-repository-in-integration-test",
                 "corral.logging.no-system-out",
-                "corral.logging.no-system-err",
-                "corral.exclusions-must-name-real-rules"), ids);
+                "corral.logging.no-system-err"), ids);
     }
 }

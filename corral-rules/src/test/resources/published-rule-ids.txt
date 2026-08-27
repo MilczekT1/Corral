@@ -5,7 +5,6 @@
 # A change to this file is therefore a breaking change — deprecate the old id instead of renaming it.
 #
 # Generated from PublishedRules.idsOf(AllCentralRules.class); pinned by PublishedRuleIdsTest.
-corral.exclusions-must-name-real-rules
 corral.logging.no-system-err
 corral.logging.no-system-out
 corral.test.class-names-must-end-with-test-or-it

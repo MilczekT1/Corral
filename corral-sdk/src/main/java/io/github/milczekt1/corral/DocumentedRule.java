@@ -49,7 +49,10 @@ public interface DocumentedRule {
      *
      * <p>Also the hook for {@link IgnorePatternsGuard} and {@link RuleExclusions}: every rule class
      * runs this, in every consumer, with nothing to configure, so it is the one place a whole-catalog
-     * kill switch cannot hide from and the one place a single rule can be removed from.
+     * kill switch cannot hide from and the one place a single rule can be removed from. It is also
+     * where {@link RuleExclusions#warnUnmatchedExclusionsOnFirstEvaluation} rides along — the one
+     * place unconditional enough to warn about an unmatched exclusion without needing a wired root:
+     * every rule reaches here, however a consumer's build is assembled.
      *
      * <p>The exclusion wraps the frozen rule rather than the raw one, so an excluded rule never
      * reaches the freeze store — re-recording it as clean would delete its debt entries and
@@ -60,6 +63,7 @@ public interface DocumentedRule {
         RuleRegistry.register(doc());
         ArchRule frozen = FreezingArchRule.freeze(definition().as(doc().id()).allowEmptyShould(true));
         ArchRule enforcedHere = RuleExclusions.applyTo(frozen, doc().id());
-        return IgnorePatternsGuard.interposeOn(enforcedHere);
+        ArchRule warnedIfUnmatched = RuleExclusions.warnUnmatchedExclusionsOnFirstEvaluation(enforcedHere);
+        return IgnorePatternsGuard.interposeOn(warnedIfUnmatched);
     }
 }

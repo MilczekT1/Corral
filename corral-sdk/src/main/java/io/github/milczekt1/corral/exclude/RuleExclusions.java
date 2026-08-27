@@ -5,13 +5,8 @@ import static java.util.stream.Collectors.joining;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.lang.ConditionEvents;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
-import com.tngtech.archunit.lang.SimpleConditionEvent;
-import io.github.milczekt1.corral.doc.RuleDoc;
-import io.github.milczekt1.corral.doc.RuleRegistry;
-import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -21,8 +16,13 @@ import java.util.Collections;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
+import lombok.extern.slf4j.Slf4j;
 
 /**
  * Reads {@value #EXCLUSIONS_FILE} off the classpath: the rules this codebase permanently opts out
@@ -36,6 +36,7 @@ import lombok.experimental.UtilityClass;
  * the consumer as {@code failed to discover tests} with the cause dropped, so every failure becomes
  * a {@link Loaded#problem()} that later fails every rule with a message instead.
  */
+@Slf4j
 @UtilityClass
 public class RuleExclusions {
 
@@ -47,34 +48,19 @@ public class RuleExclusions {
 
     private static final String COMMENT = "#";
 
-    /** Ids this file may not name, because excluding them would disable the file's own guardrails. */
-    private static final Set<String> NOT_EXCLUDABLE = Set.of("corral.exclusions-must-name-real-rules");
-
     /** Read once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
     private static final Loaded STATE = load(currentClassLoader());
 
     /**
-     * Documentation for {@link #resolvedAgainst}, which is published as an {@code @ArchTest} rule
-     * and therefore owes consumers the same guidance every other rule gives.
+     * Every excluded id that has actually matched a rule this run evaluated, filled in by
+     * {@link #applyTo} as rules pass through it. A {@link ConcurrentHashMap}-backed set, in the
+     * style of {@code RuleRegistry}: rule classes initialise concurrently under a parallel Surefire
+     * or Gradle test run.
      */
-    private static final RuleDoc RESOLVE_DOC = RuleDoc.builder()
-            .id("corral.exclusions-must-name-real-rules")
-            .why("""
-                    An exclusion that names an id nothing publishes removes nothing, while reading in \
-                    the diff exactly like one that does. That happens two ways: a typo, and a rule \
-                    renamed upstream — the second is the dangerous one, because the rule you \
-                    deliberately turned off comes back on at the next catalog upgrade and you find out \
-                    from a failing build on code nobody touched.""")
-            .howToFix("""
-                    Correct the id to one this build actually wires — the failure lists them — or \
-                    delete the line if the rule it named is gone. If it names a rule you wrote \
-                    yourself, check that your own wiring evaluates it: a rule no @ArchTest field \
-                    reaches is a rule nothing registers.""")
-            .howNotToFix("""
-                    Do NOT delete the line merely to make this check pass while still expecting the \
-                    rule to be off. Deleting it turns the rule back ON, which is the opposite of what \
-                    the line was for, and the rule's own violations are what you will see next.""")
-            .build();
+    private static final Set<String> MATCHED = ConcurrentHashMap.newKeySet();
+
+    /** Flips once, at the first rule any consumer evaluates — shared by every {@link UnmatchedExclusionsWarning}. */
+    private static final AtomicBoolean WARNED = new AtomicBoolean(false);
 
     /**
      * What the classpath amounts to: the exclusions in effect, or the reason there are none to be
@@ -120,14 +106,18 @@ public class RuleExclusions {
         return STATE.isBroken();
     }
 
+    /** For tests: whether {@code ruleId} has been recorded as having matched a rule this run. */
+    static boolean hasMatched(String ruleId) {
+        return MATCHED.contains(ruleId);
+    }
+
     /**
      * {@code rule} unchanged unless this file names it — so every rule a consumer does not exclude
      * is the same object, evaluated identically, whatever else the file says.
      *
-     * <p>Deliberately does <em>not</em> validate that the ids resolve. At the moment one rule is
-     * evaluated, {@link RuleRegistry} holds only the rules loaded so far, so a run wiring one group
-     * would call every other group's exclusions typos and fail rules that are perfectly fine. That
-     * check needs a complete set and lives in {@link #resolvedAgainst}.
+     * <p>Records a match in {@link #MATCHED} first, so {@link #warnUnmatchedExclusionsOnFirstEvaluation}
+     * — evaluated later, once every rule class in the run has initialised and called this method — can
+     * tell an id that matched nothing from one that did.
      *
      * <p>Applied <em>outside</em> {@code FreezingArchRule}, so an excluded rule never reaches the
      * freeze store. A rule re-recorded as clean would have its debt entries deleted, and re-enabling
@@ -137,35 +127,6 @@ public class RuleExclusions {
         return applyTo(rule, ruleId, STATE);
     }
 
-    /**
-     * The unknown-id guardrail: a rule that fails when a line in the file names an id nothing
-     * publishes or registers. Wire it beside the catalog root a consumer already evaluates.
-     *
-     * <p>Walking {@code wiredRoot} is what makes this sound. {@code PublishedRules} reads every
-     * reachable {@code @ArchTest} field, which forces each rule class to initialise, so the ids it
-     * yields are complete for that root by construction — unlike the registry mid-run.
-     *
-     * <p>Only the walk — deliberately not unioned with {@link RuleRegistry}. The registry holds
-     * whatever loaded in this JVM, so including it made the verdict depend on which tests ran: an id
-     * belonging to a consumer's own rule passed a full build and failed a run that wired this root
-     * without loading that rule's class. A check that answers differently run to run is worse than
-     * one with a stated limit, and the limit here is stateable: exclusions name rules this root
-     * publishes.
-     */
-    public static ArchRule resolvedAgainst(Class<?> wiredRoot) {
-        return resolvedAgainst(wiredRoot, STATE);
-    }
-
-    /** The doc {@link #resolvedAgainst} publishes; exposed so tests can register it deliberately. */
-    static RuleDoc resolveDoc() {
-        return RESOLVE_DOC;
-    }
-
-    static ArchRule resolvedAgainst(Class<?> wiredRoot, Loaded state) {
-        RuleRegistry.register(RESOLVE_DOC);
-        return new Resolves(wiredRoot, state);
-    }
-
     static ArchRule applyTo(ArchRule rule, String ruleId, Loaded state) {
         if (state.isBroken()) {
             return new Failing(rule.getDescription(), state.problem());
@@ -173,32 +134,72 @@ public class RuleExclusions {
         if (state.entries().isEmpty()) {
             return rule;
         }
-        return state.excludes(ruleId) ? new Excluded(rule.getDescription()) : rule;
+        if (!state.excludes(ruleId)) {
+            return rule;
+        }
+        MATCHED.add(ruleId);
+        return new Excluded(rule.getDescription());
     }
 
     /**
-     * Every excluded id that names nothing in {@code knownIds}. A typo would otherwise exclude
-     * nothing while reading in the diff as though it did, and a rule renamed upstream would come
-     * back on silently.
+     * Wraps {@code rule} so that, on the first rule any consumer evaluates in this run, a warning is
+     * logged for every excluded id that matched no rule — a typo, or a rule renamed or retired
+     * upstream. Unlike a build failure, a warning can be honest about a partial run: "matched no rule
+     * <em>in this run</em>" is true whether the run wires the whole catalog or a single leaf test, so
+     * this needs no wired root and runs unconditionally from {@link io.github.milczekt1.corral.DocumentedRule#guard()}.
      *
-     * @return the problem, or {@code null} when every excluded id resolves
+     * <p>Fires once per run, not once per rule: {@link #WARNED} is a single static flag shared by
+     * every wrapped rule. By the time any rule's {@code check}/{@code evaluate} actually runs, ArchUnit
+     * has already finished walking every {@code @ArchTest} field it discovered, which forces every
+     * wired rule class to initialise and call {@link #applyTo} — so {@link #MATCHED} is complete by
+     * then, however early or late this particular rule happens to fire relative to its siblings.
+     *
+     * <p>{@code rule} unchanged when the file names no exclusion at all — the same pass-through
+     * {@link #applyTo} uses for an empty file. There is nothing an id could fail to match, so
+     * wrapping would only ever produce a silent no-op.
      */
-    static String unresolvedIdProblem(Loaded state, Collection<String> knownIds) {
-        List<String> unresolved = state.entries().stream()
+    public static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(ArchRule rule) {
+        if (STATE.entries().isEmpty()) {
+            return rule;
+        }
+        return warnUnmatchedExclusionsOnFirstEvaluation(rule, WARNED, RuleExclusions::unmatchedWarning, log::warn);
+    }
+
+    static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(
+            ArchRule rule, AtomicBoolean warned, Supplier<String> messageSupplier, Consumer<String> sink) {
+        return new UnmatchedExclusionsWarning(rule, warned, messageSupplier, sink);
+    }
+
+    /** Live at call time, deliberately: {@link #MATCHED} is still filling in while rules initialise. */
+    private static String unmatchedWarning() {
+        return unmatchedWarning(STATE, MATCHED);
+    }
+
+    /**
+     * Every excluded id that has matched no rule seen so far. Honest about partial runs by
+     * construction: it says nothing about ids no rule in {@code matched} names, only that none of the
+     * rules this run evaluated up to now needed them — true on a full run and harmless on a single
+     * leaf.
+     *
+     * @return the warning message, or {@code null} when every excluded id has matched something
+     */
+    static String unmatchedWarning(Loaded state, Collection<String> matched) {
+        List<String> unmatched = state.entries().stream()
                 .map(Exclusion::ruleId)
-                .filter(id -> !knownIds.contains(id))
+                .filter(id -> !matched.contains(id))
                 .toList();
 
-        return unresolved.isEmpty() ? null : """
-                %s excludes %s, which no rule wired here publishes under that id. An exclusion that \
-                names nothing removes nothing, and reads in the diff as though it did — so it fails \
-                rather than passing quietly. Either the id is a typo, or the rule was renamed and its \
-                exclusion needs renaming with it.
-                Excludable ids:
+        if (unmatched.isEmpty()) {
+            return null;
+        }
+        return """
+                %s: %d exclusion%s matched no rule in this run:
                 %s
-                This file removes rules from the catalog you wire. A rule you wrote yourself is not \
-                excluded here — stop wiring it, by removing its @ArchTest field from your group.\
-                """.formatted(EXCLUSIONS_FILE, quoted(unresolved), listedText(knownIds.stream().sorted().toList()));
+                If you ran a single rule this is expected. In a full run it means the id names \
+                nothing — a typo, or a rule renamed or retired upstream — so it removes nothing \
+                while reading in the diff as though it did.\
+                """.formatted(EXCLUSIONS_FILE, unmatched.size(), unmatched.size() == 1 ? "" : "s",
+                        unmatched.stream().map(id -> "  " + id).collect(joining(System.lineSeparator())));
     }
 
     /**
@@ -253,12 +254,6 @@ public class RuleExclusions {
             }
             try {
                 Exclusion exclusion = parseLine(line);
-                if (NOT_EXCLUDABLE.contains(exclusion.ruleId())) {
-                    throw new IllegalArgumentException("'" + exclusion.ruleId() + "' is the check that"
-                            + " every line here names a real rule; excluding it would switch off the"
-                            + " guard on this very file, and would print it in the build log as a rule"
-                            + " that is not enforced when it still is");
-                }
                 if (!idsSeen.add(exclusion.ruleId())) {
                     throw new IllegalArgumentException("'" + exclusion.ruleId()
                             + "' is excluded more than once — which reason is in effect is unanswerable");
@@ -326,10 +321,6 @@ public class RuleExclusions {
                 : lines.stream().map(line -> "  " + line).collect(joining(System.lineSeparator()));
     }
 
-    private static String quoted(Collection<String> ids) {
-        return ids.stream().map(id -> "'" + id + "'").collect(joining(", "));
-    }
-
     /**
      * Renders every exclusion in effect, so a reader of a failing build sees what is not being
      * enforced. Empty when there are none — the common case, where the block is omitted entirely.
@@ -381,67 +372,64 @@ public class RuleExclusions {
     }
 
     /**
-     * The unknown-id guardrail as a rule, so it runs where the consumer already wires the catalog
-     * and fails the build the way any other rule does.
+     * A pass-through that, on the first {@code check}/{@code evaluate} across every rule sharing its
+     * {@link #warned} flag, logs whatever {@link #messageSupplier} returns and then always delegates —
+     * this never changes the outcome of the rule it wraps, only what reaches the log once.
      *
-     * <p>Silent when the file could not be parsed: every rule is already failing with that problem,
-     * and ids from a file nobody could read are not evidence of anything.
+     * <p>Unlike {@link Excluded} and {@link Failing}, every method genuinely delegates: this rule is
+     * not standing in for the one it wraps, it is riding along with it, so {@code because} and
+     * {@code allowEmptyShould} must still reach the real rule, and {@code as} must keep wrapping
+     * whatever {@code as} on the delegate returns.
      */
     @RequiredArgsConstructor
-    private static final class Resolves implements ArchRule {
+    private static final class UnmatchedExclusionsWarning implements ArchRule {
 
-        private final Class<?> wiredRoot;
-        private final Loaded state;
+        private final ArchRule delegate;
+        private final AtomicBoolean warned;
+        private final Supplier<String> messageSupplier;
+        private final Consumer<String> sink;
 
-        /**
-         * Through ArchUnit rather than by throwing: {@code assertNoViolation} renders the failure
-         * with the configured {@code failureDisplayFormat}, which is what puts {@link #RESOLVE_DOC}'s
-         * WHY and HOW TO FIX in front of the consumer. Thrown raw, the doc would exist only to
-         * satisfy the catalog's completeness test.
-         */
         @Override
         public void check(JavaClasses classes) {
-            ArchRule.Assertions.assertNoViolation(evaluate(classes));
+            warnOnce();
+            delegate.check(classes);
         }
 
-        /** The guard is published by this root too, and it is not a rule anyone may switch off. */
-        private Set<String> knownIds() {
-            Set<String> known = new LinkedHashSet<>(PublishedRules.idsOf(wiredRoot));
-            known.remove(RESOLVE_DOC.id());
-            return known;
-        }
-
-        /** Silent for a file that could not be parsed: every rule is already failing with that. */
         @Override
         public EvaluationResult evaluate(JavaClasses classes) {
-            ConditionEvents events = ConditionEvents.Factory.create();
-            if (!state.isBroken() && !state.entries().isEmpty()) {
-                String problem = unresolvedIdProblem(state, knownIds());
-                if (problem != null) {
-                    events.add(SimpleConditionEvent.violated(this, problem));
-                }
+            warnOnce();
+            return delegate.evaluate(classes);
+        }
+
+        private void warnOnce() {
+            if (!warned.compareAndSet(false, true)) {
+                return;
             }
-            return new EvaluationResult(this, events, Priority.MEDIUM);
+            String message = messageSupplier.get();
+            if (message != null) {
+                sink.accept(message);
+            }
         }
 
         @Override
         public String getDescription() {
-            return RESOLVE_DOC.id();
+            return delegate.getDescription();
         }
 
         @Override
         public ArchRule as(String newDescription) {
-            return this;
+            return new UnmatchedExclusionsWarning(delegate.as(newDescription), warned, messageSupplier, sink);
         }
 
         @Override
         public ArchRule because(String reason) {
-            return this;
+            return new UnmatchedExclusionsWarning(delegate.because(reason), warned, messageSupplier, sink);
         }
 
         @Override
         public ArchRule allowEmptyShould(boolean allowEmptyShould) {
-            return this;
+            return new UnmatchedExclusionsWarning(
+                    delegate.allowEmptyShould(allowEmptyShould), warned, messageSupplier, sink);
         }
     }
 
