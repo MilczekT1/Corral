@@ -90,33 +90,16 @@ keep in step, and no way to declare a member that consumers never evaluate.
 
 ## Adding a rule to an existing group
 
-1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
-   private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
-   rule class is recognisable at a glance and never collides with the `*Test` convention its own
-   tests follow.
-   - `static final RuleDoc DOC` — the id follows the grammar in [Rule ids](#rule-ids): the `corral.`
-     vendor prefix, a closed segment-2 concern, a `no-`/`-must-` polarity marker on the slug,
-     depth ≤ 4, length ≤ 72. Returned from `doc()`.
-   - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
-     Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
-     rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
-     registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`. **Declare it below `DOC` and `DEFINITION`**: it runs during class
-     initialisation and reads them. Method order does not matter — only fields initialise.
-2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
-   rule class nobody points at is never run.
-3. Add fixtures under `corral-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
-   and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
-   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `DEFINITION`, asserting
-   **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
-   ever finds nothing.
-4. Assert in the rule's own test that the published field carries the doc id, as
-   `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
-   `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
-   exists at all, which an interface cannot enforce.
-5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `corral-rules`).
-6. Add a row to the [Rules table](README.md#rules). Nothing enforces this — it is on you.
+The step-by-step is **[Creating a rule](docs/creating-a-rule.md)** — id, class, fixtures, wiring, and
+the three ways to ship a rule that silently enforces nothing.
+
+What that guide does not cover, because it belongs to the design rather than the task:
+
+- **One rule, one class.** A rule class under `rules/<topic>/` owns everything about that rule; a
+  group is a thin wrapper. Class names end in `Rule`, so they never collide with the `*Test`
+  convention their own tests follow.
+- **Membership is the field.** `ArchTests.in(X)` descends into exactly `X`'s `@ArchTest` fields, so
+  the field *is* the declaration. There is no second list to keep in step.
 
 ## A rule in more than one group
 
@@ -231,32 +214,9 @@ that team's own rule namespace](#is-a-rule-catalog-worthy)"); a closed vocabular
 `RuleDoc` itself would revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly
 that case, and it must keep working.
 
-**Deprecate, never rename.** ArchUnit's `ViolationStore` SPI is four methods —
-`initialize(Properties)`, `contains(ArchRule)`, `save(ArchRule, List)`, `getViolations(ArchRule)` —
-with no rename verb and nowhere to pass a former id. This was observed on this branch: renaming one
-rule id left the regenerated `stored.rules` holding *both* the new entry and a stale, orphaned line
-for the old one, because ArchUnit's store never prunes index entries it no longer recognises. The old
-entry lingers doing nothing, the new id seeds fresh and passes, and the build is green while
-enforcing nothing on the rule you meant to keep evaluating. A rename cannot be made safe against that
-SPI, so Corral does not do it: retire an id with `DeprecatedRule.supersededBy(retiredId,
-replacementId, why)` in `corral-sdk`. It keeps the retired id registered as an always-passing rule
-that names its replacement, so an exclusion still naming the retired id keeps resolving, and it is
-deliberately never frozen — freezing it would claim it is enforced, and it is not.
-
-A retirement touches three files. Wire the `@ArchTest ArchRule` field carrying `supersededBy(...)`
-into the group that used to publish the old id — unwired, it registers a doc but nothing ever
-evaluates it, and `RuleExclusions.resolvedAgainst` validates against what a consumer's wired root
-actually publishes, not against the registry. Update
-`corral-rules/src/test/resources/published-rule-ids.txt` so both ids appear — the retired one (still
-published, now as a signpost) and the replacement — since `PublishedRuleIdsTest` pins this file and
-fails until the diff matches. Extend the expected id set in
-`AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups`, which asserts the wired root's ids
-exactly, so a newly wired signpost fails it until it is listed.
-
-Nothing to do in `RuleIdGrammarTest` itself: it exempts every id in `DeprecatedRule.retiredIds()`
-from the namespace and polarity checks automatically, because `supersededBy` records the id there the
-moment it registers. That exemption is why a retired id may keep a shape the grammar would otherwise
-reject — it predates the grammar, the `corral.` prefix included.
+**Deprecate, never rename.** A rule id is a freeze-store key, and ArchUnit's `ViolationStore` SPI has
+no rename verb — so a rename orphans every consumer's recorded violations, silently. Withdraw an id
+with `DeprecatedRule.supersededBy(...)` instead: **[Retiring a rule](docs/retiring-a-rule.md)**.
 
 ## Commit conventions
 

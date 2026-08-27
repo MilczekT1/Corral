@@ -217,63 +217,33 @@ Two consequences follow, and they are the questions people actually ask:
 > resurface as new ones. That is a breaking change for consumers on the same footing as renaming an
 > id: they must re-freeze. Batch predicate changes into a release and say so in the notes.
 
-## Excluding a rule
+## Working with rules
 
-Some rules are simply wrong for some codebases. `spring.no-transactional-on-final` is wrong under
-AspectJ load-time weaving, where the annotation genuinely does apply. `logging.no-log4j-api-directly`
-is wrong for a project whose facade *is* the Log4j 2 API. No per-violation carve-out helps: the whole
-codebase disagrees with the rule's premise.
+Three short guides, one per task:
 
-Without a way to say that, the only option is to stop using `AllCentralRules` and enumerate the rules
-you do want — which costs you the thing the single field was for. **You stop receiving new rules**,
-and every catalog release becomes a manual diff against your wiring.
+| I want to… | Guide |
+|---|---|
+| **Turn off a rule** that is wrong for my codebase | [Excluding a rule](docs/excluding-a-rule.md) |
+| **Add a rule** to the catalog | [Creating a rule](docs/creating-a-rule.md) |
+| **Withdraw an id** that was renamed, split or made obsolete | [Retiring a rule](docs/retiring-a-rule.md) |
 
-Instead, name the rule in `src/test/resources/corral-exclusions.txt`, beside `archunit.properties`:
+Exclusion is a *consumer* opting out locally; retirement is a *maintainer* withdrawing an id for
+everyone. Retirement exists so that a withdrawn id doesn't break the consumers who excluded it.
+
+Excluding takes one line in `src/test/resources/corral-exclusions.txt`:
 
 ```text
 # <rule-id> :: <reason>
-spring.no-transactional-on-final :: AspectJ load-time weaving; the annotation applies. ADR-021.
-logging.no-log4j-api-directly    :: The Log4j 2 API is our facade by decision.
+corral.logging.no-system-err :: We ship a CLI; stderr is the interface. ADR-021.
 ```
 
-The named rules evaluate nothing and pass. Every other rule is untouched, and you keep
-`ArchTests.in(AllCentralRules.class)` — you have removed one rule, not opted out of the mechanism
-that delivers them. With no file present nothing changes for anyone.
+You keep `ArchTests.in(AllCentralRules.class)`, so new rules still arrive on upgrade — you removed
+one rule, not the mechanism that delivers them. A reason is mandatory, the id must be one Corral
+publishes, and every exclusion in effect is printed on any rule failure.
 
-This is deliberately blunt: it can only remove a whole rule, never one violation. A change that
-disables a rule entirely is loud in review, unlike a suppression that hides one violation and looks
-small.
-
-**The guardrails:**
-
-| | |
-|---|---|
-| The id must be a **catalog rule** `AllCentralRules` publishes | A typo excludes nothing while reading as though it did, and a rule renamed upstream would silently come back on. Both fail the build, listing the excludable ids. Checked by `corral.exclusions-resolve` — see below. |
-| A **reason is mandatory** | A line without `::` and non-empty text after it is a parse error. Corral cannot judge whether a reason is a good one; it can make its absence fatal. |
-| A file that cannot be read **excludes nothing and fails everything** | A file that is not understood must not be trusted to remove a rule. Every broken line is reported at once, with its line number. |
-| Resolved with `getResources` (**plural**) | More than one copy on the classpath fails, naming each. Otherwise first-match-wins decides which rules you enforce, and the winner could belong to a test-scoped dependency rather than to you. |
-| Every exclusion in effect is **printed on any rule failure** | Under `EXCLUDED IN THIS BUILD`, so whoever reads a failing build sees what is *not* being enforced — including on rules the file never named, since an excluded rule never fails and so can never print it itself. |
-
-**This file names catalog rules.** A rule *you* wrote is not removed here — stop wiring it, by
-deleting its `@ArchTest` field from your group. That is why `corral.exclusions-resolve` accepts only
-ids reachable from `AllCentralRules`: it walks that tree, which is the one set of ids that is the
-same in every run. Validating against "whatever has registered so far" would make the verdict depend
-on which tests happened to run, and a check that answers differently run to run is worse than one
-with a stated limit.
-
-The check runs wherever `AllCentralRules` is wired, so a run of one leaf from the IDE gutter applies
-your exclusions without verifying them. `corral.exclusions-resolve` itself cannot be excluded.
-
-> **An exclusion is not a pause button.** An excluded rule records nothing while it is off, so any
-> violation the codebase acquires meanwhile is *new* the day you delete the line — and the build
-> fails on code nobody touched that day. Corral keeps the frozen entries intact (the exclusion wraps
-> the frozen rule rather than replacing it, so the store is never rewritten as clean), but it cannot
-> record what it never evaluated. Re-enable a rule the way you adopt one: expect to re-freeze, and
-> read the diff.
-
-Adding a rule to this file in the same change that made it fail is silencing, not excluding — and
-reads that way in the diff. The [anti-fix policy](#what-a-failure-looks-like) says so on every
-failure.
+> **An exclusion is not a pause button.** An excluded rule records nothing while it is off, so
+> violations acquired meanwhile are all *new* the day you delete the line. To adopt a rule you
+> currently break, just let it run — freezing records the existing violations as debt.
 
 ## Install
 
@@ -323,7 +293,7 @@ you want something to depend on in the meantime.
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
 | `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
-| `corral-exclusions.txt` | optional | Not a property — a file beside `archunit.properties`. Removes named rules from your build permanently; see [Excluding a rule](#excluding-a-rule). |
+| `corral-exclusions.txt` | optional | Not a property — a file beside `archunit.properties`. Removes named rules from your build permanently; see [Excluding a rule](docs/excluding-a-rule.md). |
 | `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
@@ -371,11 +341,11 @@ and drops the file. Three things to know:
 
 ## Extending
 
-Adding a rule, adding a group, and the package layout that keeps the dependency arrows pointing one
-way are covered in **[CONTRIBUTING.md](CONTRIBUTING.md)**:
+Start with **[Creating a rule](docs/creating-a-rule.md)**. The surrounding design — package layout,
+group composition, and what breaks consumers — is in **[CONTRIBUTING.md](CONTRIBUTING.md)**:
 
 - [The shape](CONTRIBUTING.md#the-shape) — one rule one class, and which package owns what
-- [Adding a rule to an existing group](CONTRIBUTING.md#adding-a-rule-to-an-existing-group)
+- [Rule ids](CONTRIBUTING.md#rule-ids) — the grammar, and why it is split across two layers
 - [A rule in more than one group](CONTRIBUTING.md#a-rule-in-more-than-one-group)
 - [Adding a group](CONTRIBUTING.md#adding-a-group)
 - [What breaks consumers](CONTRIBUTING.md#what-breaks-consumers) — rule ids and predicate text are
