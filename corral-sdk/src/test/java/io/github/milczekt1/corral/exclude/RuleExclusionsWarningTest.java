@@ -13,6 +13,9 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import io.github.milczekt1.corral.exclude.RuleExclusions.Loaded;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -238,7 +241,7 @@ class RuleExclusionsWarningTest {
         assertDoesNotThrow(() -> allowingEmpty.check(nothingToMatch()));
     }
 
-    /** The production factory: the process-wide flag and the real SLF4J sink, wired end to end. */
+    /** The production factory: the process-wide flag and the real stderr sink, wired end to end. */
     @Test
     void theProductionFactoryWrapsWithoutChangingTheOutcome() {
         ArchRule rule = noClasses().should().haveNameMatching("does.not.Exist").allowEmptyShould(true).as("test.no-wrapper-production");
@@ -247,6 +250,49 @@ class RuleExclusionsWarningTest {
 
         assertEquals("test.no-wrapper-production", wrapped.getDescription());
         assertDoesNotThrow(() -> wrapped.check(nothingToMatch()));
+    }
+
+    // -- proving the message actually reaches a stream a consumer sees, not just an injected seam --
+
+    /**
+     * The defect this guards against: a seam-only test passes identically whether the real sink
+     * writes to a live stream or is silently swallowed (as {@code log.warn} would be under a bare
+     * {@code slf4j-api} with no provider). This drives the wrapper with the literal production sink,
+     * {@link RuleExclusions#printWarning}, and asserts on the real {@link System#err} -- the same
+     * stream a consumer's build actually prints to.
+     */
+    @Test
+    void theRealProductionSinkWritesTheMessageToRealSystemErr() {
+        ArchRule wrapped = RuleExclusions.warnUnmatchedExclusionsOnFirstEvaluation(
+                noClasses().should().haveNameMatching("does.not.Exist").allowEmptyShould(true)
+                        .as("test.no-wrapper-real-stderr"),
+                new AtomicBoolean(false), () -> "corral-exclusions.txt: an unmatched exclusion probe",
+                RuleExclusions::printWarning);
+
+        String captured = withCapturedSystemErr(() -> wrapped.check(nothingToMatch()));
+
+        assertTrue(captured.contains("corral-exclusions.txt: an unmatched exclusion probe"), captured);
+    }
+
+    /** The unit underneath the test above: {@code printWarning} itself really writes to stderr. */
+    @Test
+    void printWarningWritesToRealSystemErr() {
+        String captured = withCapturedSystemErr(() -> RuleExclusions.printWarning("a direct probe message"));
+
+        assertTrue(captured.contains("a direct probe message"), captured);
+    }
+
+    /** Redirects {@link System#err} for the duration of {@code action} and returns what it captured. */
+    private static String withCapturedSystemErr(Runnable action) {
+        PrintStream original = System.err;
+        ByteArrayOutputStream captured = new ByteArrayOutputStream();
+        try (PrintStream redirected = new PrintStream(captured, true, StandardCharsets.UTF_8)) {
+            System.setErr(redirected);
+            action.run();
+        } finally {
+            System.setErr(original);
+        }
+        return captured.toString(StandardCharsets.UTF_8);
     }
 
     private static JavaClasses nothingToMatch() {

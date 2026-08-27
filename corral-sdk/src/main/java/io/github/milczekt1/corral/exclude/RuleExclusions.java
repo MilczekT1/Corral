@@ -22,7 +22,6 @@ import java.util.function.Consumer;
 import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
-import lombok.extern.slf4j.Slf4j;
 
 /**
  * Reads {@value #EXCLUSIONS_FILE} off the classpath: the rules this codebase permanently opts out
@@ -36,7 +35,6 @@ import lombok.extern.slf4j.Slf4j;
  * the consumer as {@code failed to discover tests} with the cause dropped, so every failure becomes
  * a {@link Loaded#problem()} that later fails every rule with a message instead.
  */
-@Slf4j
 @UtilityClass
 public class RuleExclusions {
 
@@ -143,7 +141,7 @@ public class RuleExclusions {
 
     /**
      * Wraps {@code rule} so that, on the first rule any consumer evaluates in this run, a warning is
-     * logged for every excluded id that matched no rule — a typo, or a rule renamed or retired
+     * printed for every excluded id that matched no rule — a typo, or a rule renamed or retired
      * upstream. Unlike a build failure, a warning can be honest about a partial run: "matched no rule
      * <em>in this run</em>" is true whether the run wires the whole catalog or a single leaf test, so
      * this needs no wired root and runs unconditionally from {@link io.github.milczekt1.corral.DocumentedRule#guard()}.
@@ -162,12 +160,31 @@ public class RuleExclusions {
         if (STATE.entries().isEmpty()) {
             return rule;
         }
-        return warnUnmatchedExclusionsOnFirstEvaluation(rule, WARNED, RuleExclusions::unmatchedWarning, log::warn);
+        return warnUnmatchedExclusionsOnFirstEvaluation(
+                rule, WARNED, RuleExclusions::unmatchedWarning, RuleExclusions::printWarning);
     }
 
     static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(
             ArchRule rule, AtomicBoolean warned, Supplier<String> messageSupplier, Consumer<String> sink) {
         return new UnmatchedExclusionsWarning(rule, warned, messageSupplier, sink);
+    }
+
+    /**
+     * Deliberately {@link System#err}, not SLF4J, even though {@code slf4j-api} is on this module's
+     * classpath: this is a build-time diagnostic from a test-scoped library, and it is the entire
+     * safety net for a silent misconfiguration, so it must not depend on the consumer having wired a
+     * logging backend. Most consumers have not — a bare {@code slf4j-api} with no provider falls back
+     * to a no-op logger, and {@code log.warn} here would vanish exactly as quietly as the typo it is
+     * meant to surface. Maven and Gradle both capture and print stderr with nothing to configure.
+     *
+     * <p>Corral itself publishes {@code corral.logging.no-system-err}, which reads as an irony until
+     * the target is named: that rule governs a <em>consumer's application code</em>, where stderr
+     * bypasses whatever log pipeline the application runs in production. This is not application
+     * code and there is no pipeline to bypass — it is the build tool telling the person running the
+     * build something about the build, on the stream every build tool already surfaces.
+     */
+    static void printWarning(String message) {
+        System.err.println(message);
     }
 
     /** Live at call time, deliberately: {@link #MATCHED} is still filling in while rules initialise. */
