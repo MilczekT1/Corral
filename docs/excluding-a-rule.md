@@ -47,6 +47,20 @@ the day you delete the line — and the build fails on code nobody touched.
 **To adopt a rule you currently break, just let it run.** Freezing records your existing violations
 as debt; only new ones fail.
 
----
+## Your own rules
 
-Only Corral's rules go here. To drop a rule you wrote, delete its `@ArchTest` field from your group.
+Exclusion is an **SDK** feature, not a Corral one. Any catalog built on `corral-sdk` gets it — if you
+publish rules for your own teams, wire the guard against your own root and your consumers exclude
+your ids exactly the same way:
+
+```java
+@ArchTest
+static final ArchRule exclusionsResolve = RuleExclusions.resolvedAgainst(AcmeRules.class);
+```
+
+That guard is a spell-checker for the file: it fails the build when a line names an id nothing
+publishes, so a typo or a renamed rule can't silently exclude nothing.
+
+**One limitation.** If you wire Corral's catalog *and* your own rules, this file can only name
+Corral's — Corral's guard validates against Corral's ids. To drop one of your own rules, delete its
+`@ArchTest` field from your group.
