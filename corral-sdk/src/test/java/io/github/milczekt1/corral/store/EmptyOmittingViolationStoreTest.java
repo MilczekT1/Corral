@@ -190,7 +190,7 @@ class EmptyOmittingViolationStoreTest {
                 "logging.no-system-out", "jakarta.no-final-entity", "naming.no-impl-suffix",
                 "concurrency.no-thread-sleep", "security.no-runtime-exec", "java.no-legacy-date-api",
                 "lombok.no-builder-with-setters", "jackson.no-default-typing", "layering.no-package-cycles",
-                "exception.no-error-subclass", "corral.exclusions-resolve");
+                "exception.no-error-subclass", "corral.exclusions-must-name-real-rules");
         for (String id : ids) {
             store.save(ruleNamed(id), List.of("Class <Foo> violates " + id));
         }

@@ -125,10 +125,10 @@ class RuleExclusionsResolveTest {
     @Test
     void theResolveCheckItselfCannotBeExcluded() {
         Loaded loaded = RuleExclusions.parse(
-                "corral.exclusions-resolve :: we do not want this guard", "x");
+                "corral.exclusions-must-name-real-rules :: we do not want this guard", "x");
 
         assertNotNull(loaded.problem(), "excluding the guard must not parse as an ordinary line");
-        assertTrue(loaded.problem().contains("corral.exclusions-resolve"), loaded::problem);
+        assertTrue(loaded.problem().contains("corral.exclusions-must-name-real-rules"), loaded::problem);
         assertTrue(loaded.entries().isEmpty(),
                 () -> "it must never reach the census, which would print it as not enforced: " + loaded);
     }

@@ -48,7 +48,7 @@ public class RuleExclusions {
     private static final String COMMENT = "#";
 
     /** Ids this file may not name, because excluding them would disable the file's own guardrails. */
-    private static final Set<String> NOT_EXCLUDABLE = Set.of("corral.exclusions-resolve");
+    private static final Set<String> NOT_EXCLUDABLE = Set.of("corral.exclusions-must-name-real-rules");
 
     /** Read once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
     private static final Loaded STATE = load(currentClassLoader());
@@ -58,7 +58,7 @@ public class RuleExclusions {
      * and therefore owes consumers the same guidance every other rule gives.
      */
     private static final RuleDoc RESOLVE_DOC = RuleDoc.builder()
-            .id("corral.exclusions-resolve")
+            .id("corral.exclusions-must-name-real-rules")
             .why("""
                     An exclusion that names an id nothing publishes removes nothing, while reading in \
                     the diff exactly like one that does. That happens two ways: a typo, and a rule \

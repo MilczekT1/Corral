@@ -168,7 +168,7 @@ namespace to consumers. A consumer's own rule needs no prefix at all — `corral
 
 | Shape | When | Example |
 |---|---|---|
-| `corral.<slug>` | Corral's own framework meta-check | `corral.exclusions-resolve` |
+| `corral.<slug>` | Corral's own framework meta-check | `corral.exclusions-must-name-real-rules` |
 | `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
 | `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
 
@@ -179,8 +179,9 @@ four kinds:
 - **library** — `jackson`, `jakarta`, `lombok`, `spring`
 - **JDK** — `java`, plus `java<N>` for a version-gated API
 - **meta** — the one exception: a depth-2 `corral.<slug>` id has no segment-2 concern at all, the slug
-  itself sits at segment 2 (`corral.exclusions-resolve` is the only one today). It asserts nothing
-  about consumer code, so it carries no polarity marker and is exempt from the rule below.
+  itself sits at segment 2 (`corral.exclusions-must-name-real-rules` is the only one today). It still
+  needs a polarity marker like any other id — see the rule below — it simply asserts something about
+  the consumer's configuration rather than their code.
 
 **Segment 3, when present, is a library qualifier** — today, exactly `mockito`, `powermock` or
 `junit`.

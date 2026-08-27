@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
  * <p>Every id Corral publishes starts with the {@code corral} vendor prefix at segment 1 — see
  * CONTRIBUTING — so a consumer choosing their own namespace can never collide with Corral's. Segment 2
  * is either a closed concern vocabulary (a catalog rule, {@code corral.<concern>.<slug>}) or, for the
- * sole framework meta-check {@code corral.exclusions-resolve}, the slug itself
+ * sole framework meta-check {@code corral.exclusions-must-name-real-rules}, the slug itself
  * ({@code corral.<slug>}).
  *
  * <p>An id is the freeze-store key: it cannot change once a consumer has frozen it. The vocabulary
@@ -82,7 +82,7 @@ class RuleIdGrammarTest {
     }
 
     @Test
-    void everyPublishedSlugCarriesAPolarityMarkerExceptCorralsOwnMetaChecks() {
+    void everyPublishedSlugCarriesAPolarityMarker() {
         assertPolarityGrammar(publishedIds());
     }
 
@@ -132,16 +132,13 @@ class RuleIdGrammarTest {
             String[] segments = id.split("\\.");
             String slug = segments[segments.length - 1];
             boolean marked = slug.startsWith("no-") || slug.contains("-must-");
-            // depth-2 under the corral vendor prefix: a framework meta-check, which asserts nothing
-            // about consumer code, so it carries no polarity marker.
-            boolean metaCheck = segments.length == 2 && VENDOR_PREFIX.equals(segments[0]);
 
-            assertTrue(marked || metaCheck,
+            assertTrue(marked,
                     () -> "id '" + id + "' has no polarity marker: a slug either starts with 'no-'"
                             + " (a prohibition) or contains '-must-' (an obligation, read as"
-                            + " <subject>-must-<predicate>, e.g. fields-must-be-final)."
-                            + " A depth-2 corral.<slug> meta-check like corral.exclusions-resolve is"
-                            + " exempt — it asserts nothing about consumer code, so it carries none.");
+                            + " <subject>-must-<predicate>, e.g. fields-must-be-final). Every"
+                            + " published id needs one, including a depth-2 corral.<slug> framework"
+                            + " meta-check like corral.exclusions-must-name-real-rules.");
         }
     }
 

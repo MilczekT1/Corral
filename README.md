@@ -166,7 +166,7 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 | `corral.test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
 | `corral.test.class-names-must-end-with-test-or-it` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
 | `corral.logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
-| `corral.exclusions-resolve` | `AllCentralRules` | Every line of `corral-exclusions.txt` names an id this build wires. Not an architecture rule — it guards the exclusion mechanism itself, and only runs when the catalog root is wired. |
+| `corral.exclusions-must-name-real-rules` | `ConfigurationChecksGroup` | Every line of `corral-exclusions.txt` names an id this build wires. Not an architecture rule — it guards the exclusion mechanism itself, and only runs when the catalog root is wired. |
 | `corral.logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `corral.logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
 
 This table is maintained by hand; nothing in the build checks it.
@@ -179,11 +179,10 @@ This table is maintained by hand; nothing in the build checks it.
 > [example consumer](corral-example) shows the generic namespace this frees up. After the prefix, an
 > id is a dot-namespaced, kebab-cased shape, and every slug carries exactly one of two markers:
 > `no-` for a prohibition (`corral.logging.no-system-out`) or `-must-` for an obligation
-> (`corral.test.class-names-must-end-with-test-or-it`) — except Corral's own `corral.<slug>` meta-checks
-> (e.g. `corral.exclusions-resolve`, above), which assert nothing about consumer code and so carry
-> neither. Ids are never renamed, only deprecated — the old one stays registered, always passing,
-> naming its replacement. The full grammar and the reason renaming is unsafe are in
-> [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
+> (`corral.test.class-names-must-end-with-test-or-it`) — including Corral's own `corral.<slug>`
+> meta-checks (e.g. `corral.exclusions-must-name-real-rules`, above). Ids are never renamed, only
+> deprecated — the old one stays registered, always passing, naming its replacement. The full grammar
+> and the reason renaming is unsafe are in [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
 
 ## How freezing decides
 

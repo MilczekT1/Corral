@@ -93,7 +93,7 @@ class RuleDocTest {
         assertDoesNotThrow(() -> valid().id("db.no-spring-transactional").build());
         assertDoesNotThrow(() -> valid().id("naming.lowercase-packages").build(),
                 "RuleDoc itself has no opinion on polarity markers");
-        assertDoesNotThrow(() -> valid().id("corral.exclusions-resolve").build());
+        assertDoesNotThrow(() -> valid().id("corral.exclusions-must-name-real-rules").build());
     }
 
     @Test

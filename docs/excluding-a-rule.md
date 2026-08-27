@@ -55,7 +55,7 @@ your ids exactly the same way:
 
 ```java
 @ArchTest
-static final ArchRule exclusionsResolve = RuleExclusions.resolvedAgainst(AcmeRules.class);
+static final ArchRule exclusionsMustNameRealRules = RuleExclusions.resolvedAgainst(AcmeRules.class);
 ```
 
 That guard is a spell-checker for the file: it fails the build when a line names an id nothing
