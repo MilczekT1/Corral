@@ -66,8 +66,8 @@ depend on the SDK alone to write your own rules without adopting these.
 
 **1. Depend on it** (see [Install](#install) for the GitHub Packages repository and auth):
 
-No release is published yet. Cut `0.1.0` via the [Release workflow](#release-process) first, then
-depend on it:
+No release is published yet. Cut `0.1.0` via the [Release workflow](docs/release-process.md) first,
+then depend on it:
 
 ```xml
 <dependency>
@@ -161,26 +161,12 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 
 ## Rules
 
-| Rule id | Group | What it enforces |
-|---|---|---|
-| `corral.test.no-mocked-repository-in-integration-test` | `TestingRulesGroup` | An `*IT` class must not declare a mocked (`@Mock`, `@MockitoBean`, `@MockBean`) field whose type ends in `Repository` or `Dao`. |
-| `corral.test.class-names-must-end-with-test-or-it` | `TestingRulesGroup` | A top-level class holding JUnit test methods (`@Test`, `@ParameterizedTest`, `@RepeatedTest`, `@TestFactory`, `@TestTemplate`) must end in `Test`, `Tests` or `IT`. Nested classes — including JUnit 5 `@Nested` groups — are exempt: they run through their enclosing class. |
-| `corral.logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
-| `corral.logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `corral.logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
+Four rules today, in two groups — `TestingRulesGroup` and `LoggingRulesGroup`, both wired by
+`AllCentralRules`. Ids, groups and exactly what each one enforces are in the
+**[rules catalog](docs/rules.md)**.
 
-This table is maintained by hand; nothing in the build checks it.
-
-> **Rule ids are freeze-store keys.** Changing an id orphans every consumer's frozen entry, so treat
-> it as a breaking change.
->
-> Every id Corral publishes starts with the `corral.` vendor prefix, so it can never collide with a
-> namespace you pick for your own rules — `acme.no-stdout-in-services` in the
-> [example consumer](corral-example) shows the generic namespace this frees up. After the prefix, an
-> id is a dot-namespaced, kebab-cased shape, and every slug carries exactly one of two markers:
-> `no-` for a prohibition (`corral.logging.no-system-out`) or `-must-` for an obligation
-> (`corral.test.class-names-must-end-with-test-or-it`). Ids are never renamed, only deprecated — the
-> old one stays registered, always passing, naming its replacement. The full grammar and the reason
-> renaming is unsafe are in [CONTRIBUTING.md § Rule ids](CONTRIBUTING.md#rule-ids).
+Ids carry a `corral.` vendor prefix and are never renamed, because
+[an id is a freeze-store key](docs/rules.md#rule-ids) in every consumer's repo.
 
 ## How freezing decides
 
@@ -278,68 +264,20 @@ GitHub Packages requires authentication even for public reads. Add a matching se
 Without both pieces the build fails with `Could not find artifact io.github.milczekt1:corral-rules`.
 In CI use a secret, not a checked-in token (`${env.GITHUB_TOKEN}` interpolates in `settings.xml`).
 
-[Release](#release-process) publishes released `x.y.z` versions. Snapshots are published manually:
-dispatch [Publish artifact](#release-process) on a ref whose project version ends in `-SNAPSHOT`
-(`main`, typically). GitHub Packages rejects re-deploying an existing release version but accepts
-re-deploying a snapshot, so `0.1.0-SNAPSHOT` can be refreshed as often as needed — which is what
-makes it useful for trying a change before a release is cut.
+Released `x.y.z` versions come from the [Release workflow](docs/release-process.md); snapshots are
+published manually from `main` and can be refreshed as often as needed, which makes them the way to
+try a change before a release is cut — see
+[Snapshots](docs/release-process.md#snapshots).
 
 No release has been cut yet, so `0.1.0` does not resolve until you cut one; publish a snapshot if
 you want something to depend on in the meantime.
 
 ## Configuration reference
 
-| Property | Required | Notes |
-|---|---|---|
-| `freeze.store.default.path` | yes | Resolved against the JVM's **working directory**, not the classpath. Maven sets it to the module directory; an IDE run configuration with a different working directory will not find the store. |
-| `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
-| `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
-| `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
-| `corral-exclusions.txt` | optional | Not a property — a file beside `archunit.properties`. Removes named rules from your build permanently; see [Excluding a rule](docs/excluding-a-rule.md). |
-| `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
-
-> **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
-> defaults it to `false`, and that default is the only thing separating "the store is missing" from
-> "silently freeze everything and pass". Pinned to `true`, a store that was never committed, got
-> gitignored, or was lost to a shallow checkout gives you a green build with every violation
-> re-frozen and no signal at all. Left at its default, the same situation fails loudly with
-> `Creating new violation store is disabled (…)`. ArchUnit merges any `archunit.`-prefixed system
-> property, which is why the one-off override in step 4 works without editing the committed file.
-
-### The freeze store
-
-`freeze.store=io.github.milczekt1.corral.store.EmptyOmittingViolationStore` changes two things
-about how the store is written.
-
-**Violation files are named after the rule id.** Stock ArchUnit names them with a random UUID, so
-reading a store means resolving names through `stored.rules` first:
-
-```text
-archunit/frozen/
-├── stored.rules
-├── corral.test.class-names-must-end-with-test-or-it  # instead of 56d55a4e-91ac-4e12-8682-030d6f3f746f
-└── acme.no-stdout-in-services
-```
-
-`git log -p archunit/frozen/corral.test.class-names-must-end-with-test-or-it` is then that rule's debt history. Only ids
-get this treatment: the store is global, so it also serves rules frozen without a `RuleDoc`, whose
-descriptions are whole sentences — those keep a UUID. Names are assigned once, when a rule is first
-frozen, so existing stores keep their UUIDs and keep working.
-
-**A clean rule leaves no file.** A rule that is already clean still gets frozen: ArchUnit records it
-in `stored.rules` *and* writes an empty violation file. The index entry is what keeps the rule
-enforced (see the flowchart above); the empty file is noise in a commit. This store keeps the entry
-and drops the file. Three things to know:
-
-- **Opt-in.** Leave the line out and you get ArchUnit's stock store, empty files included.
-- **Global per run.** ArchUnit uses it for *every* `FreezingArchRule` in the run, including your own.
-  The behaviour change is narrow and the index entry is always preserved, so your own frozen rules
-  stay exactly as enforced.
-- **Not retroactive.** Switching it on leaves already-committed empty files in place —
-  `FreezingArchRule` only writes when it has something to change, and a rule that is clean and stays
-  clean never triggers a write. Clear them once with `mvn test -Darchunit.freeze.refreeze=true` (or
-  delete them by hand) and review the diff: `refreeze` re-records *every* rule, so anything currently
-  failing gets absorbed as debt too.
+`freeze.store.default.path` is the only required property; the rest are optional, including
+`freeze.store`, which swaps in a store that names violation files after the rule id and keeps empty
+ones out of your commits. Every setting, and the reason it exists, is in the
+**[configuration reference](docs/configuration.md)**.
 
 ## Extending
 
@@ -353,73 +291,12 @@ group composition, and what breaks consumers — is in **[CONTRIBUTING.md](CONTR
 - [What breaks consumers](CONTRIBUTING.md#what-breaks-consumers) — rule ids and predicate text are
   both freeze-store keys, so changing either is a breaking change
 
-## CI/CD
-
-Every push and pull request to `main` runs **Build Pipeline**
-(`.github/workflows/build-java.yml`): a `build` job (`./mvnw clean install`) and a
-`sonar_scan` job (`./mvnw clean verify` plus a SonarCloud scan). Coverage comes from jacoco,
-which fails the build at `verify` below the thresholds in the root `pom.xml`
-(`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
-`corral-example` overrides them to zero and sets `sonar.skip=true` — it is a wiring demo, not a
-tested component. Its classes exist to be flagged by rules and its violations are deliberate and
-committed, so analysing it would report the demo itself as findings. It is still compiled and its
-tests still run: that module is the end-to-end test of the wiring.
-
 ### Release process
 
-Releases run in CI via the **Release** GitHub Actions workflow (manual `workflow_dispatch`
-trigger). Only allowlisted users may trigger it.
-
-1. Go to **Actions → Release → Run workflow**.
-2. Enter:
-    - **releaseVersion** — the version to release, e.g. `0.1.0` (no `-SNAPSHOT`).
-    - **nextVersion** — the next development version, e.g. `0.1.1` (no `-SNAPSHOT`; the
-      workflow appends it).
-3. Run it. The workflow checks you are on the allowlist, creates branch `release/v<version>`,
-   sets the release version and commits + tags `v<version>` on it (crediting you as
-   co-author), publishes `corral-sdk`, `corral-rules` and `corral-parent` to
-   GitHub Packages — consumers need the parent pom to resolve the managed dependency
-   versions — bumps to
-   `<nextVersion>-SNAPSHOT`, pushes the branch + tag, creates the GitHub Release, then opens a
-   PR (`release/v<version>` → `main`) and enables **auto-merge**. The PR merges automatically
-   once the required build check passes.
-
-Before publishing, the workflow runs `./mvnw clean verify` on the version-bumped tree. That tree
-has never been built by any CI run — `versions:set` has just rewritten the poms — and publishing to
-GitHub Packages cannot be undone, so the tests and the coverage gate run against exactly what is
-about to be released. The `deploy` step itself then uses `-DskipTests=true` rather than testing
-twice.
-
-`corral-example` is never published — its `maven-deploy-plugin` is skipped, and the
-workflow's already-published check skips it for the same reason.
-
-The trigger allowlist is hardcoded in `.github/workflows/release.yml` as
-`RELEASE_ALLOWED_ACTORS` (space-separated GitHub usernames); edit it via a normal PR.
-
-**One-time setup (maintainer):**
-
-- Create the SonarCloud project `MilczekT1_Corral` in organization `milczekt1` and store
-  its token as repo secret `SONAR_TOKEN`. This is a first-ever analysis: the project must
-  exist before the first scan (import it in the SonarCloud UI, or let the scan auto-provision
-  it if the token's user holds *Create Projects* in the organization). The first run has no
-  previous analysis to diff against, so its new-code quality gate conditions are vacuous.
-- Install a **GitHub App** on the repo with **Contents: write** and **Pull requests: write**,
-  and store its credentials as repo secrets `RELEASE_APP_ID` and `RELEASE_APP_PRIVATE_KEY`.
-  The release PR is created under this App so it triggers CI (a PR created by the default
-  token would not, and auto-merge would hang).
-- Enable **Settings → General → Allow auto-merge** and **Allow rebase merging** — the release
-  PR is merged with `gh pr merge --auto --rebase`.
-- Keep the **build check required** on `main` branch protection — this is the gate
-  auto-merge waits on.
-
-`publish-java.yml` ("Publish artifact (manual)") publishes without bumping or tagging. Two uses:
-re-publishing an already-released `x.y.z` (only if it is not already present — GitHub Packages
-rejects re-deploying an existing release version), and publishing a `-SNAPSHOT` so consumers can
-try a change before a release is cut. Snapshots may be re-deployed repeatedly.
-
-The checked-out ref — not the `version` input — determines what gets published. Select the tag
-`v<version>` to re-publish a release, or a branch such as `main` to publish its snapshot; the
-input is only asserted against what is checked out, never used to check anything out.
+Releases are cut by dispatching the **Release** GitHub Actions workflow, which builds the
+version-bumped tree before publishing `corral-sdk`, `corral-rules` and `corral-parent` to GitHub
+Packages and opens the back-merge PR. Steps, inputs, the trigger allowlist and how snapshots are
+published are in **[Release process](docs/release-process.md)**.
 
 ## Contributing
 

@@ -20,9 +20,9 @@ import lombok.experimental.UtilityClass;
  * {@code FreezingArchRule}, the freeze store or any failure message sees them, so one {@code .*}
  * silences the catalog while every rule reports green.
  *
- * <p>{@link Detected} throws from {@link ArchRule#check} rather than being a rule (its violation
- * would be filtered by the file it detects) and rather than throwing from {@code guard()} (static
- * initialisation reaches the consumer as {@code failed to discover tests}, cause dropped).
+ * <p>{@link Detected} throws from {@link ArchRule#check}: a violation would be filtered by the very
+ * file it reports, and a throw from {@code guard()} reaches the consumer as
+ * {@code failed to discover tests} with the cause dropped.
  */
 @UtilityClass
 public class IgnorePatternsGuard {
@@ -63,7 +63,6 @@ public class IgnorePatternsGuard {
         try {
             return Collections.list(classLoader.getResources(IGNORE_PATTERNS_FILE));
         } catch (IOException e) {
-            // A classpath that cannot be enumerated cannot be declared clean either.
             throw new UncheckedIOException("Could not scan the classpath for " + IGNORE_PATTERNS_FILE, e);
         }
     }
@@ -119,7 +118,6 @@ public class IgnorePatternsGuard {
             return new Detected(newDescription, message);
         }
 
-        /** Nothing a caller can chain may soften this into something that passes. */
         @Override
         public ArchRule because(String reason) {
             return this;

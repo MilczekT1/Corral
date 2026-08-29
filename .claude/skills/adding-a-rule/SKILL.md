@@ -47,7 +47,7 @@ them, it does not restate them.
 6. **Extend the expected id set** in
    `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java`).
 
-7. **Add a row to the [README rules table](../../../README.md#rules).** Nothing in the build checks
+7. **Add a row to the [rules catalog](../../../docs/rules.md).** Nothing in the build checks
    this table — it drifts silently if you skip it.
 
 ## Three silent failure modes
@@ -83,4 +83,4 @@ Skip a step above and one of these two tests fails the build, on purpose:
 | Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<Name>RuleTest.java` |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java` |
-| Rules table | `README.md#rules` |
+| Rules table | `docs/rules.md` |

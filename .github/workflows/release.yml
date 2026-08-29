@@ -118,9 +118,8 @@ jobs:
             packaging=${packaging:-jar}
             [[ "$packaging" == "pom" ]] && continue
 
-            # Skip modules that are never deployed (maven-deploy-plugin skip=true).
-            # Without this, an unpublished-by-design module keeps all_exist false forever
-            # and the idempotency short-circuit below can never fire.
+            # Skip modules that are never deployed (maven-deploy-plugin skip=true), or they
+            # keep all_exist false forever and the short-circuit below never fires.
             deploy_skip=$(xmllint --xpath "string(//*[local-name()='plugin'][*[local-name()='artifactId']='maven-deploy-plugin']/*[local-name()='configuration']/*[local-name()='skip'])" "$pom" 2>/dev/null)
             [[ "$deploy_skip" == "true" ]] && continue
 

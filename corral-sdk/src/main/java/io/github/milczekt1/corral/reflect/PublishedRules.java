@@ -14,47 +14,27 @@ import java.util.stream.Collectors;
 import lombok.experimental.UtilityClass;
 
 /**
- * Reflection over what consumers actually evaluate: the {@code @ArchTest} fields reachable, however
- * deeply nested, from a given root class.
+ * Reflection over the {@code @ArchTest} fields reachable, however deeply nested, from a root class.
  *
- * <p>Assert against this rather than {@code RuleRegistry.all()}. The registry is process-wide and
- * Surefire reuses one JVM, so a sibling test registering a throwaway doc leaks into it, making any
- * assertion on its total contents order-dependent. What a walk from a root yields is
- * order-independent and pins exactly what a consumer running that root evaluates.
+ * <p>Prefer this to {@code RuleRegistry.all()} in assertions: the registry is process-wide, so in a
+ * reused JVM a sibling test's registration leaks into it.
  *
- * <p><strong>Member resolution mirrors ArchUnit's.</strong> ArchUnit collects members with
- * {@code ReflectionUtils.getAllFields}, which streams {@code getDeclaredFields()} over every
- * supertype of the class — superclasses and interfaces alike — and reads each one after
- * {@code setAccessible(true)}. So this walk does the same: it looks up the whole supertype graph,
- * and it reads package-private and private fields, and fields of package-private classes. Being
- * narrower than ArchUnit would silently under-report, which is the dangerous direction: a rule that
- * consumers really do evaluate would drop out of every completeness assertion built on this class
- * without anything going red.
+ * <p>Member resolution mirrors ArchUnit's {@code ReflectionUtils.getAllFields}: the whole supertype
+ * graph, reading private and package-private fields alike.
  *
- * <p><strong>Uses an ArchUnit internal.</strong> {@code ArchTests.getDefinitionLocation()} is
- * annotated {@code @Internal}, and it is the only way to ask an {@code ArchTests} which class it
- * aggregates. This class ships in the SDK jar, so an ArchUnit upgrade that drops the method breaks
- * the published artifact, not merely a local test — that is a real cost, accepted knowingly. What
- * limits it is that the call is read-only: the failure mode is a compile error, never a build that
- * passes while silently skipping rules.
+ * <p>{@code ArchTests.getDefinitionLocation()} is annotated {@code @Internal} and this class ships
+ * in the SDK jar, so an ArchUnit upgrade that drops it breaks the published artifact.
  */
 @UtilityClass
 public class PublishedRules {
 
     /**
      * Every {@code @ArchTest ArchRule} reachable from {@code root}, descending through
-     * {@code @ArchTest ArchTests} fields. Rule classes are leaves, groups are branches; one walk
-     * handles both and any nesting.
+     * {@code @ArchTest ArchTests} fields.
      *
-     * <p>The membership graph is assumed acyclic — a group that reaches itself, directly or through
-     * another group, recurses until the stack overflows. That is deliberate: ArchUnit's own
-     * {@code resolveArchRules} has no cycle guard either, so such a tree is already broken before
-     * this walk ever sees it, and detecting it here would imply a robustness the framework does not
-     * actually have.
-     *
-     * <p>Not deduplicated: a rule reachable through two groups appears twice, because the count of
-     * evaluations is itself sometimes what a caller wants to check. Use {@link #idsOf(Class)} for
-     * the distinct set.
+     * <p>Not deduplicated — a rule reachable through two groups appears twice; see
+     * {@link #idsOf(Class)}. A cyclic membership graph recurses until the stack overflows, as it
+     * does in ArchUnit's own {@code resolveArchRules}.
      */
     public static List<ArchRule> rulesReachableFrom(Class<?> root) {
         List<ArchRule> collected = new ArrayList<>(archRuleFieldsOf(root));
@@ -64,10 +44,7 @@ public class PublishedRules {
         return List.copyOf(collected);
     }
 
-    /**
-     * The {@code @ArchTest ArchRule} fields visible on a class, whether declared on it or inherited
-     * from a superclass or an interface.
-     */
+    /** The {@code @ArchTest ArchRule} fields visible on a class, declared or inherited. */
     public static List<ArchRule> archRuleFieldsOf(Class<?> owner) {
         List<ArchRule> rules = new ArrayList<>();
         for (Field field : publishedFieldsOf(owner, ArchRule.class)) {
@@ -77,10 +54,8 @@ public class PublishedRules {
     }
 
     /**
-     * The {@code @ArchTest ArchTests} fields visible on a class — the only members
-     * {@code ArchTests.in(owner)} actually descends into. Inherited members count: ArchUnit
-     * evaluates a group's members whether the group declares them or gets them from a base class or
-     * an interface.
+     * The {@code @ArchTest ArchTests} fields visible on a class, declared or inherited — the only
+     * members {@code ArchTests.in(owner)} descends into.
      */
     public static List<ArchTests> archTestsFieldsOf(Class<?> owner) {
         List<ArchTests> nested = new ArrayList<>();
@@ -92,11 +67,7 @@ public class PublishedRules {
 
     /**
      * The distinct ids (= ArchUnit rule descriptions, = freeze-store keys) reachable from
-     * {@code root}.
-     *
-     * <p>Distinct because a rule may be reachable through more than one group. Encounter order is
-     * preserved so output is stable, but neither {@code getDeclaredFields()} nor the order in which
-     * supertypes are visited guarantees anything, so callers should not depend on it.
+     * {@code root}. Encounter order is preserved but is not guaranteed by reflection.
      */
     public static Set<String> idsOf(Class<?> root) {
         return rulesReachableFrom(root).stream()
@@ -105,9 +76,8 @@ public class PublishedRules {
     }
 
     /**
-     * The published fields of the requested type across {@code owner} and every one of its
-     * supertypes. Deduplicated by {@link Field}, whose equality is declaring class plus name, so an
-     * interface reached along two paths of a diamond contributes its fields once.
+     * The published fields of the requested type across {@code owner} and every supertype.
+     * Deduplicated by {@link Field} — declaring class plus name — so a diamond contributes once.
      */
     private static List<Field> publishedFieldsOf(Class<?> owner, Class<?> type) {
         Set<Field> fields = new LinkedHashSet<>();
@@ -129,8 +99,7 @@ public class PublishedRules {
     }
 
     private static void collectSupertypes(Class<?> type, Set<Class<?>> into) {
-        // null terminates the superclass chain (Object, primitives, interfaces); the set membership
-        // check terminates the interface graph, which is a DAG and can revisit the same interface.
+        // The set membership check terminates the interface graph, which can revisit an interface.
         if (type == null || !into.add(type)) {
             return;
         }
@@ -148,9 +117,8 @@ public class PublishedRules {
 
     private static <T> T read(Field field, Class<T> type) {
         try {
-            // ArchUnit's ReflectionUtils.getValue does the same before reading, which is why a
-            // package-private @ArchTest field, or one on a package-private class, is a shape it
-            // supports; refusing to read it here would hide rules that consumers do evaluate.
+            // ArchUnit's ReflectionUtils.getValue does the same, so package-private @ArchTest
+            // fields are a shape it supports.
             field.setAccessible(true);
             Object value = field.get(null);
             if (value == null) {

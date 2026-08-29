@@ -24,19 +24,10 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 class TestScopeTest {
 
-    /**
-     * Gradle's <em>main</em> output — matched by none of the patterns. Importing fixtures from here
-     * switches the location half off, isolating the structure half, and doubles as the control that
-     * the temporary directory does not itself look like test output.
-     */
+    /** Gradle's <em>main</em> output — matched by none of the test-location patterns. */
     private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
 
-    /**
-     * This build is Maven, so only {@code target/**} occurs for real. Gradle and IntelliJ layouts
-     * are exercised by copying genuinely compiled class files into a tree shaped like the layout
-     * and importing from there — the only synthesised thing is the directory name, which is
-     * precisely the input under test.
-     */
+    /** This build is Maven, so only {@code target/**} occurs for real; the rest are copied trees. */
     @ParameterizedTest(name = "{0} is test output")
     @ValueSource(strings = {
             "build/classes/java/test",  // Gradle, with the language directory
@@ -53,11 +44,7 @@ class TestScopeTest {
         assertFalse(TestScope.PRODUCTION_CLASSES.test(fixture), sourceUriOf(fixture));
     }
 
-    /**
-     * The location half against the real Maven layout. {@code RuleDoc} compiles to
-     * {@code target/classes} and the fixture to {@code target/test-classes}; neither declares a test
-     * method, so location is the only thing separating them.
-     */
+    /** Neither class declares a test method, so location is the only thing separating them. */
     @Test
     void separatesThisBuildsOwnMainOutputFromItsTestOutput() {
         JavaClasses thisBuild = new ClassFileImporter()
@@ -74,10 +61,8 @@ class TestScopeTest {
     }
 
     /**
-     * The structure half alone: all three fixtures imported from a production-looking directory, so
-     * only what they declare can decide. {@code ParameterizedTestMethodFixture} is reached only
-     * through {@code @TestTemplate}; {@code NoTestMethodsFixture} is the negative direction, without
-     * which a predicate that always said "yes" would pass.
+     * Imported from a production-looking directory, so only what a class declares can decide.
+     * {@code ParameterizedTestMethodFixture} is reached only through {@code @TestTemplate}.
      */
     @Test
     void findsTestClassesByDeclaredTestMethodsWhereTheLocationSaysNothing(@TempDir Path outputRoot)
@@ -97,11 +82,8 @@ class TestScopeTest {
     }
 
     /**
-     * A stub class has no source and must land on the production side rather than blow up.
-     *
-     * <p>Producing one needs ArchUnit's classpath resolution off — process-wide config in a JVM
-     * Surefire reuses, so it is restored in a {@code finally}. The empty source is asserted, not
-     * assumed: if ArchUnit ever gives stubs a source, this goes red instead of asserting nothing.
+     * Producing a stub needs ArchUnit's classpath resolution off — process-wide config in a JVM
+     * Surefire reuses, so it is restored in a {@code finally}.
      */
     @Test
     void treatsStubClassesWithNoSourceAsProduction() {
@@ -125,9 +107,8 @@ class TestScopeTest {
     }
 
     /**
-     * These descriptions render into every rule built on them, and a rule's description is its
-     * freeze-store key. Pinning them turns a reword into a failing test here rather than a failing
-     * build in a consumer's repo.
+     * These descriptions render into every rule built on them, and a rule description is a
+     * freeze-store key.
      */
     @Test
     void pinsThePredicateDescriptions() {
@@ -135,10 +116,6 @@ class TestScopeTest {
         assertEquals("production classes", TestScope.PRODUCTION_CLASSES.getDescription());
     }
 
-    /**
-     * The scopes must partition, not merely differ: a class in both is reported twice, a class in
-     * neither is silently exempt from both.
-     */
     @Test
     void productionScopeIsTheExactComplementOfTestScope(@TempDir Path outputRoot) throws IOException {
         JavaClasses everyShape = importFrom(outputRoot, PRODUCTION_LAYOUT,
@@ -153,8 +130,7 @@ class TestScopeTest {
 
     /**
      * Copies the compiled class files of {@code fixtures} into {@code root/layout}, keeping package
-     * directories, and imports from there. The bytes are the ones {@code javac} produced — only the
-     * directory the source URI points into differs.
+     * directories, and imports from there.
      */
     private static JavaClasses importFrom(Path root, String layout, Class<?>... fixtures)
             throws IOException {

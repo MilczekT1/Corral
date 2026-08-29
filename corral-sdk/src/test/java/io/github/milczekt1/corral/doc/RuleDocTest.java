@@ -53,9 +53,8 @@ class RuleDocTest {
     }
 
     /**
-     * {@code isId} is weaker than the constructor by design: it backs the shape-only error path, so a
-     * too-long or too-deep string is still "id-shaped". Callers needing the caps use
-     * {@code isIdWithinCaps}.
+     * {@code isId} is shape only, so a too-long or too-deep string is still "id-shaped"; callers
+     * needing the caps use {@code isIdWithinCaps}.
      */
     @Test
     void isIdWithinCapsAlsoEnforcesTheLengthAndSegmentCaps() {
@@ -81,7 +80,7 @@ class RuleDocTest {
 
     /**
      * {@code RuleDoc} is public SDK surface, so a consumer's own namespace must pass. Corral's own
-     * taxonomy is enforced by {@code RuleIdGrammarTest}, never here.
+     * taxonomy is enforced by {@code RuleIdGrammarTest}.
      */
     @Test
     void acceptsAnyNamespaceAndSlugAConsumerChooses() {

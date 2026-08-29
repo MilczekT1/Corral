@@ -8,8 +8,7 @@ import org.junit.jupiter.api.Test;
 /**
  * A project's own composed test annotation — the shape JUnit 5 documents and encourages.
  *
- * <p>JUnit runs methods annotated with this, because it resolves {@code @Test} through the
- * meta-annotation. A rule matching direct annotations only would not.
+ * <p>JUnit resolves {@code @Test} through the meta-annotation and runs methods annotated with it.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(java.lang.annotation.ElementType.METHOD)

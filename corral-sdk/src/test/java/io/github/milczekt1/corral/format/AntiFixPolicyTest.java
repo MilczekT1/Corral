@@ -19,10 +19,7 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
     }
 
-    /**
-     * The escape hatches a reader can only reach by exact name: a file name and two property keys.
-     * Pinned verbatim — paraphrasing one out of the policy would silently un-name it.
-     */
+    /** The escape hatches a reader can only reach by exact name: a file name and two property keys. */
     @Test
     void namesEveryEscapeHatchVerbatim() {
         String all = String.join("\n", AntiFixPolicy.clauses());
@@ -39,9 +36,8 @@ class AntiFixPolicyTest {
     }
 
     /**
-     * The exclusions clause is the one an agent under pressure is most likely to lawyer, so the
-     * wording carries its own limits: permanent, not applicable, not a way to pass, and the
-     * same-change tell that makes the abuse visible in the diff.
+     * The exclusions clause carries its own limits: permanent, not applicable, not a way to pass,
+     * and the same-change tell.
      */
     @Test
     void theExclusionsClauseDrawsTheLineRatherThanAdvertisingAnEscapeRoute() {

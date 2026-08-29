@@ -7,6 +7,6 @@
 # it can make its absence fatal. Every exclusion in effect is printed on any rule failure.
 #
 # This is NOT a pause button. An excluded rule records nothing, so any violation added while it is
-# off resurfaces as new the day the line is deleted. See "Excluding a rule" in the README.
+# off resurfaces as new the day the line is deleted. See docs/excluding-a-rule.md.
 
 corral.logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.

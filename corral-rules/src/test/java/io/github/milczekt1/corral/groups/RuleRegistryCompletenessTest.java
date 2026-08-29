@@ -19,10 +19,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Guards the contract between the rules consumers evaluate and their documentation.
  *
- * <p>Everything here is keyed on {@link PublishedRules} rather than {@code RuleRegistry.all()}.
- * The registry is process-wide static state and Surefire reuses one JVM, so sibling tests that
- * register throwaway docs pollute it; asserting over its total contents would make these tests
- * depend on run order.
+ * <p>Everything here is keyed on {@link PublishedRules} rather than {@code RuleRegistry.all()},
+ * which is process-wide static state that sibling tests pollute in a reused JVM.
  */
 class RuleRegistryCompletenessTest {
 
@@ -50,13 +48,11 @@ class RuleRegistryCompletenessTest {
     }
 
     /**
-     * One id, one rule. The id is the freeze-store key, so two <em>different</em> rules sharing one
-     * would each treat the other's recorded violations as their own.
+     * One id, one rule: the id is the freeze-store key.
      *
-     * <p>Keyed on rule identity, not on how often an id appears: a rule reachable through two groups
-     * is one object read from one {@code static final} field, and enforcing it under both groups is
-     * legitimate. {@code RuleRegistry} does not cover this — its guard compares docs, so two rules
-     * carrying identical documentation pass it.
+     * <p>Keyed on rule identity, not on how often an id appears — a rule reachable through two
+     * groups is one object read from one {@code static final} field. {@code RuleRegistry} does not
+     * cover this: its guard compares docs, not rules.
      */
     @Test
     void everyRuleIdIsClaimedByExactlyOneRule() {

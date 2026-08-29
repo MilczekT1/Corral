@@ -29,8 +29,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * This JVM carries no {@code archunit_ignore_patterns.txt}, so the "present" case uses real files in
- * temp directories behind a real {@link URLClassLoader}. Both directions asserted — the absent one
- * alone passes vacuously.
+ * temp directories behind a real {@link URLClassLoader}.
  */
 class IgnorePatternsGuardTest {
 
@@ -53,7 +52,7 @@ class IgnorePatternsGuardTest {
         }
     }
 
-    /** First match wins, so reporting only it would hide the copy worth knowing about. */
+    /** First match wins, so every copy is named. */
     @Test
     void findsEveryCopyOnTheClassPathNotOnlyTheOneArchUnitReads(@TempDir Path first, @TempDir Path second)
             throws IOException {
@@ -145,7 +144,7 @@ class IgnorePatternsGuardTest {
         assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE));
     }
 
-    /** An unreadable classpath must not report clean — that is the silent pass this check removes. */
+    /** An unreadable classpath must not report clean. */
     @Test
     void anUnreadableClassPathFailsRatherThanReportingClean() {
         ClassLoader unreadable = new ClassLoader(null) {
@@ -174,12 +173,10 @@ class IgnorePatternsGuardTest {
     }
 
     /**
-     * The premise the whole guard rests on: that ArchUnit really does discard violations matching the
-     * file. Everything else here tests Corral's reaction to the file existing. If ArchUnit ever drops
-     * or renames the feature this goes red, and the guard becomes a tax on consumers for nothing.
+     * The premise the guard rests on: ArchUnit really does discard violations matching the file.
      *
      * <p>{@code readPatternsFrom} runs per evaluation off the thread-context loader and caches
-     * nothing, so swapping the loader is enough and no other test can be poisoned.
+     * nothing, so swapping the loader is enough.
      */
     @Test
     void archUnitReallyDiscardsViolationsMatchingTheFile(@TempDir Path root) throws IOException {
@@ -228,7 +225,7 @@ class IgnorePatternsGuardTest {
         return Files.writeString(root.resolve(IGNORE_PATTERNS_FILE), ".*" + System.lineSeparator());
     }
 
-    /** No parent, so only the temporary directories answer — this build's own classpath cannot leak in. */
+    /** No parent, so only the temporary directories answer. */
     private static URLClassLoader classLoaderOver(Path... roots) throws IOException {
         URL[] urls = new URL[roots.length];
         for (int i = 0; i < roots.length; i++) {

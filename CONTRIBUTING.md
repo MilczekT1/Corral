@@ -51,7 +51,7 @@ they are on the reviewer and on you:
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
-| Letting the **README rules table** drift from `RuleRegistry` | The most visible form of rot on the landing page. | nothing (yet) |
+| Letting the **[rules catalog](docs/rules.md)** drift from `RuleRegistry` | The most visible form of catalog rot. | nothing (yet) |
 
 If you must make one of the first two changes, say so explicitly in the PR and describe the
 migration for existing consumers.
@@ -208,7 +208,7 @@ unchanged from before the prefix existed.
 **The check is split across two layers, deliberately.** `RuleDoc`'s constructor
 (`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
 hygiene that binds every id, including a consumer's own, because the id becomes a *file name* in
-every consumer's freeze store (see [The freeze store](README.md#the-freeze-store)). The vendor
+every consumer's freeze store (see [The freeze store](docs/configuration.md#the-freeze-store)). The vendor
 prefix, the concern vocabulary, the polarity marker and the qualifier-segment list are enforced
 separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
 `AllCentralRules` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can

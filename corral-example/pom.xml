@@ -19,10 +19,8 @@
 
   <properties>
     <!--
-      A wiring demo, not a tested component: its classes exist to be flagged by rules, and its
-      violations are deliberate and committed. Analysing it reports the demo as findings and drags
-      the quality gate around for reasons no one would ever act on. Same reasoning as the coverage
-      thresholds below.
+      A wiring demo, not a tested component: its violations are deliberate and committed, so
+      analysis reports the demo as findings. Same for the coverage thresholds below.
     -->
     <sonar.skip>true</sonar.skip>
 

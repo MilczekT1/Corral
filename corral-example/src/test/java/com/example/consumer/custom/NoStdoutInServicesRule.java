@@ -13,13 +13,11 @@ import lombok.NoArgsConstructor;
 /**
  * A rule this project owns, written with the library's own machinery.
  *
- * <p>Any {@code ArchRule} works with {@code @ArchTest}, but a plain one renders through ArchUnit's
- * default format — one line, no guidance. Giving it a {@link RuleDoc} and freezing it through
- * {@link DocumentedRule} makes it behave exactly like a built-in rule: WHY / HOW TO FIX on failure,
- * existing violations recorded as debt rather than blocking.
+ * <p>A {@link RuleDoc} and {@link DocumentedRule} give it what a built-in rule has: WHY / HOW TO FIX
+ * on failure, and existing violations recorded as debt.
  *
- * <p>{@code howNotToFix} is where this rule's own anti-fix guidance goes. The global policy in
- * {@code AntiFixPolicy} is identical for every rule and prints below it.
+ * <p>{@code howNotToFix} is this rule's own anti-fix guidance; the global {@code AntiFixPolicy}
+ * prints below it.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoStdoutInServicesRule implements DocumentedRule {
