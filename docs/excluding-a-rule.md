@@ -2,9 +2,14 @@
 
 ## What it is
 
-Permanently removes **one Corral rule** from your build. The rule still exists and stays enforced for
-everyone else — you keep `ArchTests.in(AllCentralRules.class)`, so new rules still arrive on upgrade.
-You removed a rule, not the mechanism that delivers them.
+Permanently removes **one rule** from your build — a rule from any catalog you consume, Corral's or
+your company's. The rule still exists and stays enforced for everyone else, and you keep wiring the
+catalog root, so new rules still arrive on upgrade. You removed a rule, not the mechanism that
+delivers them.
+
+Exclusion is an **SDK** feature with nothing to wire: every rule that goes through
+`DocumentedRule.guard()` reads the same file, so it works identically for a catalog you built
+yourself.
 
 Withdrawing an id for *everyone* is a different thing: [retiring a rule](retiring-a-rule.md).
 
@@ -32,7 +37,7 @@ That rule now passes without evaluating; everything else is untouched. No file, 
 
 | | |
 |---|---|
-| A reason is **mandatory** | Corral can't judge if it's a good one, but it can make its absence fatal |
+| A reason is **mandatory** | The SDK can't judge if it's a good one, but it can make its absence fatal |
 | An id that matches no rule in the run **logs a warning** | A typo, or a rule renamed or retired upstream, removes nothing while reading as though it did |
 | Whole rules only, never one violation | Switching a rule off should be loud in review |
 
@@ -47,15 +52,12 @@ the day you delete the line — and the build fails on code nobody touched.
 **To adopt a rule you currently break, just let it run.** Freezing records your existing violations
 as debt; only new ones fail.
 
-## Your own rules
+## Why the typo check is a warning, not a failure
 
-Exclusion is an **SDK** feature, not a Corral one. Any catalog built on `corral-sdk` gets it
-automatically, with nothing to wire — every rule that goes through `DocumentedRule.guard()`, yours or
-Corral's, carries the same spell-checker for the file: the first rule evaluated in the run logs a
-warning naming any excluded id that matched no rule.
+Telling a typo from a rule simply absent from a partial run needs the complete rule set, which only a
+full run has. A failure would have to be certain, so it would need a wired root to walk — and then it
+would go silent for anyone wiring a hand-picked set of groups, which is the setup where mistakes are
+likeliest.
 
-It needs no wired root, so it works exactly the same whether your consumers evaluate the whole
-catalog, a hand-picked set of groups, or a single rule from an IDE gutter. What it cannot do is turn
-that warning into a build failure — telling a typo from a rule genuinely absent from a partial run
-needs the complete rule set, which only a full run has. Read the warning as "matched no rule *in this
-run*": accurate always, actionable on a full run.
+So it warns instead, from the first rule evaluated, with no root and no wiring. Read it as "matched
+no rule *in this run*": always accurate, actionable on a full run.

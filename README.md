@@ -221,8 +221,12 @@ Three short guides, one per task:
 | I want to… | Guide |
 |---|---|
 | **Turn off a rule** that is wrong for my codebase | [Excluding a rule](docs/excluding-a-rule.md) |
-| **Add a rule** to the catalog | [Creating a rule](docs/creating-a-rule.md) |
+| **Write a rule** | [Creating a rule](docs/creating-a-rule.md) |
 | **Withdraw an id** that was renamed, split or made obsolete | [Retiring a rule](docs/retiring-a-rule.md) |
+
+All three describe the **SDK**, not this catalog. Depend on `corral-sdk` and they work the same way
+for a catalog you build for your own company, whether or not you adopt any of Corral's rules — the
+steps that apply only to contributing here are called out separately in each guide.
 
 Exclusion is a *consumer* opting out locally; retirement is a *maintainer* withdrawing an id for
 everyone. Retirement exists so that a withdrawn id doesn't break the consumers who excluded it.
