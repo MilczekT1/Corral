@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNull;
+import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -23,14 +24,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 
 /**
- * The unknown-id guardrail, now a warning: honest about a partial run, so it needs no wired root.
+ * The unknown-id guardrail, as a warning. Two layers, tested separately:
+ * {@link RuleExclusions#unmatchedWarning(Loaded, java.util.Collection)} decides what to say, and the
+ * wrapper handles "once per run".
  *
- * <p>Two layers, tested separately. {@link RuleExclusions#unmatchedWarning(Loaded, java.util.Collection)}
- * is the pure decision — what to say, given what is excluded and what has matched. The wrapper
- * {@code warnUnmatchedExclusionsOnFirstEvaluation} returns is the "once per run" mechanics — every
- * test here uses its own fresh {@link AtomicBoolean} rather than the process-wide one, the same way
- * {@code RuleExclusionsGuardTest} passes an explicit {@link Loaded} rather than the real classpath
- * scan: state shared across the whole Surefire JVM must not leak between tests.
+ * <p>Every test passes its own {@link AtomicBoolean} and {@link Loaded} — the process-wide ones would
+ * leak across the Surefire JVM.
  */
 class RuleExclusionsWarningTest {
 
@@ -61,7 +60,7 @@ class RuleExclusionsWarningTest {
         assertNull(RuleExclusions.unmatchedWarning(Loaded.none(), Set.of()));
     }
 
-    /** Fixing the file one round trip per id is how it ends up deleted instead. */
+    /** Every unmatched id at once, not one per run. */
     @Test
     void everyUnmatchedIdIsListedNotOnlyTheFirst() {
         Loaded state = RuleExclusions.parse("""
@@ -86,7 +85,7 @@ class RuleExclusionsWarningTest {
         assertFalse(message.contains("1 exclusions"), message);
     }
 
-    /** {@code applyTo} is the only place a match is recorded — this is what the warning trusts. */
+    /** {@code applyTo} is the only place a match is recorded. */
     @Test
     void applyToRecordsAMatchWhenTheRuleIsExcluded() {
         String id = "test.no-applyto-records-match-fixture";
@@ -241,25 +240,23 @@ class RuleExclusionsWarningTest {
         assertDoesNotThrow(() -> allowingEmpty.check(nothingToMatch()));
     }
 
-    /** The production factory: the process-wide flag and the real stderr sink, wired end to end. */
     @Test
-    void theProductionFactoryWrapsWithoutChangingTheOutcome() {
+    void theProductionFactoryReturnsTheSameRuleWhenNothingIsExcluded() {
         ArchRule rule = noClasses().should().haveNameMatching("does.not.Exist").allowEmptyShould(true).as("test.no-wrapper-production");
 
         ArchRule wrapped = RuleExclusions.warnUnmatchedExclusionsOnFirstEvaluation(rule);
 
-        assertEquals("test.no-wrapper-production", wrapped.getDescription());
+        assertTrue(RuleExclusions.inEffect().isEmpty(),
+                "this module's test classpath must carry no exclusions file");
+        assertSame(rule, wrapped, "an unwrapped rule, not a no-op wrapper");
         assertDoesNotThrow(() -> wrapped.check(nothingToMatch()));
     }
 
     // -- proving the message actually reaches a stream a consumer sees, not just an injected seam --
 
     /**
-     * The defect this guards against: a seam-only test passes identically whether the real sink
-     * writes to a live stream or is silently swallowed (as {@code log.warn} would be under a bare
-     * {@code slf4j-api} with no provider). This drives the wrapper with the literal production sink,
-     * {@link RuleExclusions#printWarning}, and asserts on the real {@link System#err} -- the same
-     * stream a consumer's build actually prints to.
+     * Drives the wrapper with the production sink, {@link RuleExclusions#printWarning}, and asserts on
+     * the real {@link System#err} — a seam-only test passes even if the sink swallows everything.
      */
     @Test
     void theRealProductionSinkWritesTheMessageToRealSystemErr() {

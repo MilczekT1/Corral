@@ -24,46 +24,31 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 /**
- * Reads {@value #EXCLUSIONS_FILE} off the classpath: the rules this codebase permanently opts out
- * of, because they contradict how it is built.
+ * Reads {@value #EXCLUSIONS_FILE} off the classpath: the rules this codebase permanently opts out of.
  *
- * <p>Subtractive, not additive. A consumer keeps {@code ArchTests.in(AllCentralRules.class)} — and
- * so keeps receiving rules as the catalog grows — having removed one rule rather than opted out of
- * the mechanism that delivers them.
- *
- * <p>Nothing here throws. Loading happens in a static initialiser, and an exception there reaches
- * the consumer as {@code failed to discover tests} with the cause dropped, so every failure becomes
- * a {@link Loaded#problem()} that later fails every rule with a message instead.
+ * <p>Never throws — loading runs in a static initialiser, so a failure becomes a
+ * {@link Loaded#problem()} that fails every rule with a message.
  */
 @UtilityClass
 public class RuleExclusions {
 
-    /** Public so a failure message can name the file it is telling the reader about. */
     public static final String EXCLUSIONS_FILE = "corral-exclusions.txt";
 
-    /** Between the id and its reason. Two characters no rule id and no sentence starts with. */
     private static final String SEPARATOR = "::";
 
     private static final String COMMENT = "#";
 
-    /** Read once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
+    /** Read once per JVM, on the first {@code guard()} call. */
     private static final Loaded STATE = load(currentClassLoader());
 
-    /**
-     * Every excluded id that has actually matched a rule this run evaluated, filled in by
-     * {@link #applyTo} as rules pass through it. A {@link ConcurrentHashMap}-backed set, in the
-     * style of {@code RuleRegistry}: rule classes initialise concurrently under a parallel Surefire
-     * or Gradle test run.
-     */
+    /** Excluded ids that matched a rule this run, filled in by {@link #applyTo}. */
     private static final Set<String> MATCHED = ConcurrentHashMap.newKeySet();
 
-    /** Flips once, at the first rule any consumer evaluates — shared by every {@link UnmatchedExclusionsWarning}. */
+    /** Flips at the first rule evaluated this run, shared by every {@link UnmatchedExclusionsWarning}. */
     private static final AtomicBoolean WARNED = new AtomicBoolean(false);
 
     /**
-     * What the classpath amounts to: the exclusions in effect, or the reason there are none to be
-     * trusted. Exactly one of the two is populated — a file that cannot be understood excludes
-     * nothing, so a broken line can never silence a rule by accident.
+     * The exclusions in effect, or the reason there are none to be trusted. Exactly one is populated.
      *
      * @param problem {@code null} when the file was absent or read cleanly
      */
@@ -99,27 +84,18 @@ public class RuleExclusions {
         return STATE.entries();
     }
 
-    /** Whether the classpath carries an exclusions file that could not be understood. */
     static boolean isBroken() {
         return STATE.isBroken();
     }
 
-    /** For tests: whether {@code ruleId} has been recorded as having matched a rule this run. */
     static boolean hasMatched(String ruleId) {
         return MATCHED.contains(ruleId);
     }
 
     /**
-     * {@code rule} unchanged unless this file names it — so every rule a consumer does not exclude
-     * is the same object, evaluated identically, whatever else the file says.
+     * {@code rule} unchanged unless the file names it; a match is recorded in {@link #MATCHED}.
      *
-     * <p>Records a match in {@link #MATCHED} first, so {@link #warnUnmatchedExclusionsOnFirstEvaluation}
-     * — evaluated later, once every rule class in the run has initialised and called this method — can
-     * tell an id that matched nothing from one that did.
-     *
-     * <p>Applied <em>outside</em> {@code FreezingArchRule}, so an excluded rule never reaches the
-     * freeze store. A rule re-recorded as clean would have its debt entries deleted, and re-enabling
-     * it would resurface every one of them as new.
+     * <p>Apply outside {@code FreezingArchRule} — an excluded rule must never reach the freeze store.
      */
     public static ArchRule applyTo(ArchRule rule, String ruleId) {
         return applyTo(rule, ruleId, STATE);
@@ -140,21 +116,13 @@ public class RuleExclusions {
     }
 
     /**
-     * Wraps {@code rule} so that, on the first rule any consumer evaluates in this run, a warning is
-     * printed for every excluded id that matched no rule — a typo, or a rule renamed or retired
-     * upstream. Unlike a build failure, a warning can be honest about a partial run: "matched no rule
-     * <em>in this run</em>" is true whether the run wires the whole catalog or a single leaf test, so
-     * this needs no wired root and runs unconditionally from {@link io.github.milczekt1.corral.DocumentedRule#guard()}.
+     * Wraps {@code rule} so the first rule evaluated this run warns about every excluded id that
+     * matched no rule. Fires once per run via {@link #WARNED}.
      *
-     * <p>Fires once per run, not once per rule: {@link #WARNED} is a single static flag shared by
-     * every wrapped rule. By the time any rule's {@code check}/{@code evaluate} actually runs, ArchUnit
-     * has already finished walking every {@code @ArchTest} field it discovered, which forces every
-     * wired rule class to initialise and call {@link #applyTo} — so {@link #MATCHED} is complete by
-     * then, however early or late this particular rule happens to fire relative to its siblings.
+     * <p>Assumes one JVM and one discovery pass — under {@code forkCount > 1} or a sharded CI a
+     * correct exclusion can be reported unmatched.
      *
-     * <p>{@code rule} unchanged when the file names no exclusion at all — the same pass-through
-     * {@link #applyTo} uses for an empty file. There is nothing an id could fail to match, so
-     * wrapping would only ever produce a silent no-op.
+     * <p>{@code rule} unchanged when the file names no exclusion at all.
      */
     public static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(ArchRule rule) {
         if (STATE.entries().isEmpty()) {
@@ -169,37 +137,17 @@ public class RuleExclusions {
         return new UnmatchedExclusionsWarning(rule, warned, messageSupplier, sink);
     }
 
-    /**
-     * Deliberately {@link System#err}, not SLF4J, even though {@code slf4j-api} is on this module's
-     * classpath: this is a build-time diagnostic from a test-scoped library, and it is the entire
-     * safety net for a silent misconfiguration, so it must not depend on the consumer having wired a
-     * logging backend. Most consumers have not — a bare {@code slf4j-api} with no provider falls back
-     * to a no-op logger, and {@code log.warn} here would vanish exactly as quietly as the typo it is
-     * meant to surface. Maven and Gradle both capture and print stderr with nothing to configure.
-     *
-     * <p>Corral itself publishes {@code corral.logging.no-system-err}, which reads as an irony until
-     * the target is named: that rule governs a <em>consumer's application code</em>, where stderr
-     * bypasses whatever log pipeline the application runs in production. This is not application
-     * code and there is no pipeline to bypass — it is the build tool telling the person running the
-     * build something about the build, on the stream every build tool already surfaces.
-     */
+    /** {@link System#err}, not SLF4J: a consumer with no logging provider would never see this. */
     static void printWarning(String message) {
         System.err.println(message);
     }
 
-    /** Live at call time, deliberately: {@link #MATCHED} is still filling in while rules initialise. */
+    /** Live at call time: {@link #MATCHED} is still filling in while rules initialise. */
     private static String unmatchedWarning() {
         return unmatchedWarning(STATE, MATCHED);
     }
 
-    /**
-     * Every excluded id that has matched no rule seen so far. Honest about partial runs by
-     * construction: it says nothing about ids no rule in {@code matched} names, only that none of the
-     * rules this run evaluated up to now needed them — true on a full run and harmless on a single
-     * leaf.
-     *
-     * @return the warning message, or {@code null} when every excluded id has matched something
-     */
+    /** @return the warning message, or {@code null} when every excluded id has matched something */
     static String unmatchedWarning(Loaded state, Collection<String> matched) {
         List<String> unmatched = state.entries().stream()
                 .map(Exclusion::ruleId)
@@ -219,20 +167,11 @@ public class RuleExclusions {
                         unmatched.stream().map(id -> "  " + id).collect(joining(System.lineSeparator())));
     }
 
-    /**
-     * Plural: {@code getResource} would resolve first-match-wins, and the copy doing the excluding
-     * could be one a transitive test-scoped dependency shipped rather than one the consumer wrote.
-     */
     static Loaded load(ClassLoader classLoader) {
-        // Unchecked failures too, not only IOException: this runs in a static initialiser, so
-        // anything escaping it becomes an ExceptionInInitializerError. That is an Error, so every
-        // guard written against RuntimeException lets it straight through — including the ones
-        // holding up the formatter's never-throw contract — and every later call gets
-        // NoClassDefFoundError instead. A misbehaving URL handler is the realistic way in.
+        // RuntimeException too: this runs in a static initialiser, where anything escaping becomes an Error.
         try {
             return read(classLoader);
         } catch (IOException | RuntimeException e) {
-            // A classpath that cannot be read cannot be declared free of exclusions either.
             return Loaded.broken("Could not read " + EXCLUSIONS_FILE + " from the classpath: " + e);
         }
     }
@@ -253,10 +192,7 @@ public class RuleExclusions {
         }
     }
 
-    /**
-     * Every broken line is reported, not only the first — fixing the file one round trip per line is
-     * how a consumer ends up deleting it instead.
-     */
+    /** Reports every broken line, not only the first. */
     static Loaded parse(String contents, String source) {
         List<Exclusion> entries = new ArrayList<>();
         Set<String> problems = new LinkedHashSet<>();
@@ -287,11 +223,7 @@ public class RuleExclusions {
                 : Loaded.broken(brokenFileMessage(source, problems));
     }
 
-    /**
-     * {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. Left in
-     * place, a first line written by an editor that emits a BOM matches neither a comment nor an id,
-     * and the whole file is rejected over a character invisible in the message quoting it.
-     */
+    /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */
     private static String withoutByteOrderMark(String contents) {
         return contents.startsWith("\uFEFF") ? contents.substring(1) : contents;
     }
@@ -338,20 +270,14 @@ public class RuleExclusions {
                 : lines.stream().map(line -> "  " + line).collect(joining(System.lineSeparator()));
     }
 
-    /**
-     * Renders every exclusion in effect, so a reader of a failing build sees what is not being
-     * enforced. Empty when there are none — the common case, where the block is omitted entirely.
-     */
+    /** Every exclusion in effect as {@code <id> :: <reason>}; empty when there are none. */
     public static List<String> census() {
         return inEffect().stream()
                 .map(exclusion -> exclusion.ruleId() + " :: " + exclusion.reason())
                 .toList();
     }
 
-    /**
-     * A rule the file removes. Evaluates nothing: it does not merely find no violations, it never
-     * looks, so no predicate runs and no violation line is produced for the store to record.
-     */
+    /** A rule the file removes. Never looks, so no violation line reaches the store. */
     @RequiredArgsConstructor
     private static final class Excluded implements ArchRule {
 
@@ -359,7 +285,7 @@ public class RuleExclusions {
 
         @Override
         public void check(JavaClasses classes) {
-            // Nothing to check: the rule is removed from this build, so no predicate runs.
+            // Removed from this build.
         }
 
         @Override
@@ -389,14 +315,10 @@ public class RuleExclusions {
     }
 
     /**
-     * A pass-through that, on the first {@code check}/{@code evaluate} across every rule sharing its
-     * {@link #warned} flag, logs whatever {@link #messageSupplier} returns and then always delegates —
-     * this never changes the outcome of the rule it wraps, only what reaches the log once.
+     * Logs {@link #messageSupplier} once across every rule sharing {@link #warned}, then delegates.
      *
-     * <p>Unlike {@link Excluded} and {@link Failing}, every method genuinely delegates: this rule is
-     * not standing in for the one it wraps, it is riding along with it, so {@code because} and
-     * {@code allowEmptyShould} must still reach the real rule, and {@code as} must keep wrapping
-     * whatever {@code as} on the delegate returns.
+     * <p>Every method delegates — unlike {@link Excluded} and {@link Failing}, this rides along with
+     * the rule it wraps rather than standing in for it.
      */
     @RequiredArgsConstructor
     private static final class UnmatchedExclusionsWarning implements ArchRule {
@@ -450,11 +372,7 @@ public class RuleExclusions {
         }
     }
 
-    /**
-     * Every rule, when the file cannot be understood. Not a rule that fails — a rule that cannot be
-     * evaluated, because a file that is not understood must not be trusted to remove anything.
-     * Nothing a caller chains softens it.
-     */
+    /** Every rule, when the file cannot be understood. Nothing a caller chains softens it. */
     @RequiredArgsConstructor
     private static final class Failing implements ArchRule {
 
@@ -492,7 +410,7 @@ public class RuleExclusions {
         }
     }
 
-    /** Mirrors {@code ClassLoaders.getCurrentClassLoader}, which is how ArchUnit resolves its own files. */
+    /** Mirrors {@code ClassLoaders.getCurrentClassLoader}, how ArchUnit resolves its own files. */
     static ClassLoader currentClassLoader() {
         ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
         return contextClassLoader != null ? contextClassLoader : RuleExclusions.class.getClassLoader();

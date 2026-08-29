@@ -4,6 +4,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import io.github.milczekt1.corral.exclude.RuleExclusions;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -48,6 +49,9 @@ public class DeprecatedRule {
      *
      * <p>Deliberately never frozen: freezing would write an index entry claiming the retired id is
      * enforced. It is not — it is a signpost.
+     *
+     * <p>Routed through {@link RuleExclusions#applyTo} so an exclusion naming {@code retiredId}
+     * counts as matched. {@code retiredId} must satisfy {@link RuleDoc}'s id shape and caps.
      */
     public static ArchRule supersededBy(String retiredId, String replacementId, String why) {
         RuleRegistry.register(RuleDoc.builder()
@@ -59,7 +63,7 @@ public class DeprecatedRule {
                         + " it keeps resolving.")
                 .build());
         RETIRED_IDS.add(retiredId);
-        return new Retired(retiredId);
+        return RuleExclusions.applyTo(new Retired(retiredId), retiredId);
     }
 
     /**
