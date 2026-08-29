@@ -22,7 +22,7 @@ import lombok.NoArgsConstructor;
 public final class TestClassNamingConventionRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("test.class-naming-convention")
+            .id("corral.test.class-names-must-end-with-test-or-it")
             .why("""
                     Most build tools select which top-level classes to run by class-name convention (Maven's \
                     Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \
@@ -43,22 +43,14 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
                     either; every one of them counts.""")
             .build();
 
-    /**
-     * The three JUnit 5 roots this rule selects on, taken from the SDK so there is one definition
-     * of what JUnit executes — see {@link TestScope#JUNIT_TEST_ANNOTATIONS}.
-     *
-     * <p>Kept as a field here because this rule's own test pins it, so an SDK-side edit surfaces as
-     * a failure rather than as a silent change in which classes get reported.
-     */
+    /** {@link TestScope#JUNIT_TEST_ANNOTATIONS}, kept as a field so this rule's own test pins it. */
     static final List<String> JUNIT_TEST_ANNOTATIONS = TestScope.JUNIT_TEST_ANNOTATIONS;
 
     /**
-     * {@link TestScope#isJUnitTestMethod} and <strong>not</strong> {@code TestScope.TEST_CLASSES}:
-     * the class-level predicate is {@code location OR structure}, so it also holds for fixtures and
-     * helpers that declare no test — a different rule under the same id.
+     * {@link TestScope#isJUnitTestMethod}, not {@code TestScope.TEST_CLASSES} — the class-level
+     * predicate also holds for fixtures and helpers that declare no test.
      *
-     * <p>The description text is this rule's own and stays byte-identical to what shipped: it is
-     * rendered into the rule's description, which is the freeze-store matching key.
+     * <p>The description text must stay byte-identical: it renders into the freeze-store key.
      */
     static final ArchRule DEFINITION = classes()
             .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",

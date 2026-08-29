@@ -32,7 +32,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
             "org.springframework.boot.test.mock.mockito.MockBean");
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("test.no-mocked-repository-in-integration-test")
+            .id("corral.test.no-mocked-repository-in-integration-test")
             .why("""
                     An integration test exists to prove the real wiring works — schema, queries, mapping \
                     and transactions included. Mocking the repository or dao removes exactly the layer the \
@@ -66,13 +66,10 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
     }
 
     /**
-     * A field violates only when it is <em>both</em> annotated with a mocking annotation and typed
-     * as a persistence abstraction. Used with {@code noClasses().should(...)}, so a satisfied event
-     * is reported as a violation.
+     * A field violates only when <em>both</em> mocked and typed as a persistence abstraction. Used
+     * with {@code noClasses().should(...)}, so a satisfied event is reported as a violation.
      *
-     * <p>Walks {@code getAllFields()} rather than {@code getFields()}: parking the mock on an
-     * abstract base test class is the most natural way to share it across integration tests, and
-     * inspecting declared fields only would let exactly that shape through.
+     * <p>Walks {@code getAllFields()}: a mock parked on an abstract base test class still counts.
      */
     private static ArchCondition<JavaClass> declareAMockedRepositoryOrDaoField() {
         return new ArchCondition<>("declare a mocked Repository or Dao field") {
@@ -92,11 +89,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
         };
     }
 
-    /**
-     * Names the integration test that inherited the field, since the field's own name points at the
-     * base class and would otherwise leave the reader guessing which {@code *IT} to fix. Empty for a
-     * field the test class declares itself, where the field name already says it.
-     */
+    /** Names the inheriting {@code *IT}; empty for a field the test class declares itself. */
     private static String inheritedBy(JavaClass testClass, JavaField field) {
         return field.getOwner().equals(testClass) ? "" : ", inherited by " + testClass.getSimpleName();
     }

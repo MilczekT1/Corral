@@ -11,28 +11,18 @@ import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 
 /**
- * One structural definition of "is this a test class", for every rule that needs to scope itself to
- * tests or away from them.
+ * One structural definition of "is this a test class", for every rule that scopes itself to tests or
+ * away from them. A class qualifies on <strong>either</strong> test output location or a declared
+ * JUnit test method — never on its name, which a consumer can freeze away.
  *
- * <p><strong>Not the class name.</strong> Every Corral rule is independently optional and Corral
- * freezes violations, so a consumer can freeze {@code test.class-naming-convention}'s violations as
- * debt: it passes green forever while the convention it guarantees stays false, silently unarming
- * every name-scoped rule.
- *
- * <p>A class is a test class when <strong>either</strong> half matches; neither is sufficient alone.
- * Location catches fixtures, helpers and abstract bases that declare no test method; structure
- * catches tests under a build layout the patterns do not recognise.
- *
- * <p>Editing this class changes what every rule scoped through it reports, so one commit can
- * surface new violations across many consumer freeze stores at once.
+ * <p>Editing this changes what every rule scoped through it reports, across every consumer's store.
  */
 @UtilityClass
 public class TestScope {
 
     /**
-     * The patterns ArchUnit's own {@code ImportOption.DoNotIncludeTests} matches source URIs
-     * against. Copied, not delegated: {@code ImportOption.Predefined} exposes a predicate over
-     * {@code Location}, not over an imported {@link JavaClass}.
+     * The patterns {@code ImportOption.DoNotIncludeTests} matches source URIs against. Copied, not
+     * delegated: {@code ImportOption.Predefined} takes a {@code Location}, not a {@link JavaClass}.
      */
     private static final List<Pattern> TEST_OUTPUT_LOCATIONS = Stream.of(
                     ".*/target/test-classes/.*",            // Maven
@@ -43,12 +33,8 @@ public class TestScope {
 
     /**
      * The three JUnit 5 roots, matched by FQN string so a consumer without
-     * {@code junit-jupiter-params} still compiles.
-     *
-     * <p>Only roots, because the check below matches meta-annotations: {@code @ParameterizedTest}
-     * and {@code @RepeatedTest} are reached through {@code @TestTemplate}, and a consumer's own
-     * {@code @FastTest} through {@code @Test}. Listing the leaves would stop recognising whatever
-     * JUnit adds next. Immutable, so publishing it hands out no way to change it.
+     * {@code junit-jupiter-params} still compiles. Roots only — {@link #isJUnitTestMethod} matches
+     * meta-annotations, so {@code @ParameterizedTest} and a consumer's own {@code @FastTest} follow.
      */
     public static final List<String> JUNIT_TEST_ANNOTATIONS = List.of(
             "org.junit.jupiter.api.Test",
@@ -58,16 +44,13 @@ public class TestScope {
     /**
      * Classes in a recognised test output directory, or declaring a JUnit 5 test method.
      *
-     * <p>This description text renders into any rule built on it, and a rule's description is its
-     * freeze-store key. Rewording it breaks every consumer of every such rule.
+     * <p>The description text renders into every rule built on it, which is that rule's freeze-store
+     * key — rewording it re-seeds every consumer's store.
      */
     public static final DescribedPredicate<JavaClass> TEST_CLASSES =
             describe("test classes", TestScope::isTestClass);
 
-    /**
-     * The exact complement of {@link #TEST_CLASSES}. A negation rather than a second hand-written
-     * predicate, so the two halves cannot drift into overlapping or leaving a gap.
-     */
+    /** The exact complement of {@link #TEST_CLASSES}. */
     public static final DescribedPredicate<JavaClass> PRODUCTION_CLASSES =
             DescribedPredicate.not(TEST_CLASSES).as("production classes");
 
@@ -75,10 +58,7 @@ public class TestScope {
         return isInTestOutput(clazz) || declaresTestMethod(clazz);
     }
 
-    /**
-     * {@code getSource()} is empty for a stub class — referenced but never imported — so stubs fall
-     * to the production side. Safe either way: a stub has no method bodies to inspect.
-     */
+    /** {@code getSource()} is empty for a stub class, so stubs fall to the production side. */
     private static boolean isInTestOutput(JavaClass clazz) {
         return clazz.getSource()
                 .map(source -> source.getUri().toString())
@@ -95,15 +75,11 @@ public class TestScope {
     }
 
     /**
-     * Whether JUnit 5 would execute this method as a test. {@code isMetaAnnotatedWith} also matches
-     * a directly annotated element, so one call covers plain {@code @Test} and
-     * {@code @ParameterizedTest} alike.
+     * Whether JUnit 5 would execute this method as a test. {@code isMetaAnnotatedWith} also matches a
+     * directly annotated element, so this covers {@code @Test} and {@code @ParameterizedTest} alike.
      *
-     * <p>The seam for rules meaning "this class declares a test" — {@link #TEST_CLASSES} is
-     * {@code location OR structure} and would also pull in every fixture and helper in test output.
-     *
-     * <p>Deliberately not a {@code DescribedPredicate}: the wording a rule wraps this in becomes
-     * that rule's freeze-store key, so each rule must own it.
+     * <p>The seam for rules meaning "declares a test"; {@link #TEST_CLASSES} also matches fixtures and
+     * helpers in test output. Not a {@code DescribedPredicate} — each rule owns its own wording.
      */
     public static boolean isJUnitTestMethod(JavaMethod method) {
         return JUNIT_TEST_ANNOTATIONS.stream().anyMatch(method::isMetaAnnotatedWith);

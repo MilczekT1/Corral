@@ -11,19 +11,14 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
- * The {@code @ArchTest ArchTests} fields on {@link AllCentralRules} are the only members
- * {@code ArchTests.in(AllCentralRules.class)} descends into, so they are exactly what consumers
- * evaluate. These tests pin what that walk yields: every exposed member contributes rules, and the
- * published id set is the seeded one.
+ * Pins what {@code ArchTests.in(AllCentralRules.class)} yields — exactly what consumers evaluate:
+ * every exposed member contributes rules, and the published id set is the seeded one.
  */
 class AllCentralRulesTest {
 
     /**
-     * {@code ArchTests.getDefinitionLocation()} is annotated {@code @Internal}, so it is not part of
-     * ArchUnit's public API. Reading it here is deliberate and confined to this test: it is the only
-     * way to ask an {@code ArchTests} field which class it actually aggregates, and that question is
-     * exactly what must not drift. It is read-only, so the worst case of ArchUnit removing it is a
-     * compile error in this test — never a wrong verdict in a consumer's build.
+     * {@code ArchTests.getDefinitionLocation()} is {@code @Internal}, and the only way to ask a field
+     * which class it aggregates. Read-only, so its removal is a compile error here and nothing more.
      */
     private static Set<Class<?>> classesExposedToConsumers() {
         return PublishedRules.archTestsFieldsOf(AllCentralRules.class).stream()
@@ -42,16 +37,13 @@ class AllCentralRulesTest {
 
     @Test
     void ruleDiscoveryDescendsThroughNestedGroups() {
-        // A group whose members are themselves groups (or rule classes reached via ArchTests) must
-        // still yield its rules. Before nesting support this returns empty for anything but a group
-        // that declares @ArchTest ArchRule fields directly.
+        // A group whose members are themselves groups must still yield its rules.
         Set<String> ids = PublishedRules.idsOf(AllCentralRules.class);
 
         assertEquals(Set.of(
-                "test.class-naming-convention",
-                "test.no-mocked-repository-in-integration-test",
-                "logging.no-system-out",
-                "logging.no-system-err",
-                "corral.exclusions-resolve"), ids);
+                "corral.test.class-names-must-end-with-test-or-it",
+                "corral.test.no-mocked-repository-in-integration-test",
+                "corral.logging.no-system-out",
+                "corral.logging.no-system-err"), ids);
     }
 }

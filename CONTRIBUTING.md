@@ -42,12 +42,12 @@ the wiring, and breaking it breaks the build.
 
 ## What breaks consumers
 
-Corral's compatibility surface is unusual and sharp. Three of these have **no automated check**, so
+Corral's compatibility surface is unusual and sharp. Two of these have **no automated check**, so
 they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also breaks any consumer excluding that id: an exclusion naming no registered rule fails the build. | nothing |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | `AllCentralRulesTest` — the change shows as a diff in its expected id set |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
@@ -90,32 +90,16 @@ keep in step, and no way to declare a member that consumers never evaluate.
 
 ## Adding a rule to an existing group
 
-1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<RuleName>Rule.java` — a `final class implements DocumentedRule` with a
-   private constructor (see `TestClassNamingConventionRule`). **Class names end in `Rule`**, so a
-   rule class is recognisable at a glance and never collides with the `*Test` convention its own
-   tests follow.
-   - `static final RuleDoc DOC` — id is `<topic>.<kebab-case-rule>`, matching
-     `^[a-z0-9]++(?:\.[a-z0-9-]++)++$`. Returned from `doc()`.
-   - `static final ArchRule DEFINITION` — the raw rule, package-private. Returned from `definition()`.
-     Tests exercise *this*; the published field is frozen, so it seeds and passes, which would make
-     rule-correctness tests meaningless.
-   - `@ArchTest public static final ArchRule rule = new <RuleName>Rule().guard();` — `guard`
-     registers the doc, renames the rule to the doc id (that name is the freeze-store key), and
-     allows an empty `should`. **Declare it below `DOC` and `DEFINITION`**: it runs during class
-     initialisation and reads them. Method order does not matter — only fields initialise.
-2. In the group, give it an `@ArchTest ArchTests` field. That field is what consumers evaluate; a
-   rule class nobody points at is never run.
-3. Add fixtures under `corral-rules/src/test/java/.../fixtures/<topic>/` — at least one class the rule must flag
-   and one it must leave alone. Surefire excludes `**/fixtures/**`, so fixtures named `*Test`/`*IT`
-   are not executed. Then write `rules/<topic>/<RuleName>RuleTest.java` against the raw `DEFINITION`, asserting
-   **both** directions: a test that only asserts what the rule ignores passes vacuously if the scan
-   ever finds nothing.
-4. Assert in the rule's own test that the published field carries the doc id, as
-   `publicRuleIsFrozenAndIdPinned` does. Freezing a rule under another rule's doc is not possible —
-   `guard()` reads both off the same object — but nothing yet checks that the `@ArchTest` field
-   exists at all, which an interface cannot enforce.
-5. Extend the expected id set in `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (in `corral-rules`).
-6. Add a row to the [Rules table](README.md#rules). Nothing enforces this — it is on you.
+The step-by-step is **[Creating a rule](docs/creating-a-rule.md)** — id, class, fixtures, wiring, and
+the three ways to ship a rule that silently enforces nothing.
+
+What that guide does not cover, because it belongs to the design rather than the task:
+
+- **One rule, one class.** A rule class under `rules/<topic>/` owns everything about that rule; a
+  group is a thin wrapper. Class names end in `Rule`, so they never collide with the `*Test`
+  convention their own tests follow.
+- **Membership is the field.** `ArchTests.in(X)` descends into exactly `X`'s `@ArchTest` fields, so
+  the field *is* the declaration. There is no second list to keep in step.
 
 ## A rule in more than one group
 
@@ -165,6 +149,77 @@ Not every good rule belongs here. A rule earns a place in the central catalog wh
 
 A rule that encodes one team's preference is better off in that team's own rule namespace. The SDK
 exists so you can author those without forking anything.
+
+## Rule ids
+
+An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumers)), so its grammar
+is closed and the closure is enforced, not a style convention.
+
+**Every id Corral publishes starts with the `corral.` vendor prefix.** Corral can enforce its own ids
+against its own catalog test (`RuleIdGrammarTest`), but it deliberately cannot enforce a consumer's —
+`RuleDoc` is public SDK surface, narrowed to universal hygiene precisely so a consumer keeps their own
+namespace. That freedom means a consumer authoring rules with `corral-sdk` reaches for the same
+generic words Corral's own catalog used to claim — `test`, `logging`, `api`, `security`, `naming`.
+Before the prefix, a collision there was prevented only by a runtime `RuleRegistry.register` throw
+that forced the *consumer* to rename *their* rule. Taking `corral.` for every id this library
+publishes makes the collision structurally impossible instead, and leaves the entire generic
+namespace to consumers. A consumer's own rule needs no prefix at all — `corral-example`'s
+`acme.no-stdout-in-services` is exactly that case, and it must keep working.
+
+| Shape | When | Example |
+|---|---|---|
+| `corral.<slug>` | Corral's own framework meta-check | (none published today) |
+| `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
+| `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
+
+**Segment 1 is always `corral`** — provenance, not taxonomy. **Segment 2 is a closed vocabulary**, in
+four kinds:
+
+- **concern** — `api`, `concurrency`, `exception`, `layering`, `logging`, `naming`, `security`, `test`
+- **library** — `jackson`, `jakarta`, `lombok`, `spring`
+- **JDK** — `java`, plus `java<N>` for a version-gated API
+- **meta** — the one exception: a depth-2 `corral.<slug>` id has no segment-2 concern at all, the slug
+  itself sits at segment 2. Nothing published today takes this shape — the framework's own former
+  meta-check, `corral.exclusions-must-name-real-rules`, was replaced by an unconditional SDK warning
+  that needs no wired root and so is no longer published as a rule at all — but the grammar still
+  supports it for a future one. It would still need a polarity marker like any other id — see the
+  rule below.
+
+**Segment 3, when present, is a library qualifier** — today, exactly `mockito`, `powermock` or
+`junit`.
+
+**Tie-break when a predicate touches a library:** the segment-3 qualifier is the non-JDK library whose
+*correct use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
+libraries leaking into production code, for instance, would name JUnit and Mockito only to detect
+them — it polices layering, not correct use of either library — so it would stay `corral.layering.*`
+rather than take on either library's qualifier.
+
+**Exactly two polarity markers.** A slug either starts with `no-` (a prohibition) or contains
+`-must-`, read as `<subject>-must-<predicate>` (`fields-must-be-final`: the subject is fields, the
+predicate is being final). Six inconsistent forms across the early catalog collapsed into these two
+so a slug's intent is legible without opening the rule.
+
+**Caps:** depth ≤ 4 segments, and a fourth segment is legal only when segment 3 is a library
+qualifier — today, exactly `mockito`, `powermock` or `junit`. Anything finer-grained belongs in a
+group, which can be reorganised, not in the id, which cannot once a consumer has frozen it. Length ≤
+72 characters — segment 1 is a fixed vendor prefix on top, so the taxonomy budget below it is
+unchanged from before the prefix existed.
+
+**The check is split across two layers, deliberately.** `RuleDoc`'s constructor
+(`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
+hygiene that binds every id, including a consumer's own, because the id becomes a *file name* in
+every consumer's freeze store (see [The freeze store](README.md#the-freeze-store)). The vendor
+prefix, the concern vocabulary, the polarity marker and the qualifier-segment list are enforced
+separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
+`AllCentralRules` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can
+author rules in their own namespace ("[a rule that encodes one team's preference is better off in
+that team's own rule namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside
+`RuleDoc` itself would revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly
+that case, and it must keep working.
+
+**Deprecate, never rename.** A rule id is a freeze-store key, and ArchUnit's `ViolationStore` SPI has
+no rename verb — so a rename orphans every consumer's recorded violations, silently. Withdraw an id
+with `DeprecatedRule.supersededBy(...)` instead: **[Retiring a rule](docs/retiring-a-rule.md)**.
 
 ## Commit conventions
 

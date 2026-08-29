@@ -16,53 +16,52 @@ class RuleRegistryTest {
 
     @Test
     void registersAndFindsById() {
-        RuleDoc registered = doc("registry.find-me", "because");
+        RuleDoc registered = doc("test.no-registry-find-me-fixture", "because");
         RuleRegistry.register(registered);
 
-        assertEquals(Optional.of(registered), RuleRegistry.find("registry.find-me"));
+        assertEquals(Optional.of(registered), RuleRegistry.find("test.no-registry-find-me-fixture"));
     }
 
     @Test
     void findReturnsEmptyForUnknownId() {
-        assertEquals(Optional.empty(), RuleRegistry.find("registry.never-registered"));
+        assertEquals(Optional.empty(), RuleRegistry.find("test.no-registry-never-registered-fixture"));
     }
 
     @Test
     void findToleratesNullAndArbitraryDescriptions() {
-        // The formatter passes ArchUnit rule descriptions straight through, including
-        // full sentences from a consumer's own rules. This must never blow up.
+        // Descriptions pass straight through, including full sentences from a consumer's own rules.
         assertEquals(Optional.empty(), RuleRegistry.find(null));
         assertEquals(Optional.empty(), RuleRegistry.find("no classes should be annotated with @Foo"));
     }
 
     @Test
     void reRegisteringTheSameDocIsIdempotent() {
-        RuleRegistry.register(doc("registry.idempotent", "because"));
-        RuleRegistry.register(doc("registry.idempotent", "because"));
+        RuleRegistry.register(doc("test.no-registry-idempotent-fixture", "because"));
+        RuleRegistry.register(doc("test.no-registry-idempotent-fixture", "because"));
 
-        assertEquals(Optional.of(doc("registry.idempotent", "because")),
-                RuleRegistry.find("registry.idempotent"));
+        assertEquals(Optional.of(doc("test.no-registry-idempotent-fixture", "because")),
+                RuleRegistry.find("test.no-registry-idempotent-fixture"));
     }
 
     @Test
     void rejectsTwoDifferentDocsSharingAnId() {
-        RuleRegistry.register(doc("registry.clash", "first reason"));
-        RuleDoc sameIdDifferentDoc = doc("registry.clash", "conflicting reason");
+        RuleRegistry.register(doc("test.no-registry-clash-fixture", "first reason"));
+        RuleDoc sameIdDifferentDoc = doc("test.no-registry-clash-fixture", "conflicting reason");
 
         IllegalStateException e = assertThrows(IllegalStateException.class,
                 () -> RuleRegistry.register(sameIdDifferentDoc));
-        assertTrue(e.getMessage().contains("registry.clash"), e.getMessage());
+        assertTrue(e.getMessage().contains("test.no-registry-clash-fixture"), e.getMessage());
     }
 
     @Test
     void allIsSortedByIdAndContainsRegisteredDocs() {
-        RuleRegistry.register(doc("registry.zzz-last", "because"));
-        RuleRegistry.register(doc("registry.aaa-first", "because"));
+        RuleRegistry.register(doc("test.no-registry-zzz-last-fixture", "because"));
+        RuleRegistry.register(doc("test.no-registry-aaa-first-fixture", "because"));
 
         List<String> ids = RuleRegistry.all().stream().map(RuleDoc::id).toList();
 
         assertEquals(ids.stream().sorted().toList(), ids, "all() must be sorted by id");
-        assertTrue(ids.contains("registry.aaa-first"));
-        assertTrue(ids.contains("registry.zzz-last"));
+        assertTrue(ids.contains("test.no-registry-aaa-first-fixture"));
+        assertTrue(ids.contains("test.no-registry-zzz-last-fixture"));
     }
 }

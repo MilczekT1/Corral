@@ -25,24 +25,19 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 /**
- * What an exclusion does to a rule. {@code RuleExclusionsFileTest} owns the file; this owns the
- * effect — the two directions that matter are that a named rule stops evaluating and that every
- * rule it does not name is handed back untouched, identical object included.
+ * What an exclusion does to a rule ({@code RuleExclusionsFileTest} owns the file): a named rule stops
+ * evaluating, and every rule it does not name is handed back as the identical object.
  */
 class RuleExclusionsGuardTest {
 
-    private static final String EXCLUDED_ID = "fixture.excluded-rule";
-    private static final String OTHER_ID = "fixture.other-rule";
+    private static final String EXCLUDED_ID = "test.no-guard-excluded-fixture";
+    private static final String OTHER_ID = "test.no-guard-other-fixture";
 
-    /** Violated by every class there is, so "evaluated nothing" is distinguishable from "found nothing". */
+    /** Violated by every class there is, so "evaluated nothing" differs from "found nothing". */
     private static final ArchRule ALWAYS_VIOLATED =
             noClasses().should().haveNameMatching(".*").as(EXCLUDED_ID);
 
-    /**
-     * Excluding an id no rule registers is itself a failure, so the fixture ids must be real
-     * registered docs — otherwise every test here would fail on the unknown-id check instead of on
-     * what it means to assert.
-     */
+    /** Real registered docs: excluding an id no rule registers is itself a failure. */
     @BeforeAll
     static void registerTheFixtureIds() {
         RuleRegistry.register(docFor(EXCLUDED_ID));
@@ -78,10 +73,7 @@ class RuleExclusionsGuardTest {
                 RuleExclusions.applyTo(ALWAYS_VIOLATED, EXCLUDED_ID, Loaded.none()));
     }
 
-    /**
-     * The description is the freeze-store key, so an excluded rule must keep it — a consumer who
-     * re-enables the rule finds their store entry where they left it.
-     */
+    /** The description is the freeze-store key, so an excluded rule must keep it. */
     @Test
     void anExcludedRuleKeepsItsDescription() {
         ArchRule excluded = RuleExclusions.applyTo(ALWAYS_VIOLATED, EXCLUDED_ID, EXCLUDING);
@@ -100,10 +92,7 @@ class RuleExclusionsGuardTest {
                 () -> "an excluded rule must produce no violation lines: " + result.getFailureReport());
     }
 
-    /**
-     * A file that cannot be understood must not be trusted to remove a rule, so it removes none and
-     * fails all of them — including rules no line ever named.
-     */
+    /** A file that cannot be understood removes no rule and fails all of them. */
     @Test
     void abrokenFileFailsEveryRuleNamingTheProblem() {
         Loaded broken = RuleExclusions.parse("logging.no-system-out", "file:/somewhere/x.txt");
@@ -134,10 +123,8 @@ class RuleExclusionsGuardTest {
     }
 
     /**
-     * A run that does not load every rule-declaring class sees a partial {@link RuleRegistry} — one
-     * test class from the IDE gutter, a single {@code -Dtest=...}, a forked-per-class Surefire. A
-     * valid exclusion naming a rule that run never loads must NOT be treated as a typo, and must not
-     * fail the rules that did run. Corral advertises "runnable at any granularity"; this is that.
+     * A partial run — one test class from the IDE gutter, a single {@code -Dtest=...} — sees a partial
+     * {@link RuleRegistry}. An exclusion naming a rule it never loads must not fail the rules it did.
      */
     @Test
     void aRunThatNeverLoadsTheExcludedRuleStillPasses() {
@@ -163,10 +150,7 @@ class RuleExclusionsGuardTest {
         assertSame(other, RuleExclusions.applyTo(other, OTHER_ID, EXCLUDING));
     }
 
-    /**
-     * Not a pause button. Excluding a rule must leave the freeze store alone rather than re-record
-     * it as clean — a rewrite would delete the debt entries and resurface them all on re-enabling.
-     */
+    /** Excluding a rule must leave the freeze store alone rather than re-record it as clean. */
     @Test
     void anExcludedRuleNeverWritesToTheFreezeStore() {
         RecordingViolationStore store = new RecordingViolationStore();
@@ -177,7 +161,7 @@ class RuleExclusionsGuardTest {
         assertTrue(store.saved.isEmpty(), () -> "an excluded rule wrote to the store: " + store.saved);
     }
 
-    /** Counterpart: unexcluded, the same rule does write — or the assertion above proves nothing. */
+    /** Counterpart: unexcluded, the same rule does write. */
     @Test
     void theSameRuleUnexcludedDoesWriteToTheFreezeStore() {
         RecordingViolationStore store = new RecordingViolationStore();

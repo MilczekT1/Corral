@@ -12,20 +12,17 @@ import lombok.NoArgsConstructor;
 /**
  * No class may write to {@code System.err}.
  *
- * <p>Sibling of {@link NoSystemOutRule}, kept separate rather than folded into one {@code orShould}
- * chain: separate ids are separate freeze-store keys, so a consumer carries stdout debt and stderr
- * debt independently, and each doc argues about one stream. Matches the field access, so every
- * method on the stream counts.
+ * <p>Separate from {@link NoSystemOutRule} so stdout and stderr debt freeze independently. Matches
+ * the field access, so every method on the stream counts.
  *
- * <p>One thing it cannot see: {@code throwable.printStackTrace()} reaches System.err from inside
- * {@code java.lang.Throwable}, so the calling class never touches the field. The doc still argues
- * against it, because whoever reads a failure here is usually one step away from writing it.
+ * <p>Blind to {@code throwable.printStackTrace()}: it reaches System.err from inside
+ * {@code java.lang.Throwable}, so the calling class never touches the field.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoSystemErrRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
-            .id("logging.no-system-err")
+            .id("corral.logging.no-system-err")
             .why("""
                     System.err is the worse of the two streams to write to: it is where stack traces get \
                     dumped, so the failures most worth alerting on are exactly the ones that end up outside \
@@ -39,7 +36,7 @@ public final class NoSystemErrRule implements DocumentedRule {
                     routine, log.warn says so more accurately than a stack trace on stderr ever did.""")
             .howNotToFix("""
                     Do NOT swap System.err for System.out to satisfy this rule — the sibling rule \
-                    logging.no-system-out catches that too, and it only makes the failure harder to find. \
+                    corral.logging.no-system-out catches that too, and it only makes the failure harder to find. \
                     Do NOT swallow the exception, or narrow the catch until it disappears, just to remove \
                     the print: the print is the wrong destination, not the wrong intent.""")
             .build();
