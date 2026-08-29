@@ -133,13 +133,13 @@ file off the classpath. Without it the stale copy keeps excluding the rule and t
 green for the wrong reason. The two edits below change the file rather than remove it, so plain
 `mvn test` is enough for those.
 
-Three things are worth trying while you are in there, because each one fails on purpose:
+Four edits are worth trying while you are in there, because each shows a different edge of the mechanism:
 
 | Edit | What happens |
 |---|---|
 | Misspell the id (`corral.logging.no-system-errr`) | The build stays green, but logs a warning naming the id: an exclusion that matches no rule removes nothing while reading in the diff as though it did. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
-| Name this module's own `acme.no-stdout-in-services` | Fails: the file removes rules from the catalog you wire, and a rule you own is removed by not wiring it. |
+| Name this module's own `acme.no-stdout-in-services` | Nothing fails and nothing is logged: the file removes any rule that goes through `guard()`, your own included, so `CustomArchitectureTest` passes with the rule disarmed. Removing a rule you own by not wiring it is the clearer edit. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
 Note what does **not** happen: the freeze store is not rewritten. The exclusion wraps the frozen

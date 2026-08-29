@@ -46,7 +46,7 @@ retired id is still published — it now appears alongside its replacement.
 | | |
 |---|---|
 | `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` | Add both ids — it asserts the wired root's ids exactly |
-| `RuleIdGrammarTest` | **Nothing to do** — it exempts every id in `DeprecatedRule.retiredIds()` automatically, which is why a retired id may keep a shape the grammar would now reject |
+| `RuleIdGrammarTest` | **Usually nothing to do** — its namespace and polarity checks exempt every id in `DeprecatedRule.retiredIds()` automatically, which is why a retired id may keep a shape the grammar would now reject. The qualifier-segment check is not exempt: a 4-segment retired id still has to qualify with a listed library |
 
 ## When to just delete instead
 

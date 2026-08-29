@@ -62,7 +62,7 @@ Each gives you a green build and zero enforcement.
 
 ## In Corral's own catalog
 
-Contributing a rule *here* adds four project-specific steps:
+Contributing a rule *here* adds three project-specific steps:
 
 | | |
 |---|---|
