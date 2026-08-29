@@ -44,13 +44,10 @@ them, it does not restate them.
 5. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
    class nobody points at is imported and compiled but never evaluated by any consumer.
 
-6. **Add the id** to `corral-rules/src/test/resources/published-rule-ids.txt`, keeping the file
-   sorted. Pinned by `PublishedRuleIdsTest` — see "Two loud failures" below.
-
-7. **Extend the expected id set** in
+6. **Extend the expected id set** in
    `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java`).
 
-8. **Add a row to the [README rules table](../../../README.md#rules).** Nothing in the build checks
+7. **Add a row to the [README rules table](../../../README.md#rules).** Nothing in the build checks
    this table — it drifts silently if you skip it.
 
 ## Three silent failure modes
@@ -68,11 +65,11 @@ catching them is why the steps above are ordered the way they are.
 
 Skip a step above and one of these two tests fails the build, on purpose:
 
-- **`PublishedRuleIdsTest`** — fails if the published id set no longer matches
-  `published-rule-ids.txt` (step 6 skipped or the id changed). If it fails on a rule you did **not**
-  mean to touch, an id got renamed somewhere in your diff. **Ids are never renamed** — an id is the
-  freeze-store key, and renaming orphans every consumer's recorded violations (rule re-seeds clean,
-  build stays green, nothing is enforced). Retire the old id with `DeprecatedRule.supersededBy(retiredId,
+- **`AllCentralRulesTest`** — fails if the published id set no longer matches its expected set
+  (step 6 skipped, or an id changed). If it fails on a rule you did **not** mean to touch, an id got
+  renamed somewhere in your diff. **Ids are never renamed** — an id is the freeze-store key, and
+  renaming orphans every consumer's recorded violations (rule re-seeds clean, build stays green,
+  nothing is enforced). Retire the old id with `DeprecatedRule.supersededBy(retiredId,
   replacementId, why)` in `corral-sdk` instead, and keep the retired id in the published set.
 - **`RuleIdGrammarTest`** — fails if the id violates the closed grammar (namespace, polarity marker,
   segment cap) from step 1. Fix the id, not the test.
@@ -85,6 +82,5 @@ Skip a step above and one of these two tests fails the build, on purpose:
 | Fixtures | `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/` |
 | Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<Name>RuleTest.java` |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
-| Golden id file | `corral-rules/src/test/resources/published-rule-ids.txt` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java` |
 | Rules table | `README.md#rules` |

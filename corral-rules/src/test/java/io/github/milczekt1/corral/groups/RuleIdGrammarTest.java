@@ -65,9 +65,8 @@ class RuleIdGrammarTest {
 
     /**
      * Guards the three tests below against the vacuous pass a wholly empty catalog would otherwise
-     * produce: a bare {@code for} loop over an empty set asserts nothing and reports green. This does
-     * not replace {@code PublishedRuleIdsTest} — it means this class does not depend on that other
-     * test existing to catch the same failure.
+     * produce: a bare {@code for} loop over an empty set asserts nothing and reports green. It means this
+     * class does not lean on {@code AllCentralRulesTest} to catch the same failure.
      */
     @Test
     void publishedIdsIsNotEmpty() {

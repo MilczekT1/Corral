@@ -45,8 +45,7 @@ retired id is still published — it now appears alongside its replacement.
 
 | | |
 |---|---|
-| `corral-rules/src/test/resources/published-rule-ids.txt` | Add both ids; `PublishedRuleIdsTest` pins this file |
-| `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` | Asserts the wired root's ids exactly |
+| `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` | Add both ids — it asserts the wired root's ids exactly |
 | `RuleIdGrammarTest` | **Nothing to do** — it exempts every id in `DeprecatedRule.retiredIds()` automatically, which is why a retired id may keep a shape the grammar would now reject |
 
 ## When to just delete instead

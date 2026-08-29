@@ -67,8 +67,7 @@ Contributing a rule *here* adds four project-specific steps:
 | | |
 |---|---|
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
-| Add the id to `corral-rules/src/test/resources/published-rule-ids.txt` | Pinned by `PublishedRuleIdsTest`, so id changes surface in review |
-| Extend `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` | It asserts the wired root's ids exactly |
+| Extend `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` | It asserts the wired root's ids exactly, so an id change shows as a diff in review |
 | Add a row to the [Rules table](../README.md#rules) | Nothing enforces this |
 
 And the bar is higher: broadly applicable, objectively checkable, stable — see
