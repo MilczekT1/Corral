@@ -26,7 +26,7 @@ class RuleRegistryCompletenessTest {
 
     @Test
     void everyPublishedRuleHasARegisteredDoc() {
-        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(EveryPublishedGroup.class)) {
             String description = rule.getDescription();
             assertTrue(RuleRegistry.find(description).isPresent(),
                     "rule description '" + description + "' is not a registered RuleDoc id — the failure"
@@ -36,7 +36,7 @@ class RuleRegistryCompletenessTest {
 
     @Test
     void everyPublishedRuleHasUsableGuidance() {
-        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(EveryPublishedGroup.class)) {
             String description = rule.getDescription();
             Optional<RuleDoc> found = RuleRegistry.find(description);
 
@@ -57,7 +57,7 @@ class RuleRegistryCompletenessTest {
     @Test
     void everyRuleIdIsClaimedByExactlyOneRule() {
         Map<String, Set<ArchRule>> rulesById = new LinkedHashMap<>();
-        for (ArchRule rule : PublishedRules.rulesReachableFrom(AllCentralRules.class)) {
+        for (ArchRule rule : PublishedRules.rulesReachableFrom(EveryPublishedGroup.class)) {
             rulesById.computeIfAbsent(rule.getDescription(),
                             id -> Collections.newSetFromMap(new IdentityHashMap<>()))
                     .add(rule);

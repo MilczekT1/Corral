@@ -3,12 +3,19 @@
 A working consumer of `corral-rules`: one test-scoped dependency, the catalog's rules wired in, and a
 rule this project owns.
 
+**One test package per feature.** Each package below demonstrates exactly one thing, and each wires a
+*different* set of rules — a rule id is the freeze-store key, so the same rule run from two nodes
+would have both writing the same entry.
+
 | File | What it shows |
 |---|---|
-| `CentralArchitectureTest` | Wiring the library's rules — the whole point of the dependency. |
-| `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. |
-| `custom/CustomArchitectureTest` | Wiring your own rules alongside the library's. |
-| `archunit/frozen/` | The committed freeze store. Five entries, three files named after their rule ids — the clean rules have no file. |
+| `wiring/ProjectRulesGroup` | **Your own catalog root.** Corral publishes groups, not an all-in-one root, so the set of rules this build runs is a line in this repo. Note that it deliberately does *not* wire everything the catalog offers. |
+| `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
+| `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. It is wired from `ProjectRulesGroup`, alongside the library's. |
+| `exclusions/ExcludedRuleTest` | A second node with its own scope, wiring `LoggingRulesGroup` — the group holding the excluded rule. |
+| `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
+| `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
+| `archunit/frozen/` | The committed freeze store. Six entries, three files named after their rule ids — the clean rules have no file, and the retired id has no entry at all. |
 | `corral-exclusions.txt` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
@@ -139,13 +146,45 @@ Four edits are worth trying while you are in there, because each shows a differe
 |---|---|
 | Misspell the id (`corral.logging.no-system-errr`) | The build stays green, but logs a warning naming the id: an exclusion that matches no rule removes nothing while reading in the diff as though it did. |
 | Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
-| Name this module's own `acme.no-stdout-in-services` | Nothing fails and nothing is logged: the file removes any rule that goes through `guard()`, your own included, so `CustomArchitectureTest` passes with the rule disarmed. Removing a rule you own by not wiring it is the clearer edit. |
+| Name this module's own `acme.no-stdout-in-services` | Nothing fails and nothing is logged: the file removes any rule that goes through `guard()`, your own included, so `ProjectArchitectureTest` passes with the rule disarmed. Removing a rule you own by not wiring it is the clearer edit. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
 Note what does **not** happen: the freeze store is not rewritten. The exclusion wraps the frozen
 rule rather than replacing it, so `corral.logging.no-system-err` keeps its `stored.rules` entry and nothing
 is deleted. What Corral cannot do is record violations it never evaluated — so anything this module
 acquires while the rule is off is *new* the day the line goes away. Exclusion is not a pause button.
+
+## Retiring an id
+
+`retirement/` is the other half of the story: excluding is a *consumer* opting out locally, retiring
+is a *catalog owner* withdrawing an id for everyone. This module is both, so it can show both.
+
+`acme.no-java-util-date` shipped, then grew to cover `Calendar` as well as `Date` — at which point
+the slug no longer described it. The tempting fix is a rename. **A rename fails silently:** the id is
+the freeze-store key, ArchUnit's `ViolationStore` SPI has no rename verb, so every consumer's
+recorded violations stay filed under the old key while the rule re-seeds clean and the build goes
+green enforcing nothing. `DateRulesGroup` retires it instead:
+
+```java
+@ArchTest
+static final ArchRule noJavaUtilDate = DeprecatedRule.supersededBy(
+        "acme.no-java-util-date",     // retired
+        "acme.no-legacy-date-api",    // replacement
+        "renamed when it grew to cover Calendar as well as Date, …");
+```
+
+Three things to read off the committed store:
+
+- **`acme.no-legacy-date-api` has a `stored.rules` entry and no file.** It is clean here, and the
+  entry is what keeps it armed — see [Freezing this rule](#freezing-this-rule).
+- **`acme.no-java-util-date` has no entry at all.** A retired id is deliberately never frozen:
+  an entry would claim it is enforced, and nothing is enforced under it any more.
+- **The retired id is still wired.** Unwired it would register a doc that nothing evaluates. Wired,
+  a consumer who excluded the old id keeps building and gets told where the rule went.
+
+Worth trying: add `acme.no-java-util-date :: …` to `corral-exclusions.txt`. It resolves against the
+signpost rather than logging the "matched no rule in this run" warning — which is the whole reason a
+withdrawn id stays published instead of simply disappearing.
 
 ## Freezing this rule
 

@@ -1,7 +1,9 @@
 # Rules catalog
 
-Every rule Corral publishes. `AllCentralRules` wires all of them; a group can be wired on its own,
-and a single rule can be switched off with [an exclusion](excluding-a-rule.md).
+Every rule Corral publishes. Groups are the unit you wire — from your own root, one line each, see
+the [quick start](../README.md#quick-start). Corral publishes no all-in-one root: a group you do not
+wire is not enforced. A single rule inside a group you do wire can be switched off with
+[an exclusion](excluding-a-rule.md).
 
 | Rule id | Group | What it enforces |
 |---|---|---|

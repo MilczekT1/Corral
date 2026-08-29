@@ -13,7 +13,8 @@ import org.junit.jupiter.api.Test;
 /**
  * Enforces the shape of every id Corral itself publishes: {@code corral} at segment 1, a closed
  * concern vocabulary at segment 2, a polarity marker on the slug. Checked against
- * {@link AllCentralRules} only — {@code RuleDoc} applies the hygiene caps a consumer's own id needs.
+ * {@link EveryPublishedGroup} only — {@code RuleDoc} applies the hygiene caps a consumer's own id
+ * needs.
  *
  * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
  * checks, but not from the qualifier-segment check.
@@ -38,14 +39,14 @@ class RuleIdGrammarTest {
     private static final Set<String> QUALIFIERS = Set.of("mockito", "powermock", "junit");
 
     private static Set<String> publishedIds() {
-        return PublishedRules.idsOf(AllCentralRules.class);
+        return PublishedRules.idsOf(EveryPublishedGroup.class);
     }
 
     /** Guards the three tests below, whose loops would pass vacuously over an empty catalog. */
     @Test
     void publishedIdsIsNotEmpty() {
         assertFalse(publishedIds().isEmpty(),
-                "AllCentralRules published no id at all — the other tests here iterate this same set"
+                "EveryPublishedGroup published no id at all — the other tests here iterate this same set"
                         + " and would pass vacuously if it were empty");
     }
 

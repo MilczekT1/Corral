@@ -9,7 +9,7 @@ import lombok.experimental.UtilityClass;
  * Wires {@link DeprecatedRule#supersededBy} as its Javadoc instructs, from a retired id that predates
  * {@code RuleIdGrammarTest}'s grammar.
  *
- * <p>Never wired into {@code AllCentralRules}; {@code DeprecatedRuleRetirementTest} walks it directly.
+ * <p>Never wired into {@code EveryPublishedGroup}; {@code DeprecatedRuleRetirementTest} walks it directly.
  * Under {@code fixtures/}, which Surefire excludes from running as tests.
  */
 @UtilityClass
