@@ -7,11 +7,10 @@ import com.tngtech.archunit.lang.ArchRule;
 
 /**
  * A member contributed by an interface. Interface fields are implicitly {@code public static final},
- * so this is a legitimate shape: ArchUnit resolves members over every supertype of the class under
- * test, interfaces included, and evaluates this rule for anything that implements this interface.
+ * and ArchUnit evaluates this rule for anything implementing the interface.
  *
  * <p>Raw {@code ArchRule}s rather than {@code DocumentedRule}s, as elsewhere in this tree: nothing
- * here should reach the process-wide {@code RuleRegistry}, and the walk never consults it anyway.
+ * here should reach the process-wide {@code RuleRegistry}.
  */
 public interface InterfaceDeclaredRules {
 

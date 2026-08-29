@@ -19,8 +19,6 @@ public class RuleRegistry {
             return;
         }
 
-        // The id alone decides nothing: the same rule registering again carries the same
-        // documentation, so only a difference in why/howToFix/howNotToFix is a real collision.
         boolean sameDocumentationWordForWord = alreadyUnderThisId.equals(doc);
         if (sameDocumentationWordForWord) {
             return;

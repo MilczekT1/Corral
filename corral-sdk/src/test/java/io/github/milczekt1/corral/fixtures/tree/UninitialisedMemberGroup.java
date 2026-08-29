@@ -10,9 +10,8 @@ import com.tngtech.archunit.lang.ArchRule;
  * {@code @ArchTest} field declared above the constant it reads, so it is left null once class
  * initialisation finishes.
  *
- * <p>The reference is qualified because a simple name here would be an illegal forward reference and
- * would not compile — which is precisely why this mistake survives to runtime in real code, where
- * the constant usually sits in another class or is reached through a method call.
+ * <p>The reference is qualified because a simple name here would be an illegal forward reference
+ * and would not compile.
  */
 public final class UninitialisedMemberGroup {
 

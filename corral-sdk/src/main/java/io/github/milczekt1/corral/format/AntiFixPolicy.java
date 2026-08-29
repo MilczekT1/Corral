@@ -7,9 +7,8 @@ import lombok.experimental.UtilityClass;
  * The global "how NOT to fix this" policy rendered at the bottom of <em>every</em> framework
  * rule failure.
  *
- * <p>Identical for every rule, and immutable: the anti-cheat guidance cannot be forgotten, weakened,
- * or quietly dropped. Clauses specific to one rule belong in that rule's
- * {@code RuleDoc.howNotToFix}, which renders just above this block.
+ * <p>Clauses specific to one rule belong in that rule's {@code RuleDoc.howNotToFix}, which renders
+ * just above this block.
  */
 @UtilityClass
 public class AntiFixPolicy {

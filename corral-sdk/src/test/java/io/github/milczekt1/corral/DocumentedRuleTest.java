@@ -78,15 +78,14 @@ class DocumentedRuleTest {
     void guardFreezesTheRuleSoAdoptingItRecordsExistingDebt() {
         ArchRule guarded = new FixtureRule().guard();
 
-        // Without this assertion the freeze(...) wrapper can be deleted and every other test passes.
         assertInstanceOf(FreezingArchRule.class, guarded,
                 "guard() must freeze — an unfrozen rule blocks in-flight work on adoption, and the"
                         + " id would stop being a freeze-store key");
     }
 
     /**
-     * The wiring, not the detection — {@code IgnorePatternsGuardTest} owns that. Asserted against the
-     * bytecode: on a clean classpath the call is a no-op and nothing behavioural can see it.
+     * The wiring, not the detection — {@code IgnorePatternsGuardTest} owns that. Asserted against
+     * the bytecode, since on a clean classpath the call is a no-op.
      */
     @Test
     void guardInterposesTheIgnorePatternsCheckOnEveryRule() {

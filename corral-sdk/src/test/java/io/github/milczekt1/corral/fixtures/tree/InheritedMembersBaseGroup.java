@@ -7,11 +7,10 @@ import com.tngtech.archunit.junit.ArchTests;
 import com.tngtech.archunit.lang.ArchRule;
 
 /**
- * Members contributed by a superclass — a shared base a family of groups extends to pick up a
- * common baseline. ArchUnit evaluates these for every subclass, so the walk must see them there too.
+ * Members contributed by a superclass. ArchUnit evaluates these for every subclass, so the walk
+ * must see them there too.
  *
- * <p>Declares one of each kind: a leaf rule and a nested group, so a subclass exercises both descent
- * paths through inheritance rather than only the flat one.
+ * <p>Declares one of each kind: a leaf rule and a nested group.
  */
 public abstract class InheritedMembersBaseGroup {
 

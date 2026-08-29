@@ -50,12 +50,9 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     private Path storePath;
 
     /**
-     * Names a rule's file after its id; a description that is not an id keeps ArchUnit's UUID.
-     *
-     * <p>Gated on {@link RuleDoc#isIdWithinCaps} rather than {@link RuleDoc#isId}, which applies no
-     * length or segment cap and so admits an unbounded file name.
-     *
-     * <p>Reached only for a rule with no index entry yet — an existing entry's file name is reused.
+     * Names a rule's file after its id; a description that is not an id keeps ArchUnit's UUID. Gated
+     * on {@link RuleDoc#isIdWithinCaps}, since {@link RuleDoc#isId} admits an unbounded file name.
+     * Reached only for a rule with no index entry yet.
      */
     static String fileNameFor(String ruleDescription) {
         return RuleDoc.isIdWithinCaps(ruleDescription) ? ruleDescription : UUID.randomUUID().toString();

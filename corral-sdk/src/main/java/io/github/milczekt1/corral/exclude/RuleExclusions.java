@@ -137,15 +137,7 @@ public class RuleExclusions {
         return new UnmatchedExclusionsWarning(rule, warned, messageSupplier, sink);
     }
 
-    /**
-     * {@link System#err}, not SLF4J: a consumer with no logging provider would never see this.
-     *
-     * <p>Sonar's S106 says to use a logger, and for application code it is right — stdout and stderr
-     * bypass the log pipeline. This is not application code. It is a test-scoped build tool's own
-     * diagnostic, with no pipeline to bypass, and it is the only signal that an exclusion silently
-     * removes nothing. Routing it through SLF4J made it vanish under the default NOP binding, which
-     * is the bug this replaced.
-     */
+    /** {@link System#err}, not SLF4J: a consumer with no logging provider would never see this. */
     @SuppressWarnings("java:S106")
     static void printWarning(String message) {
         System.err.println(message);

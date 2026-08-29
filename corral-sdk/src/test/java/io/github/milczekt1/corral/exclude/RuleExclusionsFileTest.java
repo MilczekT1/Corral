@@ -24,10 +24,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * The file half of {@link RuleExclusions}: what a line may say, and how the classpath is resolved.
- *
- * <p>Every parse failure is a {@link Loaded#problem()} rather than a thrown exception, because
- * loading happens in a static initialiser — an exception there reaches the consumer as
- * {@code failed to discover tests} with the cause dropped.
+ * Every parse failure is a {@link Loaded#problem()} rather than a thrown exception.
  */
 class RuleExclusionsFileTest {
 
@@ -71,7 +68,6 @@ class RuleExclusionsFileTest {
                 loaded.entries().stream().map(Exclusion::ruleId).toList());
     }
 
-    /** A reason is the one thing Corral cannot judge, so its absence is what it can make fatal. */
     @ParameterizedTest(name = "\"{0}\" is a parse error")
     @ValueSource(strings = {
             "logging.no-system-out",
@@ -103,7 +99,6 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.problem().contains("logging.no-system-err"), loaded::problem);
     }
 
-    /** Reporting only the first would turn fixing the file into a round trip per line. */
     @Test
     void everyBrokenLineIsReportedNotOnlyTheFirst() {
         Loaded loaded = RuleExclusions.parse("""
@@ -115,7 +110,6 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.problem().contains("second.no-reason"), loaded::problem);
     }
 
-    /** The id is a freeze-store key with a fixed shape; prose in that position is a typo, not an id. */
     @ParameterizedTest(name = "\"{0}\" is not the shape of a rule id")
     @ValueSource(strings = {
             "Logging.No-System-Out",
@@ -130,7 +124,6 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.problem().contains(id), loaded::problem);
     }
 
-    /** Two reasons for one exclusion is a merge accident; which one is in effect is unanswerable. */
     @Test
     void thesameIdExcludedTwiceIsAParseError() {
         Loaded loaded = RuleExclusions.parse("""
@@ -142,12 +135,7 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.problem().contains("logging.no-system-out"), loaded::problem);
     }
 
-    /**
-     * Notepad and friends write a BOM. {@code String.strip()} does not remove it —
-     * {@code Character.isWhitespace('\uFEFF')} is false — so without this the first line fails to
-     * match either a comment or an id, and the whole file is rejected over a character that is
-     * invisible in the error message quoting it.
-     */
+    /** {@code String.strip()} leaves a BOM: {@code Character.isWhitespace('\uFEFF')} is false. */
     @Test
     void aByteOrderMarkOnTheFirstLineIsNotAParseError() {
         Loaded commented = RuleExclusions.parse("\uFEFF# just a comment\nlogging.no-system-out :: ours",
@@ -167,7 +155,6 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.entries().isEmpty());
     }
 
-    /** The record is the invariant: an Exclusion that exists is well formed. */
     @Test
     void anExclusionCannotBeBuiltWithoutAWellFormedIdAndAReason() {
         assertThrows(IllegalArgumentException.class, () -> new Exclusion(null, "a reason"));
@@ -199,10 +186,7 @@ class RuleExclusionsFileTest {
         }
     }
 
-    /**
-     * A second copy would otherwise be resolved by first-match-wins, and the copy doing the excluding
-     * could be one a transitive test-scoped dependency shipped rather than one the consumer wrote.
-     */
+    /** Otherwise first-match-wins, and the winner may be a copy a dependency shipped. */
     @Test
     void moreThanOneCopyOnTheClassPathIsAProblemThatNamesEveryLocation(
             @TempDir Path first, @TempDir Path second) throws IOException {
@@ -221,11 +205,8 @@ class RuleExclusionsFileTest {
     }
 
     /**
-     * {@code load} runs in a static initialiser, so anything it lets escape becomes an
-     * {@code ExceptionInInitializerError} — an {@link Error}, which sails past every
-     * {@code catch (RuntimeException)} guarding the formatter's never-throw contract, and leaves
-     * {@code NoClassDefFoundError} behind on every later call. A URL handler that throws unchecked
-     * is the realistic route in.
+     * {@code load} runs in a static initialiser, where an escaping exception becomes an
+     * {@code ExceptionInInitializerError} and every later call an {@code NoClassDefFoundError}.
      */
     @Test
     void anUncheckedFailureWhileReadingIsAProblemRatherThanEscaping() {
@@ -243,7 +224,6 @@ class RuleExclusionsFileTest {
         assertTrue(loaded.entries().isEmpty());
     }
 
-    /** A classpath that cannot be enumerated cannot be declared free of exclusions either. */
     @Test
     void anUnreadableClassPathIsAProblemRatherThanNoExclusions() {
         ClassLoader unreadable = new ClassLoader(null) {
@@ -271,7 +251,7 @@ class RuleExclusionsFileTest {
         return Files.writeString(root.resolve(EXCLUSIONS_FILE), contents + System.lineSeparator());
     }
 
-    /** No parent, so only the temporary directories answer — this build's own classpath cannot leak in. */
+    /** No parent, so only the temporary directories answer. */
     private static URLClassLoader classLoaderOver(Path... roots) throws IOException {
         URL[] urls = new URL[roots.length];
         for (int i = 0; i < roots.length; i++) {

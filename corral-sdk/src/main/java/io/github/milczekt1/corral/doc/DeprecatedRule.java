@@ -11,13 +11,10 @@ import java.util.concurrent.ConcurrentHashMap;
 import lombok.experimental.UtilityClass;
 
 /**
- * A retired rule id, kept alive so that retiring it is not a silent breaking change.
+ * A retired rule id, registered as a rule that always passes and names its replacement.
  *
- * <p>ArchUnit's {@code ViolationStore} SPI takes only an {@code ArchRule} and offers no rename verb,
- * so a renamed id cannot carry its recorded violations across — the rule re-seeds clean and the
- * build goes green with nothing enforced. Corral therefore never renames. The old id stays
- * registered as a rule that always passes and names its replacement, so a consumer excluding it
- * still resolves and a consumer reading the catalog is told where the rule went.
+ * <p>Ids are retired rather than renamed: ArchUnit's {@code ViolationStore} SPI has no rename verb,
+ * so a renamed id re-seeds clean and enforces nothing.
  *
  * <p>Wire it exactly like a live rule, so consumers keep evaluating it:
  * <pre>{@code
@@ -32,23 +29,14 @@ public class DeprecatedRule {
 
     /**
      * Every id ever passed as {@code retiredId} to {@link #supersededBy}, this JVM's lifetime.
-     *
-     * <p>A retired id predates whatever grammar the catalog enforces today — it was legal under an
-     * older or no convention at all, and {@code supersededBy}'s whole point is that it can never be
-     * renamed to comply. {@code RuleIdGrammarTest} needs to tell "retired" from "wrong" before it
-     * fails an id, and this set is how: an id here is exempted, not grandfathered by accident.
-     *
-     * <p>{@code ConcurrentHashMap}-backed, mirroring {@link RuleRegistry}'s {@code DOCS} map — Surefire
-     * reuses one JVM across test classes, so registration and lookup can race across them.
+     * A retired id predates today's grammar and can never be renamed to comply, so
+     * {@code RuleIdGrammarTest} exempts what is listed here.
      */
     private static final Set<String> RETIRED_IDS = ConcurrentHashMap.newKeySet();
 
     /**
      * Registers {@code retiredId} pointing at {@code replacementId} and returns a rule that always
-     * passes.
-     *
-     * <p>Deliberately never frozen: freezing would write an index entry claiming the retired id is
-     * enforced. It is not — it is a signpost.
+     * passes. Never frozen, so no index entry claims the retired id is enforced.
      *
      * <p>Routed through {@link RuleExclusions#applyTo} so an exclusion naming {@code retiredId}
      * counts as matched. {@code retiredId} must satisfy {@link RuleDoc}'s id shape and caps.
@@ -66,9 +54,7 @@ public class DeprecatedRule {
         return RuleExclusions.applyTo(new Retired(retiredId), retiredId);
     }
 
-    /**
-     * Every id retired so far, for a grammar check to exempt. See {@link #RETIRED_IDS}.
-     */
+    /** Every id retired so far, for a grammar check to exempt. */
     public static Set<String> retiredIds() {
         return Collections.unmodifiableSet(RETIRED_IDS);
     }
@@ -82,7 +68,6 @@ public class DeprecatedRule {
 
         @Override
         public EvaluationResult evaluate(JavaClasses classes) {
-            // No ConditionEvents are ever added, so this evaluation never carries a violation.
             return new EvaluationResult(this, Priority.MEDIUM);
         }
 

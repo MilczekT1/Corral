@@ -22,8 +22,7 @@ import lombok.extern.slf4j.Slf4j;
  *
  * <p>{@code failureDisplayFormat} is <strong>global per run</strong>, so this also sees the
  * consumer's own rules. Anything that is not a registered {@link RuleDoc} id falls through to
- * ArchUnit's standard rendering, and this class never throws — a formatter must not mask the
- * violation it is reporting.
+ * ArchUnit's standard rendering, and this class never throws.
  *
  * <p>Needs a public no-arg constructor — ArchUnit instantiates it reflectively.
  *
@@ -47,7 +46,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /** Guarded so a broken logging binding cannot widen the never-throw contract. */
+    /** Guarded: a broken logging binding must not widen the never-throw contract. */
     private static void debug(String message, Throwable cause) {
         try {
             log.debug(message, cause);
@@ -67,10 +66,8 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
     }
 
     /**
-     * Provably non-throwing backstop for {@link #formatFailure}, reached only if a guarded path above
-     * still failed. Every value here comes from a guarded accessor, {@code getClass().getName()} or
-     * an enum — never from a caller-controlled {@code toString()}. Package-private so the guarantee
-     * is directly testable without needing a real {@link FailureMessages}.
+     * Non-throwing backstop for {@link #formatFailure}: every value comes from a guarded accessor,
+     * {@code getClass().getName()} or an enum, never from a caller-controlled {@code toString()}.
      */
     String lastResortFormat(HasDescription rule, FailureMessages failureMessages, Priority priority) {
         return lastResortFormat(describeSafely(rule), priority,
@@ -78,21 +75,15 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
                         + ", failureMessages type=" + safeClassName(failureMessages));
     }
 
-    /** Names the rule whenever the caller knows it — that is the whole value of a failure message. */
     private static String lastResortFormat(String ruleLabel, Priority priority, String diagnostics) {
         return "Architecture Violation [Priority: " + priority + "] - " + ruleLabel
                 + " (failed to render failure details; " + diagnostics + ")";
     }
 
-    /** Package-private seam: rendering a documented rule, testable with a plain list. */
     String render(RuleDoc doc, List<String> violationLines, Priority priority) {
         return render(doc, violationLines, priority, censusSafely());
     }
 
-    /**
-     * Package-private seam taking the census explicitly, so it is testable without a file on the
-     * classpath.
-     */
     String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census) {
         try {
             String nl = System.lineSeparator();
@@ -117,8 +108,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             }
             out.append(nl);
 
-            // Rendered on every failure, not only the excluded rule's: an excluded rule never fails,
-            // so its own output is the one place this could never appear.
+            // An excluded rule never fails, so the census rides on every other rule's failure.
             List<String> exclusions = census == null ? List.of() : census;
             if (!exclusions.isEmpty()) {
                 out.append("EXCLUDED IN THIS BUILD (").append(RuleExclusions.EXCLUSIONS_FILE)
@@ -140,7 +130,6 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /** The formatter must never throw, and reading the census walks consumer-supplied state. */
     private static List<String> censusSafely() {
         try {
             return RuleExclusions.census();
@@ -150,12 +139,12 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /** A record accessor cannot throw, but {@link #render} is package-private and may be handed null. */
+    /** {@link #render} is package-private and may be handed a null doc. */
     private static String idOf(RuleDoc doc) {
         return doc == null ? UNKNOWN_RULE : doc.id();
     }
 
-    /** Package-private seam: byte-for-byte ArchUnit's default rendering, so foreign rules look untouched. */
+    /** Byte-for-byte ArchUnit's default rendering, so foreign rules look untouched. */
     String defaultFormat(String description, List<String> violationLines, String countInfo, Priority priority) {
         try {
             List<String> lines = violationLines == null ? List.of() : violationLines;
@@ -170,7 +159,6 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /** Package-private seam: the only degradation testable with a rule that throws on description. */
     static String describeSafely(HasDescription rule) {
         try {
             String description = rule == null ? null : rule.getDescription();
@@ -190,7 +178,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    /** Keeps whatever was collected before a mid-iteration failure — partial locations still help. */
+    /** Keeps whatever was collected before a mid-iteration failure. */
     private static List<String> linesSafely(FailureMessages messages) {
         if (messages == null) {
             return List.of();
@@ -207,7 +195,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         return Collections.unmodifiableList(copy);
     }
 
-    /** {@code getClass()} is final and {@code getName()} runs no caller code, so this cannot throw. */
+    /** Cannot throw: {@code getClass()} is final and {@code getName()} runs no caller code. */
     private static String safeClassName(Object value) {
         return value == null ? "null" : value.getClass().getName();
     }

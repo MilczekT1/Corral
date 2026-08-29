@@ -254,11 +254,11 @@ class RuleExclusionsWarningTest {
         assertDoesNotThrow(() -> wrapped.check(nothingToMatch()));
     }
 
-    // -- proving the message actually reaches a stream a consumer sees, not just an injected seam --
+    // -- the message reaching a real stream, not just an injected seam ----------------------------
 
     /**
-     * Drives the wrapper with the production sink, {@link RuleExclusions#printWarning}, and asserts on
-     * the real {@link System#err} — a seam-only test passes even if the sink swallows everything.
+     * Drives the wrapper with the production sink, {@link RuleExclusions#printWarning}, and asserts
+     * on the real {@link System#err}.
      */
     @Test
     void theRealProductionSinkWritesTheMessageToRealSystemErr() {

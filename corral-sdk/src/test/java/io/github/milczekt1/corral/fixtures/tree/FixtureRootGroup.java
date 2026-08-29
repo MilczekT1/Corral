@@ -8,8 +8,7 @@ import lombok.experimental.UtilityClass;
  * A group mixing a nested group with a rule class, so one root exercises both descent paths.
  *
  * <p>{@link AlphaFixtureRule} is reachable twice — once through {@link FixtureLeafGroup} and once
- * directly. That is deliberate: it is what makes the distinctness of {@code idsOf} testable, and it
- * mirrors the real catalog's supported case of one rule belonging to two groups.
+ * directly — which is what makes the distinctness of {@code idsOf} testable.
  */
 @UtilityClass
 public class FixtureRootGroup {
