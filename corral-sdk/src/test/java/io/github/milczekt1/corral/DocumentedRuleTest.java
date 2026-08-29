@@ -31,11 +31,9 @@ import org.junit.jupiter.api.Test;
  * Pins the four things {@link DocumentedRule#guard()} promises: the doc is registered, the
  * description is the doc id, the rule is frozen, and empty {@code should}s are allowed.
  *
- * <p>ArchUnit exposes no getter for {@code allowEmptyShould}, so the only way to observe it is to
- * evaluate the rule against classes it matches nothing in. Evaluating a frozen rule needs a store,
- * which {@link FreezingArchRule#persistIn} supplies without touching configuration or the disk —
- * see {@link InMemoryViolationStore}. The assertion is two-sided: dropping the flag must actually
- * break something, or "does not throw" would pass for the wrong reason.
+ * <p>{@code allowEmptyShould} has no getter, so it is observed by evaluating a rule that matches
+ * nothing, against an {@link InMemoryViolationStore} handed over by
+ * {@link FreezingArchRule#persistIn}.
  */
 class DocumentedRuleTest {
 
@@ -80,19 +78,15 @@ class DocumentedRuleTest {
     void guardFreezesTheRuleSoAdoptingItRecordsExistingDebt() {
         ArchRule guarded = new FixtureRule().guard();
 
-        // Freezing is what the whole design rests on: it is what makes the description the
-        // freeze-store key, which is why guard() pins the description to the doc id at all. Without
-        // this assertion the freeze(...) wrapper can be deleted and every other test still passes.
+        // Without this assertion the freeze(...) wrapper can be deleted and every other test passes.
         assertInstanceOf(FreezingArchRule.class, guarded,
                 "guard() must freeze — an unfrozen rule blocks in-flight work on adoption, and the"
                         + " id would stop being a freeze-store key");
     }
 
     /**
-     * The wiring, not the detection — {@code IgnorePatternsGuardTest} owns that. {@code guard()} is
-     * the only hook every consumer runs unconditionally, so deleting this one call would silently
-     * make the check opt-in again; asserted against the compiled bytecode because the check is a
-     * no-op on a clean classpath and therefore invisible to any behavioural assertion here.
+     * The wiring, not the detection — {@code IgnorePatternsGuardTest} owns that. Asserted against the
+     * bytecode: on a clean classpath the call is a no-op and nothing behavioural can see it.
      */
     @Test
     void guardInterposesTheIgnorePatternsCheckOnEveryRule() {
@@ -108,12 +102,7 @@ class DocumentedRuleTest {
                         + " kill switch cannot hide from");
     }
 
-    /**
-     * The wiring, not the mechanism — {@code RuleExclusionsGuardTest} owns that. Asserted against
-     * the compiled bytecode for the same reason as the check above: with no exclusions file on this
-     * build's classpath the call is a pass-through, and therefore invisible to any behavioural
-     * assertion here.
-     */
+    /** The wiring, not the mechanism — {@code RuleExclusionsGuardTest} owns that. Bytecode, as above. */
     @Test
     void guardAppliesExclusionsToEveryRule() {
         JavaMethod guard = new ClassFileImporter()
@@ -127,13 +116,7 @@ class DocumentedRuleTest {
                 "guard() must apply exclusions — it is the one place every rule passes through");
     }
 
-    /**
-     * The wiring, not the mechanism — {@code RuleExclusionsWarningTest} owns that. Asserted against
-     * the compiled bytecode for the same reason as the checks above: on a clean classpath with no
-     * unmatched exclusion the call changes nothing observable, so it is invisible to any behavioural
-     * assertion here. This is the one place a partial run — a single leaf, a hand-picked set of
-     * groups — still gets the unknown-id warning without wiring a root.
-     */
+    /** The wiring, not the mechanism — {@code RuleExclusionsWarningTest} owns that. Bytecode, as above. */
     @Test
     void guardWarnsOnUnmatchedExclusionsOnEveryRule() {
         JavaMethod guard = new ClassFileImporter()
@@ -148,11 +131,7 @@ class DocumentedRuleTest {
                         + " through, so it is the one place that needs no wired root");
     }
 
-    /**
-     * Order matters in one direction: the exclusion wrapper must sit OUTSIDE the freeze, so an
-     * excluded rule never reaches the store. Inside, it would be re-recorded as clean, deleting
-     * every frozen entry and resurfacing them all when the rule is switched back on.
-     */
+    /** The exclusion wrapper must sit outside the freeze, or an excluded rule reaches the store. */
     @Test
     void exclusionsAreAppliedOutsideTheFreezeSoAnExcludedRuleNeverTouchesTheStore() {
         JavaMethod guard = new ClassFileImporter()
@@ -194,12 +173,7 @@ class DocumentedRuleTest {
                         + " with no matching classes red for a reason the consumer cannot act on");
     }
 
-    /**
-     * The counterpart that gives the assertion above its teeth: the same raw rule, frozen and
-     * evaluated the same way but WITHOUT {@code allowEmptyShould(true)}, must fail. If ArchUnit ever
-     * stops failing on an empty should by default, this test goes red rather than its sibling
-     * quietly passing for the wrong reason.
-     */
+    /** The counterpart: the same rule without {@code allowEmptyShould(true)} must fail. */
     @Test
     void withoutAllowEmptyShouldTheSameRuleFailsOnAModuleWithNoMatchingClasses() {
         ArchRule withoutTheFlag = FreezingArchRule.freeze(
@@ -217,14 +191,10 @@ class DocumentedRuleTest {
 
     /**
      * A {@link ViolationStore} held in a map, handed to one rule via
-     * {@link FreezingArchRule#persistIn}.
+     * {@link FreezingArchRule#persistIn} — a {@code freeze.store} would be process-wide and leak
+     * across the Surefire JVM.
      *
-     * <p>Keeps these tests off both ArchUnit's global configuration and the filesystem: a store
-     * registered through {@code freeze.store} is process-wide, and Surefire reuses one JVM, so
-     * setting it here would leak into every sibling test.
-     *
-     * <p>An empty store means the rule is unknown, which is the case under test — a rule being
-     * adopted for the first time seeds whatever it finds and passes.
+     * <p>Empty, so the rule reads as unknown: it seeds whatever it finds and passes.
      */
     private static final class InMemoryViolationStore implements ViolationStore {
 

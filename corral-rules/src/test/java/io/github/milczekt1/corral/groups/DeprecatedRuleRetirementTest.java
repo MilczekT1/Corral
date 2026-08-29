@@ -9,17 +9,10 @@ import java.util.Set;
 import org.junit.jupiter.api.Test;
 
 /**
- * End-to-end coverage for {@link DeprecatedRule#supersededBy}, wired exactly as its Javadoc
- * instructs: {@link RetiredRuleFixtureGroup} holds one {@code @ArchTest ArchRule} field built from a
- * retired id with no polarity marker — the shape a rule id had before the grammar existed.
+ * End-to-end coverage for {@link DeprecatedRule#supersededBy} over {@link RetiredRuleFixtureGroup}:
+ * a retired id stays published, and passes the catalog's grammar test without being renamed.
  *
- * <p>Two things must both hold, or the mechanism does not do what it exists for: the retired id
- * keeps being published (so an exclusion naming it keeps resolving), and it does not fail the
- * catalog's own grammar test (so the maintainer is never told to "fix" it by renaming it — the one
- * action retiring instead of renaming exists to forbid).
- *
- * <p>Never wires {@link RetiredRuleFixtureGroup} into {@code AllCentralRules}: this test walks the
- * fixture directly, so nothing under {@code fixtures/} ever reaches a real consumer.
+ * <p>Walks the fixture directly, so nothing under {@code fixtures/} reaches a real consumer.
  */
 class DeprecatedRuleRetirementTest {
 
@@ -33,10 +26,7 @@ class DeprecatedRuleRetirementTest {
         assertTrue(DeprecatedRule.retiredIds().contains(RetiredRuleFixtureGroup.RETIRED_ID),
                 "retiredIds() is what lets RuleIdGrammarTest tell \"retired\" from \"wrong\"");
 
-        // The very checks RuleIdGrammarTest runs against AllCentralRules, run here against the
-        // fixture: proof that a retired id — which does not conform to the grammar — passes once
-        // DeprecatedRule.retiredIds() exempts it, rather than trusting a re-implementation of the
-        // same rule to agree with the original.
+        // The checks RuleIdGrammarTest runs against AllCentralRules, run here against the fixture.
         RuleIdGrammarTest.assertNamespaceGrammar(ids);
         RuleIdGrammarTest.assertPolarityGrammar(ids);
         RuleIdGrammarTest.assertQualifierSegmentGrammar(ids);

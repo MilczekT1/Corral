@@ -6,19 +6,13 @@ import lombok.Builder;
 /**
  * Structured, agent-facing documentation for a single architecture rule.
  *
- * <p>{@link #id()} becomes the ArchUnit rule description, which is both the freeze-store key and how
- * {@code AgentFriendlyFailureDisplayFormat} finds this doc again. Prose is kept out of it so that
- * rewording documentation cannot re-seed every consumer's store.
+ * <p>{@link #id()} becomes the ArchUnit rule description: the freeze-store key, and how
+ * {@code AgentFriendlyFailureDisplayFormat} finds this doc again. <strong>Changing an id is a
+ * breaking change.</strong>
  *
- * <p><strong>Changing an id is a breaking change.</strong>
- *
- * <p>The checks here are deliberately limited to universal hygiene: shape, length, and depth. The id
- * becomes a file name in every consumer's freeze store — see {@code EmptyOmittingViolationStore} — so
- * those are filesystem and readability constraints that bind any rule author, this library's own
- * catalog and a consumer's own {@code DocumentedRule} alike. What a namespace may be, and what marks a
- * slug as a prohibition or an obligation, is Corral-catalog taxonomy, not a hygiene rule every consumer
- * must submit to — see {@code corral-rules}' own {@code RuleIdGrammarTest}, which enforces that only
- * against the ids this library itself publishes.
+ * <p>Validated for shape, length and depth only — the id becomes a file name in every consumer's
+ * freeze store. Namespace and slug taxonomy is Corral-catalog policy, enforced against this
+ * library's own ids by {@code RuleIdGrammarTest}.
  *
  * @param howNotToFix rule-specific anti-fix guidance, or {@code null} when the rule adds none;
  *                    blank text is normalised to {@code null}
@@ -28,26 +22,14 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
 
     /**
      * Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code acme.no-stdout-in-services}.
-     *
-     * <p>Quantifiers are possessive throughout. Nothing here needs to backtrack — a segment stops at
-     * the dot it cannot match — and Java implements greedy repetition of a group by recursing once
-     * per iteration, so the greedy spelling would blow the stack on a long enough input.
+     * Possessive throughout: greedy group repetition recurses per iteration and overflows the stack.
      */
     private static final Pattern ID_PATTERN = Pattern.compile("^[a-z0-9]++(?:\\.[a-z0-9-]++)++$");
 
-    /**
-     * Segment 1 of an id is a vendor prefix (e.g. {@code corral}), not taxonomy, so it is not part of
-     * the budget a rule author spends — it is simply added on top. 60 was the old cap with no prefix;
-     * this is that budget plus room for a short, stable vendor segment and its dot, with headroom to
-     * spare rather than none.
-     */
+    /** 60 characters of taxonomy, plus room for a vendor prefix segment and its dot. */
     private static final int MAX_ID_LENGTH = 72;
 
-    /**
-     * Segment 1 of an id is a vendor prefix (e.g. {@code corral}), not taxonomy. The taxonomy budget
-     * a rule author spends is unchanged at 3 segments — namespace, and up to two more for
-     * concern/qualifier/slug shape — so this cap is 3 plus the one prefix segment.
-     */
+    /** 3 taxonomy segments — namespace, concern/qualifier, slug — plus the vendor prefix. */
     private static final int MAX_ID_SEGMENTS = 4;
 
     public RuleDoc {
@@ -74,15 +56,8 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
     }
 
     /**
-     * Whether {@code text} is a legal id AND obeys the length and segment caps — the stronger check a
-     * caller needs before trusting {@code text} as something bounded, such as a file name.
-     *
-     * <p>{@link #isId} alone is not that check: it applies only {@code ID_PATTERN}, not
-     * {@code MAX_ID_LENGTH} or {@code MAX_ID_SEGMENTS}, because it also backs the constructor's shape
-     * error, which must fire on shape alone so its message stays specific. A rule frozen without a
-     * {@code RuleDoc} — see {@code EmptyOmittingViolationStore} — can carry a description that merely
-     * looks dot/kebab-shaped; gated on {@link #isId} alone, that description becomes an unbounded-length
-     * file name.
+     * Whether {@code text} is a legal id and within the caps — the check to make before trusting it as
+     * a file name. {@link #isId} applies shape only, so it admits an unbounded-length description.
      */
     public static boolean isIdWithinCaps(String text) {
         return isId(text) && text.length() <= MAX_ID_LENGTH && text.split("\\.").length <= MAX_ID_SEGMENTS;

@@ -22,13 +22,10 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * Drives {@link EmptyOmittingViolationStore} directly rather than through {@code FreezingArchRule},
- * so each behaviour is isolated. Most of these tests do not touch {@code ArchConfiguration}'s global
- * properties: the store under test is constructed and initialized with a local {@link Properties}
- * instance, so there is nothing global to reset in {@code @AfterEach}. The exception is
- * {@link #freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze()}, which drives the decorator
- * through {@code FreezingArchRule} itself and therefore must configure and reset
- * {@code ArchConfiguration} on its own, in a {@code finally} block.
+ * Drives {@link EmptyOmittingViolationStore} directly, on a local {@link Properties} instance, so
+ * there is no global {@code ArchConfiguration} to reset. The exception is
+ * {@link #freezingArchRuleFailsOnAViolationIntroducedAfterACleanFreeze()}, which goes through
+ * {@code FreezingArchRule} and resets it in a {@code finally} block.
  */
 class EmptyOmittingViolationStoreTest {
 
@@ -96,8 +93,7 @@ class EmptyOmittingViolationStoreTest {
 
     @Test
     void aRuleIdBecomesTheFileNameWhileProseKeepsAUuid() throws Exception {
-        // The store is global, so it also serves rules frozen without a RuleDoc. Their descriptions
-        // are whole sentences and must not reach the filesystem as file names.
+        // The store is global, so it also serves rules frozen without a RuleDoc — whole sentences.
         ArchRule documented = ruleNamed("test.documented-rule");
         ArchRule foreign = ruleNamed("no classes should depend on classes that reside in '..internal..'");
 
@@ -108,9 +104,7 @@ class EmptyOmittingViolationStoreTest {
         assertEquals(List.of("Class <Bar> is bad"), store.getViolations(foreign),
                 "a rule named after prose must still round-trip through its generated file name");
 
-        // Round-trip alone would also pass if prose were sanitized into a file name, which is the
-        // failure this store exists to prevent — spaces and quotes reaching the filesystem. Pin the
-        // shape of the fallback, not just that reading it back works.
+        // Pin the shape of the fallback: a round-trip alone would pass on a sanitized file name too.
         String generated = indexEntryFor(foreign.getDescription());
         assertNotNull(generated, "a prose-named rule must still get an index entry");
         assertTrue(generated.matches("[0-9a-f]{8}(-[0-9a-f]{4}){3}-[0-9a-f]{12}"),
@@ -121,11 +115,8 @@ class EmptyOmittingViolationStoreTest {
 
     @Test
     void anOverlongIdShapedDescriptionFallsBackToAUuid() throws Exception {
-        // A rule frozen without a RuleDoc is not bound by RuleDoc's constructor at all, so its
-        // description can be dot/kebab-shaped and still exceed the length or segment caps that a
-        // real id could never violate. fileNameFor must catch that itself, or the file name it
-        // produces is unbounded — the exact invariant EmptyOmittingViolationStore.fileNameFor's
-        // Javadoc claims for every id.
+        // A rule frozen without a RuleDoc can carry a dot/kebab-shaped description that exceeds the
+        // caps, so fileNameFor must apply them itself.
         String tooLong = "test.documented-rule-" + "a".repeat(60);
         ArchRule overlong = ruleNamed(tooLong);
 
@@ -140,9 +131,7 @@ class EmptyOmittingViolationStoreTest {
 
     @Test
     void aRuleFrozenCleanIsStillContainedSoItsFirstViolationFails() {
-        // No file must not mean "unknown rule". FreezingArchRule seeds-and-passes anything the store
-        // does not contain, so if this ever returns false a clean rule's first real violation would
-        // be absorbed as debt and the build would stay green.
+        // No file must not mean "unknown rule": FreezingArchRule seeds-and-passes what it lacks.
         ArchRule rule = ruleNamed("test.clean-then-dirty");
         store.save(rule, List.of());
 
@@ -167,8 +156,7 @@ class EmptyOmittingViolationStoreTest {
 
             rule.check(clean);   // seeds clean: entry written, no file
 
-            // Without this the test would pass identically against stock ArchUnit, which writes an
-            // empty file here. Asserting the file count is what makes it a test of the decorator.
+            // Stock ArchUnit writes an empty file here, so the file count is what tests the decorator.
             assertEquals(0, countViolationFiles(),
                     "a clean freeze through FreezingArchRule must leave no violation file");
 
@@ -182,9 +170,7 @@ class EmptyOmittingViolationStoreTest {
 
     @Test
     void theIndexIsWrittenInSortedOrderWhateverTheRunningJdkDoes() throws Exception {
-        // Properties.store() sorts by key only since JDK 21; on 17-20 it writes hash-bucket order,
-        // which reshuffles wholesale when the map resizes. The store is committed by consumers, so
-        // its line order must be a property of this class, not of the JRE running the build.
+        // Properties.store() sorts by key only since JDK 21; on 17-20 it writes hash-bucket order.
         List<String> ids = List.of(
                 "spring.no-field-injection", "api.no-array-return-types", "test.no-thread-sleep",
                 "logging.no-system-out", "jakarta.no-final-entity", "naming.no-impl-suffix",
@@ -204,11 +190,7 @@ class EmptyOmittingViolationStoreTest {
                 "stored.rules must be sorted so a consumer's committed store yields a reviewable diff");
     }
 
-    /**
-     * Counts rule violation files only, excluding the {@code stored.rules} index itself — chosen
-     * over counting the index as a rule-violation file because it lets the assertions read as plain
-     * violation-file counts (0, 1) rather than "index plus N".
-     */
+    /** Counts rule violation files only, excluding the {@code stored.rules} index itself. */
     private long countViolationFiles() throws IOException {
         try (var entries = Files.list(storeDir)) {
             return entries.filter(path -> !path.getFileName().toString().equals("stored.rules")).count();

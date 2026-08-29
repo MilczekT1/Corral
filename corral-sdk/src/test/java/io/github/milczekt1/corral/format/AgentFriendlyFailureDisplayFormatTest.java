@@ -70,11 +70,7 @@ class AgentFriendlyFailureDisplayFormatTest {
                 "sections out of order:\n" + out);
     }
 
-    /**
-     * A reader of a failing build must be able to see what is <em>not</em> being enforced. Rendered
-     * on every failure, not only on the excluded rule's own — the excluded rule never fails, so its
-     * own output is exactly where this could never appear.
-     */
+    /** Rendered on every failure: the excluded rule never fails, so it has no output of its own. */
     @Test
     void listsEveryExclusionInEffect() {
         List<String> census = List.of(
@@ -99,7 +95,7 @@ class AgentFriendlyFailureDisplayFormatTest {
         assertTrue(policy < census && census < locations, "census out of order:\n" + out);
     }
 
-    /** The common case is no file at all; a header over an empty list is noise on every failure. */
+    /** No file is the common case; an empty header would be noise on every failure. */
     @Test
     void omitsTheCensusEntirelyWhenNothingIsExcluded() {
         String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, List.of());
@@ -135,10 +131,8 @@ class AgentFriendlyFailureDisplayFormatTest {
 
     @Test
     void defaultFormatLeavesForeignRulesUndecorated() {
-        // failureDisplayFormat is global: a consumer's own rules pass through this formatter too,
-        // and must come out looking exactly as they would without the framework installed.
-        // ArchUnit's own default lives in a package-private class and cannot be invoked here, so
-        // this pins our copy of its template — matching the real one is verified by reading it.
+        // failureDisplayFormat is global, so a consumer's own rules must render unchanged. ArchUnit's
+        // default is package-private and cannot be invoked here; this pins our copy of its template.
         String description = "no classes should depend on classes that reside in a package '..internal..'";
 
         String out = FORMAT.defaultFormat(description, VIOLATIONS, "2 times", Priority.HIGH);
@@ -150,10 +144,7 @@ class AgentFriendlyFailureDisplayFormatTest {
         assertFalse(out.contains("HOW NOT TO FIX (always):"), "must not decorate foreign rules: " + out);
     }
 
-    /**
-     * One consolidated check for the never-throw contract. The formatter runs inside a failing
-     * build, so throwing here would replace a real architecture violation with a stack trace.
-     */
+    /** The never-throw contract: a throw here would replace a real violation with a stack trace. */
     @Test
     void neverThrowsOnHostileOrNullInput() {
         HasDescription hostile = () -> {
@@ -177,10 +168,8 @@ class AgentFriendlyFailureDisplayFormatTest {
     }
 
     /**
-     * Everything above exercises the package-private seams directly. These drive the real
-     * {@link AgentFriendlyFailureDisplayFormat#formatFailure} entry point the way ArchUnit does:
-     * through a genuine {@code FailureMessages}, which has no public constructor and can only be
-     * obtained by letting ArchUnit build one.
+     * Drives {@link AgentFriendlyFailureDisplayFormat#formatFailure} the way ArchUnit does, through a
+     * genuine {@code FailureMessages} — it has no public constructor, so ArchUnit must build it.
      */
     @BeforeEach
     void installFormatterGlobally() {
@@ -244,8 +233,7 @@ class AgentFriendlyFailureDisplayFormatTest {
 
     @Test
     void richRenderingFallsBackToTheLastResortFormat() {
-        // A null doc makes doc.id() throw inside render's try block — the only way to reach the
-        // fallback without a doc implementation that lies about itself.
+        // A null doc makes doc.id() throw inside render's try block, reaching the fallback.
         String out = FORMAT.render(null, VIOLATIONS, Priority.MEDIUM);
 
         assertTrue(out.contains("<unknown rule>"), out);

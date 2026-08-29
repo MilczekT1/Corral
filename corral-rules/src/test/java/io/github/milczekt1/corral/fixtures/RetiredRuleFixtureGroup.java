@@ -6,18 +6,16 @@ import io.github.milczekt1.corral.doc.DeprecatedRule;
 import lombok.experimental.UtilityClass;
 
 /**
- * Exercises {@link DeprecatedRule#supersededBy} exactly as its Javadoc instructs a maintainer to:
- * an {@code @ArchTest ArchRule} field built from a deliberately non-conforming retired id — no
- * polarity marker, the shape a rule id had before {@code RuleIdGrammarTest}'s grammar existed.
+ * Wires {@link DeprecatedRule#supersededBy} as its Javadoc instructs, from a retired id that predates
+ * {@code RuleIdGrammarTest}'s grammar.
  *
- * <p>Never wired into {@code AllCentralRules} — {@code DeprecatedRuleRetirementTest} in
- * {@code groups} walks this class directly. Under {@code fixtures/}, so Surefire's
- * {@code **&#47;fixtures/**} exclusion keeps this class itself from ever running as a test.
+ * <p>Never wired into {@code AllCentralRules}; {@code DeprecatedRuleRetirementTest} walks it directly.
+ * Under {@code fixtures/}, which Surefire excludes from running as tests.
  */
 @UtilityClass
 public class RetiredRuleFixtureGroup {
 
-    /** Predates the grammar on purpose: no {@code no-}/{@code -must-} marker on the slug. */
+    /** Predates the grammar: no {@code no-}/{@code -must-} marker on the slug. */
     public static final String RETIRED_ID = "test.class-naming-convention";
 
     @ArchTest

@@ -12,14 +12,11 @@ import lombok.NoArgsConstructor;
 /**
  * No class may write to {@code System.err}.
  *
- * <p>Sibling of {@link NoSystemOutRule}, kept separate rather than folded into one {@code orShould}
- * chain: separate ids are separate freeze-store keys, so a consumer carries stdout debt and stderr
- * debt independently, and each doc argues about one stream. Matches the field access, so every
- * method on the stream counts.
+ * <p>Separate from {@link NoSystemOutRule} so stdout and stderr debt freeze independently. Matches
+ * the field access, so every method on the stream counts.
  *
- * <p>One thing it cannot see: {@code throwable.printStackTrace()} reaches System.err from inside
- * {@code java.lang.Throwable}, so the calling class never touches the field. The doc still argues
- * against it, because whoever reads a failure here is usually one step away from writing it.
+ * <p>Blind to {@code throwable.printStackTrace()}: it reaches System.err from inside
+ * {@code java.lang.Throwable}, so the calling class never touches the field.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoSystemErrRule implements DocumentedRule {

@@ -53,10 +53,9 @@ class RuleDocTest {
     }
 
     /**
-     * {@code isId} alone is intentionally weaker than the constructor: it backs the constructor's
-     * shape-only error path, so a too-long or too-deep string still counts as "id-shaped". A caller
-     * that also needs the caps enforced — {@code EmptyOmittingViolationStore}'s filename gate — uses
-     * {@code isIdWithinCaps} instead.
+     * {@code isId} is weaker than the constructor by design: it backs the shape-only error path, so a
+     * too-long or too-deep string is still "id-shaped". Callers needing the caps use
+     * {@code isIdWithinCaps}.
      */
     @Test
     void isIdWithinCapsAlsoEnforcesTheLengthAndSegmentCaps() {
@@ -70,7 +69,7 @@ class RuleDocTest {
 
     @Test
     void rejectsIdsThatWouldMakeUnstableOrUnreadableFreezeKeys() {
-        // The id IS the freeze-store key: no spaces, no upper case, must be dot-namespaced.
+        // The id is the freeze-store key: no spaces, no upper case, must be dot-namespaced.
         RuleDoc.Builder notNamespaced = valid().id("noSpringTransactional");
         RuleDoc.Builder containsSpaces = valid().id("db.No Spring Tx");
         RuleDoc.Builder upperCaseNamespace = valid().id("DB.no-spring-tx");
@@ -81,10 +80,8 @@ class RuleDocTest {
     }
 
     /**
-     * {@code RuleDoc} is public SDK surface: a consumer's {@code DocumentedRule} builds one with
-     * their own namespace, not Corral's. What namespace is allowed, and whether a slug carries a
-     * polarity marker, is catalog taxonomy for Corral's own rules — enforced by {@code corral-rules}'
-     * {@code RuleIdGrammarTest} against {@code AllCentralRules} only, never here.
+     * {@code RuleDoc} is public SDK surface, so a consumer's own namespace must pass. Corral's own
+     * taxonomy is enforced by {@code RuleIdGrammarTest}, never here.
      */
     @Test
     void acceptsAnyNamespaceAndSlugAConsumerChooses() {
@@ -104,8 +101,7 @@ class RuleDocTest {
 
     @Test
     void rejectsAnIdWithMoreThanFourSegments() {
-        // The id becomes a file name in every consumer's freeze store, so depth is a hygiene cap
-        // that binds every rule author, not catalog taxonomy for what a segment may contain.
+        // The id becomes a file name in every consumer's freeze store, so depth binds every author.
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
                 () -> valid().id("spring.data.jpa.mockito.no-repository-in-controller").build());
 

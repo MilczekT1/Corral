@@ -20,11 +20,10 @@ import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 /**
- * Exercises the walk against a fixture tree rather than the real catalog. The SDK is a framework;
- * a change to a published rule must not be able to break a framework test.
+ * Exercises the walk against a fixture tree, so a change to a published rule cannot break it.
  *
- * <p>Field order is never asserted: neither {@code Class.getDeclaredFields()} nor the order in which
- * supertypes are visited makes any ordering guarantee.
+ * <p>Field order is never asserted — neither {@code Class.getDeclaredFields()} nor supertype visit
+ * order guarantees one.
  */
 class PublishedRulesTest {
 
@@ -36,8 +35,7 @@ class PublishedRulesTest {
     void descendsThroughNestedGroups() {
         List<ArchRule> found = PublishedRules.rulesReachableFrom(FixtureRootGroup.class);
 
-        // Alpha twice (via the leaf group and directly), beta once. A walk that stopped at depth one
-        // would see only the direct alpha.
+        // Alpha twice (via the leaf group and directly), beta once — depth one would see one alpha.
         assertEquals(3, found.size(), "walk did not descend through the nested group");
         assertEquals(Set.of("test.no-alpha-fixture", "test.no-beta-fixture"), descriptionsOf(found));
     }
@@ -73,8 +71,7 @@ class PublishedRulesTest {
 
     @Test
     void archRuleFieldsOfFindsMembersInheritedFromASuperclassAndFromAnInterface() {
-        // InheritingFixtureGroup declares nothing itself. ArchUnit resolves members over every
-        // supertype, so it evaluates both of these; a getDeclaredFields() walk would return none.
+        // InheritingFixtureGroup declares nothing itself; ArchUnit resolves members over supertypes.
         List<ArchRule> found = PublishedRules.archRuleFieldsOf(InheritingFixtureGroup.class);
 
         assertEquals(Set.of("fixture.inherited-from-superclass", "fixture.inherited-from-interface"),
@@ -91,8 +88,7 @@ class PublishedRulesTest {
 
     @Test
     void theWalkDescendsThroughAnInheritedNestedGroup() {
-        // Inheritance must not be a dead end: an inherited ArchTests member is descended into like
-        // any other, so the leaf behind it is published too.
+        // An inherited ArchTests member is descended into like any other.
         assertEquals(
                 Set.of("fixture.inherited-from-superclass", "fixture.inherited-from-interface",
                         "test.no-beta-fixture"),
@@ -101,8 +97,7 @@ class PublishedRulesTest {
 
     @Test
     void readsMembersThatAreNotPublicAndMembersOfClassesThatAreNotPublic() {
-        // Both shapes are ones ArchUnit itself evaluates, so refusing them here would under-report.
-        // The second is the consumer example's own shape: a package-private class holding members.
+        // Both shapes are ones ArchUnit evaluates; the second is the consumer example's own.
         assertEquals(Set.of("fixture.restricted-field", "fixture.restricted-class"),
                 PublishedRules.idsOf(RestrictedAccessGroup.class));
     }

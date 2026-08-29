@@ -12,14 +12,10 @@ import lombok.NoArgsConstructor;
 /**
  * No class may write to {@code System.out}.
  *
- * <p>Matches the <em>field access</em> rather than one method call, so every way of using the
- * stream counts — {@code println} in any of its overloads, {@code print}, {@code printf},
- * {@code write}, handing the stream to something else — and a static initializer is reported like
- * any other code location.
+ * <p>Matches the <em>field access</em> rather than one method call, so every use of the stream
+ * counts, static initializers included.
  *
- * <p>Applies to every imported class, tests included. A central rule cannot know a consumer's
- * package naming, and freezing absorbs whatever a codebase already prints as recorded debt, so a
- * broad match costs adoption nothing.
+ * <p>Applies to every imported class, tests included.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoSystemOutRule implements DocumentedRule {

@@ -17,10 +17,7 @@ class TestClassNamingConventionRuleTest {
     private static final JavaClasses FIXTURES = new ClassFileImporter()
             .importPackages("io.github.milczekt1.corral.fixtures.testing");
 
-    /**
-     * The JUnit 5 roots the rule is configured with. Held as a constant so the assertion below reads
-     * as expected-vs-actual rather than as two expressions of unclear direction.
-     */
+    /** The JUnit 5 roots the rule is configured with. */
     private static final List<String> EXPECTED_JUNIT_ROOTS = List.of(
             "org.junit.jupiter.api.Test",
             "org.junit.jupiter.api.TestFactory",
@@ -31,17 +28,9 @@ class TestClassNamingConventionRuleTest {
     }
 
     /**
-     * Every class Surefire would never run, whatever route JUnit takes to its test methods:
-     *
-     * <ul>
-     *   <li>{@code BadlyNamedTestCase} — a plain {@code @Test} method.
-     *   <li>{@code BadlyNamedParameterizedCase} — the false negative the rule's own {@code why} text
-     *       describes: no {@code @Test} anywhere, so the old {@code @Test}-only predicate never
-     *       selected the class and Surefire never ran it either.
-     *   <li>{@code BadlyNamedComposedCase} — JUnit resolves {@code @Test} through a meta-annotation,
-     *       so {@code @FastTest} methods really do run. Matching direct annotations only would let
-     *       this class look like coverage while Surefire never selects it.
-     * </ul>
+     * Every class Surefire would never run, whatever route JUnit takes to its test methods: a plain
+     * {@code @Test}, a {@code @ParameterizedTest} with no {@code @Test} anywhere, and a consumer's
+     * own {@code @FastTest} composed annotation.
      */
     @ParameterizedTest(name = "flags {0}")
     @ValueSource(strings = {"BadlyNamedTestCase", "BadlyNamedParameterizedCase", "BadlyNamedComposedCase"})
@@ -61,9 +50,7 @@ class TestClassNamingConventionRuleTest {
 
     @Test
     void staysSilentOnJunit5NestedGroups() {
-        // A @Nested class is imported as its own JavaClass named e.g. WhenEmpty and holds @Test
-        // methods, but Surefire only ever selects the enclosing class — flagging it would be a
-        // false positive whose only "fix" is a rename that changes nothing.
+        // A @Nested class is its own JavaClass, but Surefire only ever selects the enclosing one.
         String report = report(TestClassNamingConventionRule.DEFINITION);
 
         assertFalse(report.contains("WhenEmpty"), report);
@@ -73,7 +60,7 @@ class TestClassNamingConventionRuleTest {
 
     @Test
     void staysSilentOnClassesWithNoTestMethodsAtAll() {
-        // The mock fixtures declare fields only. Nothing selects them, so no naming verdict applies.
+        // The mock fixtures declare fields only, so no naming verdict applies.
         String report = report(TestClassNamingConventionRule.DEFINITION);
 
         assertFalse(report.contains("MockingRepositoryIT"), report);
@@ -85,10 +72,7 @@ class TestClassNamingConventionRuleTest {
 
     @Test
     void pinsTheJunit5RootAnnotations() {
-        // Only the three roots are configured: @ParameterizedTest and @RepeatedTest are themselves
-        // meta-annotated with @TestTemplate and are reached through it, as is any consumer's own
-        // composed annotation. Enumerating leaves instead reopens the "looks like coverage, never
-        // runs" hole every time JUnit adds one.
+        // Roots only: @ParameterizedTest and @RepeatedTest are reached through @TestTemplate.
         assertEquals(EXPECTED_JUNIT_ROOTS, TestClassNamingConventionRule.JUNIT_TEST_ANNOTATIONS);
     }
 

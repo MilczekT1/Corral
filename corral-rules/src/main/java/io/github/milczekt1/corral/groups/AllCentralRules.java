@@ -15,10 +15,8 @@ import lombok.experimental.UtilityClass;
  * }
  * }</pre>
  *
- * <p>An {@code @ArchTest ArchTests} field is the whole declaration: it is what
- * {@code ArchTests.in(...)} descends into, so a member without one is a member nobody evaluates.
- *
- * <p>A member may be another group or a rule class. See the README for the full growth path.
+ * <p>A member may be another group or a rule class, and it is evaluated only through an
+ * {@code @ArchTest ArchTests} field — that is what {@code ArchTests.in(...)} descends into.
  */
 @UtilityClass
 public class AllCentralRules {

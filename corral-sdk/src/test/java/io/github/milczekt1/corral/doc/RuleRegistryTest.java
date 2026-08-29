@@ -29,8 +29,7 @@ class RuleRegistryTest {
 
     @Test
     void findToleratesNullAndArbitraryDescriptions() {
-        // The formatter passes ArchUnit rule descriptions straight through, including
-        // full sentences from a consumer's own rules. This must never blow up.
+        // Descriptions pass straight through, including full sentences from a consumer's own rules.
         assertEquals(Optional.empty(), RuleRegistry.find(null));
         assertEquals(Optional.empty(), RuleRegistry.find("no classes should be annotated with @Foo"));
     }

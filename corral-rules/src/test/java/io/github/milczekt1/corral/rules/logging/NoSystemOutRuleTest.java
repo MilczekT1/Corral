@@ -21,16 +21,8 @@ class NoSystemOutRuleTest {
     }
 
     /**
-     * Every shape of write the field match has to catch:
-     *
-     * <ul>
-     *   <li>{@code PrintlnIntCaller} — the gap that motivated the rule: matching
-     *       {@code callMethod(println, String.class)} misses this overload entirely.
-     *   <li>{@code PrintfCaller} — printf and print are not println at all; only the field access
-     *       reaches them.
-     *   <li>{@code StaticInitializerPrinter} — a write from a static initializer, which the field
-     *       match reports like any other code location.
-     * </ul>
+     * Every shape of write the field match has to catch: a non-String {@code println} overload,
+     * {@code printf}, and a write from a static initializer.
      */
     @ParameterizedTest(name = "flags {0}")
     @ValueSource(strings = {"PrintlnIntCaller", "PrintfCaller", "StaticInitializerPrinter"})
@@ -41,16 +33,8 @@ class NoSystemOutRuleTest {
     }
 
     /**
-     * Every shape the rule must leave alone:
-     *
-     * <ul>
-     *   <li>{@code SilentComponent} — touches neither stream.
-     *   <li>{@code StderrCaller} — the sibling rule owns System.err. Two ids mean two freeze-store
-     *       keys, so overlap here would record the same debt twice.
-     *   <li>{@code PrintStackTraceCaller} — known and accepted: {@code Throwable.printStackTrace()}
-     *       touches the field from inside the JDK, so the calling class never accesses it. Pinned so
-     *       the gap is a decision, not a surprise.
-     * </ul>
+     * Every shape the rule must leave alone: neither stream touched, System.err (the sibling rule's),
+     * and {@code printStackTrace()} — a known gap, since the JDK touches the field, not the caller.
      */
     @ParameterizedTest(name = "stays silent on {0}")
     @ValueSource(strings = {"SilentComponent", "StderrCaller", "PrintStackTraceCaller"})

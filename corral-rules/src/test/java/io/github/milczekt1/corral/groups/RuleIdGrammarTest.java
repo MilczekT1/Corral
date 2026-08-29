@@ -10,38 +10,15 @@ import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 /**
- * Enforces the shape of every id Corral itself publishes.
- *
- * <p>{@code RuleDoc}'s own constructor checks only universal hygiene — shape, length, depth — because
- * it is public SDK surface: a consumer's own {@code DocumentedRule} builds a {@code RuleDoc} against
- * it too, with a namespace of their own choosing. What a Corral id's vendor prefix and concern may be,
- * and what marks a slug as a prohibition or an obligation, is catalog taxonomy for THIS project's
- * rules, so it belongs here — checked against {@link AllCentralRules}, the whole published catalog,
- * and nowhere a consumer's own id would ever trip it.
- *
- * <p>Every id Corral publishes starts with the {@code corral} vendor prefix at segment 1 — see
- * CONTRIBUTING — so a consumer choosing their own namespace can never collide with Corral's. Segment 2
- * is a closed concern vocabulary (a catalog rule, {@code corral.<concern>.<slug>}); the grammar also
- * supports a depth-2 {@code corral.<slug>} shape for a framework meta-check with no concern segment at
- * all, though nothing published today takes that shape — see CONTRIBUTING.
- *
- * <p>An id is the freeze-store key: it cannot change once a consumer has frozen it. The vocabulary
- * below is closed on purpose, so that "which bucket" never becomes an editorial argument —
- * relitigating it is exactly what produces a rename, and a rename silently stops enforcement in every
- * consumer that froze the old id.
+ * Enforces the shape of every id Corral itself publishes: {@code corral} at segment 1, a closed
+ * concern vocabulary at segment 2, a polarity marker on the slug. Checked against
+ * {@link AllCentralRules} only — {@code RuleDoc} applies the hygiene caps a consumer's own id needs.
  *
  * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
- * checks below — it predates the grammar, including the vendor prefix, and can never be renamed to
- * comply, that being the entire point of retiring rather than renaming. It still has to pass the
- * qualifier-segment check: a retired id is still a freeze-store file name.
+ * checks, but not from the qualifier-segment check.
  *
- * <p>The namespace and polarity checks below call {@link DeprecatedRule#retiredIds()} <em>after</em>
- * {@link #publishedIds()} has already run. That ordering is not a race to "fix" by reading
- * {@code retiredIds()} earlier: {@code publishedIds()} reads {@link AllCentralRules}'s
- * {@code @ArchTest} fields, which forces every member class — including one holding a
- * {@code DeprecatedRule.supersededBy(...)} call in a field initialiser — to run its static
- * initialiser first. By the time this method returns, every retirement it could possibly report has
- * already registered.
+ * <p>Those two read {@link DeprecatedRule#retiredIds()} only after {@link #publishedIds()} has run,
+ * which is what forces every retirement to register. Do not hoist the call.
  */
 class RuleIdGrammarTest {
 
@@ -63,11 +40,7 @@ class RuleIdGrammarTest {
         return PublishedRules.idsOf(AllCentralRules.class);
     }
 
-    /**
-     * Guards the three tests below against the vacuous pass a wholly empty catalog would otherwise
-     * produce: a bare {@code for} loop over an empty set asserts nothing and reports green. It means this
-     * class does not lean on {@code AllCentralRulesTest} to catch the same failure.
-     */
+    /** Guards the three tests below, whose loops would pass vacuously over an empty catalog. */
     @Test
     void publishedIdsIsNotEmpty() {
         assertFalse(publishedIds().isEmpty(),
@@ -90,11 +63,7 @@ class RuleIdGrammarTest {
         assertQualifierSegmentGrammar(publishedIds());
     }
 
-    /**
-     * Package-private so {@code DeprecatedRuleRetirementTest} can run the very check this class runs
-     * against a fixture retirement, instead of re-implementing the rule and risking the two drifting
-     * apart.
-     */
+    /** Package-private so {@code DeprecatedRuleRetirementTest} runs this same check on a fixture. */
     static void assertNamespaceGrammar(Set<String> ids) {
         Set<String> retiredIds = DeprecatedRule.retiredIds();
         for (String id : ids) {

@@ -23,29 +23,22 @@ import java.util.stream.Collectors;
 
 /**
  * A {@link ViolationStore} that keeps the {@code stored.rules} index complete but writes no file for
- * a rule with zero violations, so a committed freeze store carries no empty files.
+ * a rule with zero violations.
  *
  * <p>Register it in {@code archunit.properties}:
  * <pre>{@code freeze.store=io.github.milczekt1.corral.store.EmptyOmittingViolationStore}</pre>
  *
- * <p><strong>A clean rule stays frozen; its first later violation fails the build.</strong>
- * {@code FreezingArchRule} decides via {@link #contains}, which keys on the {@code stored.rules}
- * index entry, not on the file. "No file" means zero known violations, not unknown rule — only a
- * rule with no entry at all seeds and passes.
- *
- * <p><strong>Commit the {@code stored.rules} line</strong> that appears when a rule is first frozen.
- * Uncommitted, CI sees no entry, so the first violation is seeded as debt and the build stays green:
- * a rule that looks armed and is not.
+ * <p>A clean rule stays frozen: {@code FreezingArchRule} keys on the index entry, not on the file.
+ * Only a rule with no entry at all seeds and passes, so <strong>commit the {@code stored.rules}
+ * line</strong> that appears when a rule is first frozen.
  *
  * <p>Needs a public no-arg constructor — ArchUnit instantiates it reflectively.
  */
 public class EmptyOmittingViolationStore implements ViolationStore {
 
     /**
-     * The delegate's index file. Its {@code <rule-description>=<file-name>} layout is
-     * {@link TextFileBasedViolationStore}'s undocumented internal format;
-     * {@code storedRulesMapsRuleDescriptionToFileName} pins it so an ArchUnit upgrade that changes it
-     * fails loudly rather than mishandling a consumer's store.
+     * The delegate's index file: {@code <rule-description>=<file-name>}, an undocumented
+     * {@link TextFileBasedViolationStore} format pinned by {@code storedRulesMapsRuleDescriptionToFileName}.
      */
     private static final String INDEX_FILE = "stored.rules";
 
@@ -57,22 +50,12 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     private Path storePath;
 
     /**
-     * Names a rule's file after its id, so
-     * {@code git log -p archunit/frozen/corral.test.class-names-must-end-with-test-or-it}
-     * reads as that rule's debt history instead of requiring a UUID lookup in the index.
+     * Names a rule's file after its id; a description that is not an id keeps ArchUnit's UUID.
      *
-     * <p>Only ids qualify: {@code freeze.store} is global, so this store also serves rules frozen
-     * without a {@code RuleDoc}, whose descriptions are whole sentences — spaces, quotes, no length
-     * bound. Those keep ArchUnit's UUID. An id is lower-case, dot-and-hyphen only and short, so it is
-     * safe as a file name on any filesystem.
+     * <p>Gated on {@link RuleDoc#isIdWithinCaps} rather than {@link RuleDoc#isId}, which applies no
+     * length or segment cap and so admits an unbounded file name.
      *
-     * <p>Gated on {@link RuleDoc#isIdWithinCaps}, not {@link RuleDoc#isId} alone: {@code isId} checks
-     * only the shape regex, not {@code RuleDoc}'s own length and segment caps, so a rule frozen without
-     * a {@code RuleDoc} whose description merely happens to be dot/kebab-shaped would otherwise become
-     * an unbounded-length file name — exactly the invariant this Javadoc's first sentence claims.
-     *
-     * <p>Applied only to a rule with no index entry yet: {@code TextFileBasedViolationStore} reuses an
-     * existing entry's file name. Stores written before this keep their UUIDs and keep working.
+     * <p>Reached only for a rule with no index entry yet — an existing entry's file name is reused.
      */
     static String fileNameFor(String ruleDescription) {
         return RuleDoc.isIdWithinCaps(ruleDescription) ? ruleDescription : UUID.randomUUID().toString();
@@ -89,11 +72,7 @@ public class EmptyOmittingViolationStore implements ViolationStore {
         return delegate.contains(rule);
     }
 
-    /**
-     * Saves through the delegate first, always — that call is what writes the rule's index entry, and
-     * an entry is what keeps the rule frozen. Only the resulting file is dropped when there is
-     * nothing to record.
-     */
+    /** Always delegates first: that call writes the index entry that keeps the rule frozen. */
     @Override
     public void save(ArchRule rule, List<String> violations) {
         delegate.save(rule, violations);
@@ -106,12 +85,8 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     /**
      * Rewrites {@code stored.rules} with its lines in key order.
      *
-     * <p>{@link java.util.Properties#store} sorts by key only from JDK 21. On 17-20 it writes the
-     * iteration order of its internal map, which reshuffles wholesale whenever that map resizes — so a
-     * consumer's committed store would produce an unreviewable diff on upgrade, on some JDKs and not
-     * others. Writing the file here makes the order a property of this store instead of the JRE.
-     *
-     * <p>Runs after the delegate's own write, which is what creates the entry being reordered.
+     * <p>{@link java.util.Properties#store} sorts by key only from JDK 21; on 17-20 it writes an
+     * unstable map iteration order.
      */
     private void rewriteIndexSorted() {
         Path indexFile = storePath.resolve(INDEX_FILE);
@@ -126,15 +101,11 @@ public class EmptyOmittingViolationStore implements ViolationStore {
     }
 
     /**
-     * Renders {@code index} as {@code key=value} lines in key order, with the header comment
-     * {@link Properties#store} would normally emit stripped out.
+     * Renders {@code index} as key-ordered {@code key=value} lines, without {@link Properties#store}'s
+     * header comment.
      *
-     * <p>A rule frozen without a {@link RuleDoc} keeps its description — a whole sentence, with
-     * spaces and punctuation — as the index key. {@link Properties#load} treats an unescaped space in
-     * a key as the key/value delimiter, so hand-building {@code "key=value"} strings truncates such a
-     * key at its first word. Routing through a key-sorted {@link Properties#store} instead reuses its
-     * escaping, so every key and value round-trips through {@link Properties#load} regardless of what
-     * characters it contains.
+     * <p>Routed through {@code store} rather than hand-built: an index key can be a whole sentence,
+     * and {@link Properties#load} reads an unescaped space in a key as the delimiter.
      */
     private static List<String> sortedLines(Properties index) throws IOException {
         Properties sortedByKey = new Properties() {

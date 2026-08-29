@@ -8,10 +8,8 @@ import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
 
 /**
- * The contract every rule class implements, in this library and in consumers.
- *
- * <p>Pairing is the point: {@link #guard()} reads the doc and the raw rule off the same object,
- * so a rule cannot be frozen under another rule's documentation.
+ * The contract every rule class implements, in this library and in consumers. {@link #guard()} reads
+ * the doc and the raw rule off the same object, so a rule cannot be frozen under another rule's doc.
  *
  * <pre>{@code
  * public final class NoStdoutInServicesRule implements DocumentedRule {
@@ -28,10 +26,8 @@ import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
  * }</pre>
  *
  * <p><strong>Declare the {@code @ArchTest} field below the constants it reads.</strong> It runs
- * {@code guard()} during class initialisation, and a static field declared after it is still
- * {@code null} at that point. Method order is irrelevant — only fields initialise. Nothing but that
- * ordering prevents the mistake, and an interface cannot mandate a static field at all, so ArchUnit
- * discovering the field remains the author's responsibility.
+ * {@code guard()} during class initialisation, so a static field declared after it is still
+ * {@code null}. Nothing enforces this.
  */
 public interface DocumentedRule {
 
@@ -41,23 +37,15 @@ public interface DocumentedRule {
     RuleDoc doc();
 
     /**
-     * The rule consumers evaluate. Registers the doc so the failure formatter can find the prose, pins
-     * the description to the doc id — ArchUnit derives the freeze-store key from the description, so
-     * this is what stops a reworded sentence re-seeding every consumer's store — allows an empty
-     * {@code should} so a module with no matching classes stays green, and freezes, so that adopting
-     * a rule records existing debt instead of blocking in-flight work.
+     * The rule consumers evaluate: doc registered, description pinned to the doc id (the freeze-store
+     * key), empty {@code should} allowed, frozen.
      *
-     * <p>Also the hook for {@link IgnorePatternsGuard} and {@link RuleExclusions}: every rule class
-     * runs this, in every consumer, with nothing to configure, so it is the one place a whole-catalog
-     * kill switch cannot hide from and the one place a single rule can be removed from. It is also
-     * where {@link RuleExclusions#warnUnmatchedExclusionsOnFirstEvaluation} rides along — the one
-     * place unconditional enough to warn about an unmatched exclusion without needing a wired root:
-     * every rule reaches here, however a consumer's build is assembled.
+     * <p>The one place every rule class reaches, so {@link IgnorePatternsGuard} and
+     * {@link RuleExclusions} hook in here.
      *
-     * <p>The exclusion wraps the frozen rule rather than the raw one, so an excluded rule never
-     * reaches the freeze store — re-recording it as clean would delete its debt entries and
-     * resurface every one of them when the rule is switched back on. The ignore-patterns check is
-     * outermost: a whole-catalog kill switch is reported even for a rule this build excludes.
+     * <p>Order matters. The exclusion wraps the frozen rule, keeping an excluded rule out of the
+     * freeze store; the ignore-patterns check is outermost, so a kill switch is reported even for an
+     * excluded rule.
      */
     default ArchRule guard() {
         RuleRegistry.register(doc());

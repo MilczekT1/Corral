@@ -10,9 +10,8 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * A rule that exists only to be found by a reflection walk. Never evaluated, so what it forbids is
- * irrelevant — only its id, which carries a {@code -fixture} suffix distinct enough not to collide
- * with a real rule in the process-wide {@code RuleRegistry}.
+ * A rule that exists only to be found by a reflection walk. Never evaluated; the {@code -fixture}
+ * suffix keeps its id out of the way of real rules in the process-wide {@code RuleRegistry}.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class AlphaFixtureRule implements DocumentedRule {
