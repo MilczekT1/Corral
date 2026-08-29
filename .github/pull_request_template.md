@@ -12,7 +12,7 @@
       changing it resurfaces old violations on upgrade
 - [ ] New or changed rules are tested against the raw `DEFINITION`, not the published frozen field
 - [ ] Fixtures cover **both** directions: a class the rule must flag, and one it must leave alone
-- [ ] The [rules table](../README.md#rules) matches `RuleRegistry` (maintained by hand)
+- [ ] The [rules catalog](../docs/rules.md) matches `RuleRegistry` (maintained by hand)
 
 If you did break either of the first two, describe the migration for existing consumers here:
 
