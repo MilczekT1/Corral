@@ -178,7 +178,9 @@ class RuleExclusionsWarningTest {
         ArchRule wrapped = RuleExclusions.warnUnmatchedExclusionsOnFirstEvaluation(
                 alwaysViolated, new AtomicBoolean(false), () -> null, message -> { });
 
-        assertThrows(AssertionError.class, () -> wrapped.check(someClasses()),
+        JavaClasses classes = someClasses();
+
+        assertThrows(AssertionError.class, () -> wrapped.check(classes),
                 "the wrapper must not swallow the delegate's own outcome");
     }
 

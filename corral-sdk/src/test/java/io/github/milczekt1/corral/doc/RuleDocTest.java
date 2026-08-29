@@ -102,8 +102,9 @@ class RuleDocTest {
     @Test
     void rejectsAnIdWithMoreThanFourSegments() {
         // The id becomes a file name in every consumer's freeze store, so depth binds every author.
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> valid().id("spring.data.jpa.mockito.no-repository-in-controller").build());
+        RuleDoc.Builder fiveSegments = valid().id("spring.data.jpa.mockito.no-repository-in-controller");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, fiveSegments::build);
 
         assertTrue(thrown.getMessage().contains("4"), thrown.getMessage());
     }
@@ -112,8 +113,9 @@ class RuleDocTest {
     void rejectsAnIdLongerThanSeventyTwoCharacters() {
         String tooLong = "security." + "a".repeat(70);
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> valid().id(tooLong).build());
+        RuleDoc.Builder overlong = valid().id(tooLong);
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, overlong::build);
 
         assertTrue(thrown.getMessage().contains("72"), thrown.getMessage());
     }

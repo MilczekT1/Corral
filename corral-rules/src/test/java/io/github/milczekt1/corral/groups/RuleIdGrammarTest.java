@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.groups;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -73,7 +74,7 @@ class RuleIdGrammarTest {
             String[] segments = id.split("\\.");
             String prefix = segments[0];
 
-            assertTrue(VENDOR_PREFIX.equals(prefix),
+            assertEquals(VENDOR_PREFIX, prefix,
                     () -> "id '" + id + "' does not start with '" + VENDOR_PREFIX + "'. Every id"
                             + " Corral publishes carries the vendor prefix, so a consumer's own"
                             + " namespace can never collide with Corral's.");

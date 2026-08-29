@@ -73,13 +73,7 @@ public class DeprecatedRule {
         return Collections.unmodifiableSet(RETIRED_IDS);
     }
 
-    private static final class Retired implements ArchRule {
-
-        private final String description;
-
-        private Retired(String description) {
-            this.description = description;
-        }
+    private record Retired(String description) implements ArchRule {
 
         @Override
         public void check(JavaClasses classes) {
