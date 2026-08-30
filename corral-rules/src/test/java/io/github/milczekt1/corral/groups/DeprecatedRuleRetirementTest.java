@@ -26,7 +26,7 @@ class DeprecatedRuleRetirementTest {
         assertTrue(DeprecatedRule.retiredIds().contains(RetiredRuleFixtureGroup.RETIRED_ID),
                 "retiredIds() is what lets RuleIdGrammarTest tell \"retired\" from \"wrong\"");
 
-        // The checks RuleIdGrammarTest runs against AllCentralRules, run here against the fixture.
+        // The checks RuleIdGrammarTest runs against EveryPublishedGroup, run here against the fixture.
         RuleIdGrammarTest.assertNamespaceGrammar(ids);
         RuleIdGrammarTest.assertPolarityGrammar(ids);
         RuleIdGrammarTest.assertQualifierSegmentGrammar(ids);

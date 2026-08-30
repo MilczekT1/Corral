@@ -45,7 +45,7 @@ them, it does not restate them.
    class nobody points at is imported and compiled but never evaluated by any consumer.
 
 6. **Extend the expected id set** in
-   `AllCentralRulesTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java`).
+   `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java`).
 
 7. **Add a row to the [rules catalog](../../../docs/rules.md).** Nothing in the build checks
    this table — it drifts silently if you skip it.
@@ -65,7 +65,7 @@ catching them is why the steps above are ordered the way they are.
 
 Skip a step above and one of these two tests fails the build, on purpose:
 
-- **`AllCentralRulesTest`** — fails if the published id set no longer matches its expected set
+- **`PublishedCatalogTest`** — fails if the published id set no longer matches its expected set
   (step 6 skipped, or an id changed). If it fails on a rule you did **not** mean to touch, an id got
   renamed somewhere in your diff. **Ids are never renamed** — an id is the freeze-store key, and
   renaming orphans every consumer's recorded violations (rule re-seeds clean, build stays green,
@@ -82,5 +82,5 @@ Skip a step above and one of these two tests fails the build, on purpose:
 | Fixtures | `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/` |
 | Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<Name>RuleTest.java` |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
-| Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/AllCentralRulesTest.java` |
+| Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |

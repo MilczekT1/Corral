@@ -47,7 +47,7 @@ they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | `AllCentralRulesTest` — the change shows as a diff in its expected id set |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | `PublishedCatalogTest` — the change shows as a diff in its expected id set |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
@@ -59,7 +59,10 @@ migration for existing consumers.
 ## The shape
 
 One rule, one class. A rule class under `rules/<topic>/` owns everything about that rule; a group
-under `groups/` is a thin wrapper composing rule classes; `AllCentralRules` is a group of groups.
+under `groups/` is a thin wrapper composing rule classes. A group of groups is legal and nests to any
+depth, but the catalog does not publish one: composing the groups a build runs is the consumer's
+call, made in their repo. `EveryPublishedGroup`, in this module's **test** sources, is that root for
+Corral's own tests only.
 
 Packages split by role, and the arrows only point one way:
 
@@ -135,8 +138,11 @@ rule really does belong under both.
 
 1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
    `@ArchTest ArchTests` field per member.
-2. Give it an `@ArchTest ArchTests` field on `AllCentralRules`. Without one the group exists but no
-   consumer ever evaluates it.
+2. Give it an `@ArchTest ArchTests` field on `EveryPublishedGroup` (test sources). Without one, no
+   test here walks the group, so its rules skip the doc, grammar and id-uniqueness checks —
+   `PublishedCatalogTest.everyPublishedGroupIsReachableFromHere` fails until you add it.
+3. Add it to the [rules catalog](docs/rules.md) so consumers know it exists. Nothing delivers a new
+   group automatically: it reaches a build when someone wires it, which is the point.
 
 ## Is a rule catalog-worthy?
 
@@ -211,7 +217,7 @@ hygiene that binds every id, including a consumer's own, because the id becomes 
 every consumer's freeze store (see [The freeze store](docs/configuration.md#the-freeze-store)). The vendor
 prefix, the concern vocabulary, the polarity marker and the qualifier-segment list are enforced
 separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
-`AllCentralRules` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can
+`EveryPublishedGroup` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can
 author rules in their own namespace ("[a rule that encodes one team's preference is better off in
 that team's own rule namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside
 `RuleDoc` itself would revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly

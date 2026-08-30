@@ -3,8 +3,8 @@
 ## What it is
 
 Permanently removes **one rule** from your build — a rule from any catalog you consume, Corral's or
-your company's. The rule still exists and stays enforced for everyone else, and you keep wiring the
-catalog root, so new rules still arrive on upgrade. You removed a rule, not the mechanism that
+your company's. The rule still exists and stays enforced for everyone else, and you keep the group
+wired, so rules added to it still arrive on upgrade. You removed a rule, not the mechanism that
 delivers them.
 
 Exclusion is an **SDK** feature with nothing to wire: every rule that goes through

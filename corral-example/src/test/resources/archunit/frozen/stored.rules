@@ -1,3 +1,4 @@
+acme.no-legacy-date-api=acme.no-legacy-date-api
 acme.no-stdout-in-services=acme.no-stdout-in-services
 corral.logging.no-system-err=corral.logging.no-system-err
 corral.logging.no-system-out=corral.logging.no-system-out

@@ -3,18 +3,20 @@
 [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral)
 
 Centralized [ArchUnit](https://www.archunit.org/) rules you write once and enforce everywhere. One
-test-scoped dependency, one thin test class, and your architecture rules stop being prose in a wiki.
+test-scoped dependency, a short list of the groups you want, and your architecture rules stop being
+prose in a wiki.
 
 ## What you get
 
 | | |
 |---|---|
-| **Write once, enforce everywhere** | Rules live in this library, not copy-pasted into every repo. Consumers add one dependency and one test class. |
+| **Write once, enforce everywhere** | Rules live in this library, not copy-pasted into every repo. Consumers add one dependency and compose the groups they want. |
 | **Adoption never blocks** | Every rule is frozen. Existing violations are recorded as debt on first run; only *new* ones fail. You can adopt a rule on a codebase that breaks it 200 times, today. |
 | **Failures teach** | A violation prints why the rule exists, how to fix it, and how *not* to fake a fix — written for whoever (or whatever) reads the build log. |
 | **Runnable at any granularity** | The wiring produces a real JUnit tree, so you can run the whole suite, one group, or a single rule from the IDE gutter. |
 | **Composable** | A rule is a class, a group wraps rules, a group can wrap groups. Nests to any depth. |
-| **One rule off, catalog on** | A rule that is wrong for your codebase — not "not yet", but never — goes in `corral-exclusions.txt` with a reason. You keep the single wiring field, and keep receiving new rules as the catalog grows. |
+| **One rule off, catalog on** | A rule that is wrong for your codebase — not "not yet", but never — goes in `corral-exclusions.txt` with a reason. You keep the group wired, and keep receiving the rules added to it. |
+| **You choose what runs** | Wire the groups you want, in your own module. What your build enforces changes when your repo changes, not when the catalog does. |
 | **Guarded against silent decay** | The ways this could quietly stop enforcing anything — a rule registered but never evaluated, a group added but never wired — are covered by tests that fail loudly. |
 
 ## How it fits together
@@ -22,12 +24,12 @@ test-scoped dependency, one thin test class, and your architecture rules stop be
 ```mermaid
 flowchart LR
     subgraph consumer["Your repo"]
-        CT["CentralArchitectureTest<br/><i>@AnalyzeClasses</i>"]
+        CT["ProjectArchitectureTest<br/><i>@AnalyzeClasses</i>"]
+        PRG["ProjectRulesGroup<br/><i>your catalog root</i>"]
         STORE[("archunit/frozen<br/><i>committed</i>")]
     end
 
     subgraph rules["corral-rules"]
-        ACR["AllCentralRules"]
         TG["TestingRulesGroup<br/><i>group</i>"]
         LG["LoggingRulesGroup<br/><i>group</i>"]
         R1["TestClassNamingConventionRule"]
@@ -41,9 +43,9 @@ flowchart LR
         FMT["AgentFriendlyFailureDisplayFormat"]
     end
 
-    CT -->|"ArchTests.in(...)"| ACR
-    ACR --> TG
-    ACR --> LG
+    CT -->|"ArchTests.in(...)"| PRG
+    PRG --> TG
+    PRG --> LG
     TG --> R1
     TG --> R2
     LG --> R3
@@ -56,7 +58,7 @@ flowchart LR
 
 Each arrow from a group is an `@ArchTest ArchTests` field; each leaf is an `@ArchTest ArchRule`.
 Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape nests indefinitely —
-`AllCentralRules` is just a group whose members happen to be groups.
+`ProjectRulesGroup` is just a group whose members happen to be groups, and it lives in your repo.
 
 The two jars split by role: `corral-sdk` is the framework for authoring rules, `corral-rules`
 is the catalog of rules built on it. Depending on the catalog pulls the framework in transitively;
@@ -78,20 +80,65 @@ then depend on it:
 </dependency>
 ```
 
-**2. Add one test class** — `src/test/java/com/acme/CentralArchitectureTest.java`:
+**2. Compose the groups you want** — `src/test/java/com/acme/arch/ProjectRulesGroup.java`. This is
+your catalog root: everything you want run, central groups and your own rules alike, as one node.
 
 ```java
-@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)
-class CentralArchitectureTest {
+package com.acme.arch;
+
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.groups.LoggingRulesGroup;
+import io.github.milczekt1.corral.groups.TestingRulesGroup;
+
+/** Every architecture rule this project runs. Add a line to opt into another group. */
+final class ProjectRulesGroup {
+
     @ArchTest
-    static final ArchTests all = ArchTests.in(AllCentralRules.class);
+    static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
+
+    @ArchTest
+    static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
+
+    // Your own rules go here too — a rule class, or a group of them:
+    // @ArchTest static final ArchTests own = ArchTests.in(AcmeRulesGroup.class);
+
+    private ProjectRulesGroup() {
+    }
 }
 ```
+
+**3. Add one test class that runs it** — `src/test/java/com/acme/arch/ProjectArchitectureTest.java`:
+
+```java
+package com.acme.arch;
+
+import com.tngtech.archunit.core.importer.ImportOption;
+import com.tngtech.archunit.junit.AnalyzeClasses;
+import com.tngtech.archunit.junit.ArchTest;
+import com.tngtech.archunit.junit.ArchTests;
+
+@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)
+class ProjectArchitectureTest {
+
+    @ArchTest
+    static final ArchTests all = ArchTests.in(ProjectRulesGroup.class);
+}
+```
+
+That is one JUnit tree: run the whole class, one group node, or a single rule leaf from the IDE
+gutter. The [rules catalog](docs/rules.md) lists every group you can add a line for; a group left out
+is simply not enforced.
 
 > Do **not** add `ImportOption.DoNotIncludeTests`. The testing rules inspect your test classes;
 > excluding them makes those rules pass vacuously — green build, zero enforcement.
 
-**3. Configure ArchUnit** — `src/test/resources/archunit.properties`:
+> Splitting the tree across several test classes is fine and often better — one per concern, each
+> with its own `@AnalyzeClasses` scope. Wire each rule from exactly one of them: a rule id is a
+> freeze-store key, so the same rule run from two nodes has both writing the same entry.
+> `corral-example` is laid out that way.
+
+**4. Configure ArchUnit** — `src/test/resources/archunit.properties`:
 
 ```properties
 freeze.store.default.path=src/test/resources/archunit/frozen
@@ -103,7 +150,7 @@ failureDisplayFormat=io.github.milczekt1.corral.format.AgentFriendlyFailureDispl
 > block above if the file is yours and deliberate. Every copy found is named, because ArchUnit reads
 > only the first and it may belong to a dependency rather than to you.
 
-**4. Seed the freeze store once, and commit it:**
+**5. Seed the freeze store once, and commit it:**
 
 ```bash
 mvn test -Darchunit.freeze.store.default.allowStoreCreation=true
@@ -161,8 +208,8 @@ for any rule it does not own, so your own ArchUnit tests render unchanged.
 
 ## Rules
 
-Four rules today, in two groups — `TestingRulesGroup` and `LoggingRulesGroup`, both wired by
-`AllCentralRules`. Ids, groups and exactly what each one enforces are in the
+Four rules today, in two groups — `TestingRulesGroup` and `LoggingRulesGroup`. Wire either, or both,
+from your own root. Ids, groups and exactly what each one enforces are in the
 **[rules catalog](docs/rules.md)**.
 
 Ids carry a `corral.` vendor prefix and are never renamed, because
@@ -224,10 +271,10 @@ Excluding takes one line in `src/test/resources/corral-exclusions.txt`:
 corral.logging.no-system-err :: We ship a CLI; stderr is the interface. ADR-021.
 ```
 
-You keep `ArchTests.in(AllCentralRules.class)`, so new rules still arrive on upgrade — you removed
-one rule, not the mechanism that delivers them. A reason is mandatory, and every exclusion in effect
-is printed on any rule failure. An id that matches no rule in the run logs a warning rather than
-failing the build — a typo, or a rule renamed or retired upstream.
+You keep the group wired, so rules added to it still arrive on upgrade — you removed one rule, not
+the mechanism that delivers them. A reason is mandatory, and every exclusion in effect is printed on
+any rule failure. An id that matches no rule in the run logs a warning rather than failing the
+build — a typo, or a rule renamed or retired upstream.
 
 > **An exclusion is not a pause button.** An excluded rule records nothing while it is off, so
 > violations acquired meanwhile are all *new* the day you delete the line. To adopt a rule you
