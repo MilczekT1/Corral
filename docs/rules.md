@@ -1,9 +1,8 @@
 # Rules catalog
 
-Every rule Corral publishes. Groups are the unit you wire — from your own root, one line each, see
-the [quick start](../README.md#quick-start). Corral publishes no all-in-one root: a group you do not
-wire is not enforced. A single rule inside a group you do wire can be switched off with
-[an exclusion](excluding-a-rule.md).
+Every rule Corral publishes. Groups are the unit you wire, one line each from your own root — see the
+[quick start](../README.md#quick-start). A group you do not wire is not enforced; a single rule
+inside one you do can be switched off with [an exclusion](excluding-a-rule.md).
 
 | Rule id | Group | What it enforces |
 |---|---|---|

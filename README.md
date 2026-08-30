@@ -16,7 +16,7 @@ prose in a wiki.
 | **Runnable at any granularity** | The wiring produces a real JUnit tree, so you can run the whole suite, one group, or a single rule from the IDE gutter. |
 | **Composable** | A rule is a class, a group wraps rules, a group can wrap groups. Nests to any depth. |
 | **One rule off, catalog on** | A rule that is wrong for your codebase — not "not yet", but never — goes in `corral-exclusions.txt` with a reason. You keep the group wired, and keep receiving the rules added to it. |
-| **What runs is your decision** | The catalog publishes groups, not an all-in-one root. You compose them in your own module, so no upgrade can widen what your build enforces without a diff in your repo. |
+| **You choose what runs** | Wire the groups you want, in your own module. What your build enforces changes when your repo changes, not when the catalog does. |
 | **Guarded against silent decay** | The ways this could quietly stop enforcing anything — a rule registered but never evaluated, a group added but never wired — are covered by tests that fail loudly. |
 
 ## How it fits together
@@ -58,11 +58,7 @@ flowchart LR
 
 Each arrow from a group is an `@ArchTest ArchTests` field; each leaf is an `@ArchTest ArchRule`.
 Because `ArchTests.in(X)` descends into `X`'s `@ArchTest` fields, the same shape nests indefinitely —
-`ProjectRulesGroup` is just a group whose members happen to be groups.
-
-That root lives in **your** repo, not in the catalog. Corral publishes groups and stops there: the
-set of rules your build enforces is a line in your own source tree, reviewed like any other change,
-rather than something an upgrade can widen.
+`ProjectRulesGroup` is just a group whose members happen to be groups, and it lives in your repo.
 
 The two jars split by role: `corral-sdk` is the framework for authoring rules, `corral-rules`
 is the catalog of rules built on it. Depending on the catalog pulls the framework in transitively;

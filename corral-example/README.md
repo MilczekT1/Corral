@@ -9,10 +9,10 @@ would have both writing the same entry.
 
 | File | What it shows |
 |---|---|
-| `wiring/ProjectRulesGroup` | **Your own catalog root.** Corral publishes groups, not an all-in-one root, so the set of rules this build runs is a line in this repo. Note that it deliberately does *not* wire everything the catalog offers. |
+| `wiring/ProjectRulesGroup` | **Your own catalog root** — the groups and rules this module runs, composed as one node. It wires `TestingRulesGroup` and this module's own rule; `LoggingRulesGroup` is wired by `exclusions/` instead. |
 | `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
-| `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. It is wired from `ProjectRulesGroup`, alongside the library's. |
-| `exclusions/ExcludedRuleTest` | A second node with its own scope, wiring `LoggingRulesGroup` — the group holding the excluded rule. |
+| `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. Wired from `ProjectRulesGroup`, alongside the library's. |
+| `exclusions/ExcludedRuleTest` | Wiring `LoggingRulesGroup`, the group holding the excluded rule. |
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
 | `archunit/frozen/` | The committed freeze store. Six entries, three files named after their rule ids — the clean rules have no file, and the retired id has no entry at all. |
@@ -156,14 +156,13 @@ acquires while the rule is off is *new* the day the line goes away. Exclusion is
 
 ## Retiring an id
 
-`retirement/` is the other half of the story: excluding is a *consumer* opting out locally, retiring
-is a *catalog owner* withdrawing an id for everyone. This module is both, so it can show both.
+Excluding is a *consumer* opting out locally; retiring is a *catalog owner* withdrawing an id for
+everyone. `retirement/` shows the second, on the ids this module owns.
 
-`acme.no-java-util-date` shipped, then grew to cover `Calendar` as well as `Date` — at which point
-the slug no longer described it. The tempting fix is a rename. **A rename fails silently:** the id is
-the freeze-store key, ArchUnit's `ViolationStore` SPI has no rename verb, so every consumer's
-recorded violations stay filed under the old key while the rule re-seeds clean and the build goes
-green enforcing nothing. `DateRulesGroup` retires it instead:
+**A rename fails silently.** An id is the freeze-store key and ArchUnit's `ViolationStore` SPI has no
+rename verb, so a renamed id leaves every consumer's recorded violations filed under the old key: the
+rule re-seeds clean and the build goes green enforcing nothing. `DateRulesGroup` publishes
+`acme.no-legacy-date-api` and keeps the id it replaced as a signpost:
 
 ```java
 @ArchTest
