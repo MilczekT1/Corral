@@ -43,7 +43,7 @@ frozen, so existing stores keep their UUIDs and keep working.
 
 **A clean rule leaves no file.** A rule that is already clean still gets frozen: ArchUnit records it
 in `stored.rules` *and* writes an empty violation file. The index entry is what keeps the rule
-enforced (see [How freezing decides](../README.md#how-freezing-decides)); the empty file is noise in
+enforced (see [How freezing decides](freezing.md)); the empty file is noise in
 a commit. This store keeps the entry and drops the file. Three things to know:
 
 - **Opt-in.** Leave the line out and you get ArchUnit's stock store, empty files included.
