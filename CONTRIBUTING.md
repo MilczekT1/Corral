@@ -18,21 +18,19 @@ The reactor is `corral-sdk` (the framework), `corral-rules` (the rule catalog) a
 (a working consumer with a committed freeze store, which doubles as an end-to-end test of the
 wiring).
 
-**Java 17.** That is the baseline for the whole project, `maven.compiler.release=17` in the root
-POM. It is the minimum JVM that can load the published classes, so raising it is a breaking change
-for consumers — please do not, without discussing it first. A newer JDK on your machine is fine:
-`javac` cross-compiles against its bundled `ct.sym`, so you do not need a JDK 17 installed to build.
+**Java baseline.** The root POM's `maven.compiler.release` is the baseline for the whole project. It
+is the minimum JVM that can load the published classes, so raising it is a breaking change for
+consumers — please do not, without discussing it first. A newer JDK on your machine is fine: `javac`
+cross-compiles against its bundled `ct.sym`, so you do not need that exact JDK installed to build.
 
 **Lombok.** Install your IDE's [Lombok](https://projectlombok.org/) plugin, or the IDE reports errors
 on generated members that `mvn verify` compiles cleanly.
 
 Lombok is wired through `annotationProcessorPaths` in the root `pom.xml`, not just as a dependency —
 JDK 23+ ignores annotation processors that are only on the classpath. Remove that block and
-compilation fails on the generated members (`RuleDoc.builder()`, the formatter's `log`), so the
-misconfiguration cannot pass silently.
+compilation fails on the generated members, so the misconfiguration cannot pass silently.
 
-**Coverage.** JaCoCo fails the build at `verify` below the thresholds in the root `pom.xml`
-(`jacoco.lineCoverage.minimum`, `jacoco.branches.minimum`, `jacoco.classes.maxMissed`).
+**Coverage.** JaCoCo fails the build at `verify` below the thresholds set in the root `pom.xml`.
 `corral-example` overrides them to zero — it is a wiring demo, not a tested component.
 
 **Sonar.** `corral-example` sets `sonar.skip=true` for the same reason: its classes exist to be
@@ -42,105 +40,71 @@ the wiring, and breaking it breaks the build.
 
 ## What breaks consumers
 
-Corral's compatibility surface is unusual and sharp. Two of these have **no automated check**, so
+Corral's compatibility surface is unusual and sharp. Most of these have **no automated check**, so
 they are on the reviewer and on you:
 
 | Change | Why it breaks | Checked by |
 |---|---|---|
-| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | `PublishedCatalogTest` — the change shows as a diff in its expected id set |
+| Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | the catalog test's expected id set — the change shows as a diff in review |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
-| Testing against the **published frozen field** instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
-| Letting the **[rules catalog](docs/rules.md)** drift from `RuleRegistry` | The most visible form of catalog rot. | nothing (yet) |
+| Testing against the published frozen field instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
+| Letting the **[rules catalog](docs/rules.md)** drift from the published groups | The most visible form of catalog rot. | nothing (yet) |
 
-If you must make one of the first two changes, say so explicitly in the PR and describe the
+If you must rename an id or reword a predicate, say so explicitly in the PR and describe the
 migration for existing consumers.
 
 ## The shape
 
 One rule, one class. A rule class under `rules/<topic>/` owns everything about that rule; a group
-under `groups/` is a thin wrapper composing rule classes. A group of groups is legal and nests to any
-depth, but the catalog does not publish one: composing the groups a build runs is the consumer's
+under `groups/` is a thin wrapper composing rule classes. Class names end in `Rule`, so they never
+collide with the `*Test` convention their own tests follow. A group of groups is legal and nests to
+any depth, but the catalog does not publish one: composing the groups a build runs is the consumer's
 call, made in their repo. `EveryPublishedGroup`, in this module's **test** sources, is that root for
 Corral's own tests only.
-
-Packages split by role, and the arrows only point one way:
-
-| module | package | holds | depends on |
-|---|---|---|---|
-| `corral-sdk` | root | `DocumentedRule` — the authoring contract | `doc` |
-| `corral-sdk` | `doc` | `RuleDoc`, `RuleRegistry` — the vocabulary | nothing |
-| `corral-sdk` | `store` | `EmptyOmittingViolationStore` | `doc` |
-| `corral-sdk` | `format` | `AgentFriendlyFailureDisplayFormat`, `AntiFixPolicy` | `doc`, `exclude` |
-| `corral-sdk` | `exclude` | `Exclusion`, `RuleExclusions` — the consumer's `corral-exclusions.txt` | `doc`, `reflect` |
-| `corral-sdk` | `reflect` | `PublishedRules` — the `@ArchTest` walk | nothing |
-| `corral-sdk` | `scope` | `TestScope` — shared predicates for what a rule applies to | nothing |
-| `corral-rules` | `rules/<topic>` | the rules themselves | root, `doc`, `scope` |
-| `corral-rules` | `groups` | composition only | `rules/<topic>` |
-
-The module boundary is what enforces the direction: `corral-sdk` has no dependency on
-`corral-rules`, so a framework class importing a concrete rule does not compile.
-
-`store` and `format` are peers: a doc is rendered on failure whether or not freezing did anything
-with it, so neither imports the other. `format` reads `exclude` in one direction only — to print the
-census of what is not being enforced — and `exclude` knows nothing about rendering. `exclude` reads
-`reflect` for one thing: walking a wired root is the only way to get a *complete* set of rule ids,
-which `RuleRegistry` cannot give mid-run.
 
 Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
 exactly those fields and nothing else, so the field *is* the membership — there is no second list to
 keep in step, and no way to declare a member that consumers never evaluate.
 
-## Adding a rule to an existing group
+Packages split by role and the arrows point one way, enforced by the module boundary rather than by
+convention: `corral-sdk` has no dependency on `corral-rules`, so a framework class importing a
+concrete rule does not compile.
 
-The step-by-step is **[Creating a rule](docs/creating-a-rule.md)** — id, class, fixtures, wiring, and
-the three ways to ship a rule that silently enforces nothing.
-
-What that guide does not cover, because it belongs to the design rather than the task:
-
-- **One rule, one class.** A rule class under `rules/<topic>/` owns everything about that rule; a
-  group is a thin wrapper. Class names end in `Rule`, so they never collide with the `*Test`
-  convention their own tests follow.
-- **Membership is the field.** `ArchTests.in(X)` descends into exactly `X`'s `@ArchTest` fields, so
-  the field *is* the declaration. There is no second list to keep in step.
+The step-by-step for adding a rule is **[Creating a rule](docs/creating-a-rule.md)** — id, class,
+fixtures, wiring, and the three ways to ship a rule that silently enforces nothing.
 
 ## A rule in more than one group
 
 Membership is a graph, not a tree: nothing stops two groups naming the same rule class, and over
 time a rule genuinely belonging to two axes (say testing *and* security) will.
 
-That works. It also costs something:
+That works, and it costs a little. ArchUnit builds one JUnit node per `@ArchTest` field it reaches,
+so the rule appears once under each group and its predicates re-run over the same classes. Class
+import happens once — `JavaClasses` is cached per `@AnalyzeClasses` — and the freeze store holds one
+entry, because both nodes share the description and so cannot disagree. Nothing deduplicates the
+nodes; collapsing them would mean owning node creation, which is not worth it for a repeated
+predicate pass over already-imported classes.
 
-| | |
-|---|---|
-| JUnit nodes | **one per path** — the rule appears once under each group |
-| Rule evaluation | **once per node** — predicates re-run over the same classes |
-| Class import | once — ArchUnit caches `JavaClasses` per `@AnalyzeClasses` |
-| Freeze store | one entry — both nodes share the description, so they cannot disagree |
+The catalog test allows this on purpose. It groups published rules by id and requires **one distinct
+rule object** per id — a rule reached by two paths is one object read from one `static final` field,
+while two rules colliding on an id are two. That collision is the real hazard, because the id is the
+freeze-store key, so the two would read each other's recorded violations as their own. `RuleRegistry`
+does not catch it: its guard compares docs, so two rules carrying identical documentation pass
+straight through.
 
-Nothing deduplicates the nodes: ArchUnit builds one per `@ArchTest` field it reaches, and those
-fields are static. Collapsing them would mean owning node creation, which is not worth it for a
-repeated predicate pass over already-imported classes.
-
-`everyRuleIdIsClaimedByExactlyOneRule` allows this on purpose. It groups published rules by id and
-requires **one distinct rule object** per id — a rule reached by two paths is one object read from
-one `static final` field, while two rules colliding on an id are two. That collision is the real
-hazard, because the id is the freeze-store key, so the two would read each other's recorded
-violations as their own. `RuleRegistry` does not catch it: its guard compares docs, so two rules
-carrying identical documentation pass straight through.
-
-Default to one group per rule and compose by nesting groups. Reach for a second parent when the
-rule really does belong under both.
+Default to one group per rule and compose by nesting groups. Reach for a second parent when the rule
+really does belong under both.
 
 ## Adding a group
 
-`Java17Rules`, `JakartaMigrationRules` and `SpringRules` do not exist yet. On top of the rule steps:
+On top of the rule steps:
 
-1. Create `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>Rules.java` — copy `TestingRulesGroup`: a `@UtilityClass` with one
-   `@ArchTest ArchTests` field per member.
+1. Create the group class under `groups/` — a `@UtilityClass` with one `@ArchTest ArchTests` field
+   per member. Any existing group is a working template.
 2. Give it an `@ArchTest ArchTests` field on `EveryPublishedGroup` (test sources). Without one, no
-   test here walks the group, so its rules skip the doc, grammar and id-uniqueness checks —
-   `PublishedCatalogTest.everyPublishedGroupIsReachableFromHere` fails until you add it.
+   test here walks the group, so its rules skip the doc, grammar and id-uniqueness checks — the
+   catalog test's reachability check fails until you add it.
 3. Add it to the [rules catalog](docs/rules.md) so consumers know it exists. Nothing delivers a new
    group automatically: it reaches a build when someone wires it, which is the point.
 
@@ -162,37 +126,29 @@ An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumer
 is closed and the closure is enforced, not a style convention.
 
 **Every id Corral publishes starts with the `corral.` vendor prefix.** Corral can enforce its own ids
-against its own catalog test (`RuleIdGrammarTest`), but it deliberately cannot enforce a consumer's —
-`RuleDoc` is public SDK surface, narrowed to universal hygiene precisely so a consumer keeps their own
-namespace. That freedom means a consumer authoring rules with `corral-sdk` reaches for the same
-generic words Corral's own catalog used to claim — `test`, `logging`, `api`, `security`, `naming`.
-Before the prefix, a collision there was prevented only by a runtime `RuleRegistry.register` throw
-that forced the *consumer* to rename *their* rule. Taking `corral.` for every id this library
-publishes makes the collision structurally impossible instead, and leaves the entire generic
-namespace to consumers. A consumer's own rule needs no prefix at all — `corral-example`'s
-`acme.no-stdout-in-services` is exactly that case, and it must keep working.
+against its own catalog test, but it deliberately cannot enforce a consumer's — `RuleDoc` is public
+SDK surface, narrowed to universal hygiene precisely so a consumer keeps their own namespace. That
+freedom means a consumer authoring rules with `corral-sdk` reaches for the same generic words
+Corral's own catalog used to claim — `test`, `logging`, `api`, `security`, `naming`. Before the
+prefix, a collision there was prevented only by a runtime `RuleRegistry.register` throw that forced
+the *consumer* to rename *their* rule. Taking `corral.` for every id this library publishes makes the
+collision structurally impossible instead, and leaves the entire generic namespace to consumers. A
+consumer's own rule needs no prefix at all — `corral-example`'s `acme.no-stdout-in-services` is
+exactly that case, and it must keep working.
 
 | Shape | When | Example |
 |---|---|---|
-| `corral.<slug>` | Corral's own framework meta-check | (none published today) |
+| `corral.<slug>` | Corral's own framework meta-check | `corral.no-unregistered-rule` |
 | `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
 | `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
 
 **Segment 1 is always `corral`** — provenance, not taxonomy. **Segment 2 is a closed vocabulary**, in
-four kinds:
-
-- **concern** — `api`, `concurrency`, `exception`, `layering`, `logging`, `naming`, `security`, `test`
-- **library** — `jackson`, `jakarta`, `lombok`, `spring`
-- **JDK** — `java`, plus `java<N>` for a version-gated API
-- **meta** — the one exception: a depth-2 `corral.<slug>` id has no segment-2 concern at all, the slug
-  itself sits at segment 2. Nothing published today takes this shape — the framework's own former
-  meta-check, `corral.exclusions-must-name-real-rules`, was replaced by an unconditional SDK warning
-  that needs no wired root and so is no longer published as a rule at all — but the grammar still
-  supports it for a future one. It would still need a polarity marker like any other id — see the
-  rule below.
-
-**Segment 3, when present, is a library qualifier** — today, exactly `mockito`, `powermock` or
-`junit`.
+four kinds: a **concern** (`logging`, `security`, …), a **library** (`spring`, `jackson`, …), the
+**JDK** (`java`, plus `java<N>` for a version-gated API), or **meta** — the one exception, where a
+depth-2 `corral.<slug>` id has no segment-2 concern at all and the slug itself sits at segment 2.
+**Segment 3, when present, is a library qualifier.** The accepted words for each are the lists in
+`RuleIdGrammarTest`; that test is the vocabulary, so adding a word means adding it there and nowhere
+else.
 
 **Tie-break when a predicate touches a library:** the segment-3 qualifier is the non-JDK library whose
 *correct use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
@@ -206,22 +162,19 @@ predicate is being final). Six inconsistent forms across the early catalog colla
 so a slug's intent is legible without opening the rule.
 
 **Caps:** depth ≤ 4 segments, and a fourth segment is legal only when segment 3 is a library
-qualifier — today, exactly `mockito`, `powermock` or `junit`. Anything finer-grained belongs in a
-group, which can be reorganised, not in the id, which cannot once a consumer has frozen it. Length ≤
-72 characters — segment 1 is a fixed vendor prefix on top, so the taxonomy budget below it is
-unchanged from before the prefix existed.
+qualifier. Anything finer-grained belongs in a group, which can be reorganised, not in the id, which
+cannot once a consumer has frozen it. Length ≤ 72 characters — segment 1 is a fixed vendor prefix on
+top, so the taxonomy budget below it is unchanged from before the prefix existed.
 
-**The check is split across two layers, deliberately.** `RuleDoc`'s constructor
-(`throwOnInvalidId`) enforces only the shape regex, the length cap and the depth cap — universal
-hygiene that binds every id, including a consumer's own, because the id becomes a *file name* in
-every consumer's freeze store (see [The freeze store](docs/configuration.md#the-freeze-store)). The vendor
-prefix, the concern vocabulary, the polarity marker and the qualifier-segment list are enforced
-separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
-`EveryPublishedGroup` — this catalog, not the world. `corral-sdk` is published precisely so a consumer can
-author rules in their own namespace ("[a rule that encodes one team's preference is better off in
-that team's own rule namespace](#is-a-rule-catalog-worthy)"); a closed vocabulary enforced inside
-`RuleDoc` itself would revoke that promise. `corral-example`'s `acme.no-stdout-in-services` is exactly
-that case, and it must keep working.
+**The check is split across two layers, deliberately.** `RuleDoc`'s constructor enforces only the
+shape regex, the length cap and the depth cap — universal hygiene that binds every id, including a
+consumer's own, because the id becomes a *file name* in every consumer's freeze store (see [The
+freeze store](docs/configuration.md#the-freeze-store)). The vendor prefix, the segment vocabularies
+and the polarity marker are enforced separately, by `RuleIdGrammarTest` in `corral-rules`, and only
+against ids reachable from `EveryPublishedGroup` — this catalog, not the world. `corral-sdk` is
+published precisely so a consumer can author rules in their own namespace ("[a rule that encodes one
+team's preference is better off in that team's own rule namespace](#is-a-rule-catalog-worthy)"); a
+closed vocabulary enforced inside `RuleDoc` itself would revoke that promise.
 
 **Deprecate, never rename.** A rule id is a freeze-store key, and ArchUnit's `ViolationStore` SPI has
 no rename verb — so a rename orphans every consumer's recorded violations, silently. Withdraw an id
@@ -236,8 +189,6 @@ feat: Add SpringRules with spring.no-field-injection
 fix: Resolve Sonar findings and add SonarCloud badges
 docs: Split the contributing guide out of the README
 build: Target Java 17 across the whole project
-ci: Bump actions/create-github-app-token from 2.2.2 to 3.2.0
-refactor: Rename the project from LLamaGuard to Corral
 ```
 
 Every change lands on `main` through a squash-merged pull request, so the PR title becomes the
