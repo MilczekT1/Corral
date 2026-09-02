@@ -42,6 +42,9 @@ Write at least one class the rule must **flag** and one it must **ignore**, and 
 directions against the raw `DEFINITION` — the published field is frozen, so it would seed and pass
 (see the traps below).
 
+Put the test in the **rule's own package**: `DEFINITION` is package-private, and a test anywhere
+else cannot reach it without widening what the rule publishes.
+
 Those classes must not run as tests themselves. Corral declares them as `static` nested classes at
 the top of the rule's own test, which no runner selects — so they need no `fixtures` package and no
 naming contortion, and what each one is for is unmissable. If you keep them as top-level classes
@@ -99,10 +102,11 @@ Each gives you a green build and zero enforcement.
 
 ## In Corral's own catalog
 
-Contributing a rule *here* adds four project-specific steps:
+Contributing a rule *here* adds these project-specific steps:
 
 | | |
 |---|---|
+| One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test — so everything about a rule is one directory name. `NoThreadSleepRule` is the worked example; the three older rules still sit flat under `rules/<topic>/` with a shared `fixtures/<topic>/` package and no committed store, and move as they are next touched |
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
 | Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true`, then commit. Nothing in the build sets that flag, so a missing store fails loudly |
 | Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | It asserts the wired root's ids exactly, so an id change shows as a diff in review |
