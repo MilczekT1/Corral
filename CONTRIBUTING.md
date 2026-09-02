@@ -48,7 +48,7 @@ they are on the reviewer and on you:
 | Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | the catalog test's expected id set — the change shows as a diff in review |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
-| Testing against the published frozen field instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
+| Testing the **predicate** through the published frozen field instead of the raw `DEFINITION` | Against a store with no entry for the rule, the frozen field seeds and passes, so the test is vacuous. Freezing that field into a *committed* store is a separate, expected check — it compares rather than seeds. | partially |
 | Letting the **[rules catalog](docs/rules.md)** drift from the published groups | The most visible form of catalog rot. | nothing (yet) |
 
 If you must rename an id or reword a predicate, say so explicitly in the PR and describe the
@@ -60,13 +60,16 @@ One rule, one class, one package. A rule class under `rules/<topic>/<rule>/` own
 that rule, and its test mirrors that package in test sources, carrying the classes it examines as
 `static` nested classes — `NoThreadSleepRule` is the worked example. The test shares the rule's
 package because `DEFINITION` is package-private; the examples nest inside the test because nothing
-then selects them as tests. The three rules that predate the convention still sit flat under
-`rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package; they move as they are
-next touched. A group under `groups/` is a thin wrapper composing rule classes. Class names end in
-`Rule`, so they never collide with the `*Test` convention their own tests follow. A group of groups
-is legal and nests to any depth, but the catalog does not publish one: composing the groups a build
-runs is the consumer's call, made in their repo. `EveryPublishedGroup`, in this module's **test**
-sources, is that root for Corral's own tests only.
+then selects them as tests. **A rule test also freezes**, into a store committed under
+`corral-rules/src/test/resources/archunit/frozen/`, so what the rule records is reviewed like any
+other file and a widened predicate fails the build instead of quietly absorbing the extra findings —
+see [Creating a rule](docs/creating-a-rule.md). The three rules that predate the convention still
+sit flat under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no
+committed store; they move as they are next touched. A group under `groups/` is a thin wrapper
+composing rule classes. Class names end in `Rule`, so they never collide with the `*Test` convention
+their own tests follow. A group of groups is legal and nests to any depth, but the catalog does not
+publish one: composing the groups a build runs is the consumer's call, made in their repo.
+`EveryPublishedGroup`, in this module's **test** sources, is that root for Corral's own tests only.
 
 Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
 exactly those fields and nothing else, so the field *is* the membership — there is no second list to
