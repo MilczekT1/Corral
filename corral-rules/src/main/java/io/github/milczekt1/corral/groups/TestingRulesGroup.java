@@ -3,8 +3,8 @@ package io.github.milczekt1.corral.groups;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.testing.NoMockedRepositoryInIntegrationTestRule;
-import io.github.milczekt1.corral.rules.testing.NoThreadSleepRule;
 import io.github.milczekt1.corral.rules.testing.TestClassNamingConventionRule;
+import io.github.milczekt1.corral.rules.testing.nothreadsleep.NoThreadSleepRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass

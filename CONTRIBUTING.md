@@ -56,12 +56,15 @@ migration for existing consumers.
 
 ## The shape
 
-One rule, one class. A rule class under `rules/<topic>/` owns everything about that rule; a group
-under `groups/` is a thin wrapper composing rule classes. Class names end in `Rule`, so they never
-collide with the `*Test` convention their own tests follow. A group of groups is legal and nests to
-any depth, but the catalog does not publish one: composing the groups a build runs is the consumer's
-call, made in their repo. `EveryPublishedGroup`, in this module's **test** sources, is that root for
-Corral's own tests only.
+One rule, one class, one package. A rule class under `rules/<topic>/<rule>/` owns everything about
+that rule, and its test and fixtures mirror that package in test sources, so what a class is for is
+legible from its path — `NoThreadSleepRule` is the worked example. The three rules that predate the
+convention still sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package; they move
+as they are next touched. A group under `groups/` is a thin wrapper composing rule classes. Class
+names end in `Rule`, so they never collide with the `*Test` convention their own tests follow. A
+group of groups is legal and nests to any depth, but the catalog does not publish one: composing the
+groups a build runs is the consumer's call, made in their repo. `EveryPublishedGroup`, in this
+module's **test** sources, is that root for Corral's own tests only.
 
 Membership is declared once, as `@ArchTest ArchTests` fields. `ArchTests.in(X)` descends into
 exactly those fields and nothing else, so the field *is* the membership — there is no second list to

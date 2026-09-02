@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.fixtures.testing;
+package io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures;
 
 import org.junit.jupiter.api.Test;
 

@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing;
+package io.github.milczekt1.corral.rules.testing.nothreadsleep;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -11,8 +11,9 @@ import org.junit.jupiter.api.Test;
 
 class NoThreadSleepRuleTest {
 
+    /** This rule's own examples, and nothing else — they live one package down from this test. */
     private static final JavaClasses FIXTURES = new ClassFileImporter()
-            .importPackages("io.github.milczekt1.corral.fixtures.testing");
+            .importPackages("io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures");
 
     private static String report(ArchRule rule) {
         return String.join("\n", rule.allowEmptyShould(true).evaluate(FIXTURES).getFailureReport().getDetails());

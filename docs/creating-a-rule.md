@@ -42,7 +42,9 @@ Write at least one class the rule must **flag** and one it must **ignore**, and 
 `DEFINITION`, asserting **both** directions.
 
 If you keep fixtures in your test sources, exclude them from your test runner — Corral excludes
-`**/fixtures/**` in Surefire — so fixtures named `*Test`/`*IT` don't run themselves.
+`**/fixtures/**` in both Surefire and Failsafe — so fixtures named `*Test`/`*IT` don't run
+themselves. Corral keeps each rule's fixtures in a `fixtures` package beside that rule's test, so
+what a fixture is for is legible from its path.
 
 ## 4. Wire it into a group
 

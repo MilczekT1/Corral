@@ -28,18 +28,25 @@ them, it does not restate them.
    "what classes does the predicate mention?".
 
 2. **Create the rule class** at
-   `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<Name>Rule.java` — a
+   `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` — a
    `final class implements DocumentedRule` with a private constructor and a name ending in `Rule`
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
    `@ArchTest` field** — see Trap 1 below for why this order is load-bearing, not stylistic.
 
-3. **Add fixtures** under `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/`
-   — at least one class the rule must flag and one it must leave alone. Surefire excludes
-   `**/fixtures/**`, so naming a fixture `*Test`/`*IT` does not make it run itself.
+3. **Add fixtures** under `.../rules/<topic>/<rule>/fixtures/` in **test** sources — at least one
+   class the rule must flag and one it must leave alone. The per-rule package is what makes it
+   reviewable: the classes under it exist for that one rule and nothing else.
 
-4. **Write the rule test** in `corral-rules/src/test/java/.../rules/<topic>/<Name>RuleTest.java`,
-   asserting **both directions** (flags the bad fixture, stays silent on the good one) against the
-   raw `DEFINITION` field — see Trap 2 below for why the published field cannot substitute.
+   The `fixtures` segment is load-bearing, not decorative. Both Surefire and Failsafe exclude
+   `**/fixtures/**`, and Failsafe *includes* `**/*IT.java`, so a fixture named `*IT` one directory
+   higher is executed as a real integration test — a sleeping fixture then really sleeps. Keep the
+   segment and the name stays free.
+
+4. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, importing only that
+   rule's fixture package, and asserting **both directions** (flags the bad fixture, stays silent on
+   the good one) against the raw `DEFINITION` field — see Trap 2 below for why the published field
+   cannot substitute. The test shares the rule's package deliberately: `DEFINITION` is
+   package-private, so a test anywhere else cannot reach it without widening the published surface.
 
 5. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
    class nobody points at is imported and compiled but never evaluated by any consumer.
@@ -78,9 +85,13 @@ Skip a step above and one of these two tests fails the build, on purpose:
 
 | Artifact | Path |
 |---|---|
-| Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<Name>Rule.java` |
-| Fixtures | `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/` |
-| Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<Name>RuleTest.java` |
+| Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
+| Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
+| Fixtures | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/fixtures/` |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
+
+`NoThreadSleepRule` is the worked example. The three rules that predate this layout still sit flat
+under `rules/<topic>/` with a shared `fixtures/<topic>/` package — copy the per-rule shape, not
+theirs.
