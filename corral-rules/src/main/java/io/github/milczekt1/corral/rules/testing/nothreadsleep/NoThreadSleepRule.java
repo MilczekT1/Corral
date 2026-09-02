@@ -17,16 +17,10 @@ import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * Test code may not call {@code Thread.sleep}: waiting for a duration is not waiting for a
- * condition.
+ * Test code may not call {@code Thread.sleep}.
  *
- * <p>Scoped to {@code Thread.sleep} alone. Every other way of spelling a wait —
- * {@code TimeUnit.sleep} first among them — is the same mistake but a different predicate, and
- * belongs in its own rule under its own freeze-store key, so a consumer can adopt and retire the
- * two independently.
- *
- * <p>Scoped with {@link TestScope#TEST_CLASSES}, so a helper or abstract base in test output counts
- * even though it declares no test of its own — that is exactly where a {@code pause()} hides.
+ * <p>{@code TimeUnit.sleep} and other spellings of a wait are out of scope: same mistake, different
+ * predicate, and an id each, so a consumer can adopt and retire them separately.
  *
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
@@ -65,11 +59,7 @@ public final class NoThreadSleepRule implements DocumentedRule {
                     the test waits on anything.""")
             .build();
 
-    /**
-     * Matched by owner and name rather than by signature, so the {@code (long)}, {@code (long, int)}
-     * and {@code (Duration)} overloads are all covered without a future rewording. Assignable to
-     * {@code Thread}, so a call written against a subclass counts.
-     */
+    /** Owner and name, not signature: every overload, without a rewording that would re-seed stores. */
     private static final DescribedPredicate<JavaCall<?>> SLEEP_CALL =
             target(owner(assignableTo(Thread.class)))
                     .and(target(name("sleep")))

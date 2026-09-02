@@ -19,26 +19,12 @@ import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /**
- * The class under examination comes first and stays first: the committed store records the line its
- * violation sits on, so anything inserted above it rewrites the store on an unrelated edit.
- *
- * <p>It is a static nested class, so no runner selects it — no {@code *IT} name and no
- * {@code fixtures} package needed, only a compiler, which puts it in test output and therefore in
- * {@code TestScope.TEST_CLASSES}.
- *
- * <p>There is no second, deliberately-ignored class. The store is the negative direction instead:
- * {@code check} fails on any violation the file does not already record, so a widened predicate
- * fails here rather than passing quietly. That only works because the example holds a call the rule
- * must <em>not</em> match — with a single matching call and nothing else, every over-broad
- * predicate finds exactly the recorded violation and stays green.
+ * The examples are nested and static, so no runner selects them — a top-level {@code *IT} outside a
+ * {@code fixtures} package is run by Failsafe for real.
  */
 class NoThreadSleepRuleTest {
 
-    /**
-     * The sleep is a guess about how long the charge takes, on someone else's machine, and must be
-     * flagged. The {@code currentThread} call is on the same owner and must not be — the store
-     * recording one line and not two is what pins both directions from a single example.
-     */
+    /** {@code currentThread} is deliberate: same owner, not a sleep, so an over-broad predicate fails. */
     static class ThreadSleeper {
 
         void awaitTheCharge() throws InterruptedException {
@@ -52,14 +38,10 @@ class NoThreadSleepRuleTest {
 
     private static final String ID = "corral.test.no-thread-sleep";
 
-    /** Committed, and resolved against the JVM's working directory — the module, under Surefire. */
+    /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /**
-     * {@code TimeUnit} is imported from the JDK, so it is production-scoped, and its {@code sleep}
-     * delegates to {@code Thread.sleep} — which makes it the only thing here that can pin the
-     * {@code TEST_CLASSES} clause. A test cannot declare a class outside test scope.
-     */
+    /** {@code TimeUnit} sleeps and is JDK-sourced, so it is production-scoped: it pins the scope clause. */
     private static final JavaClasses EXAMPLES = new ClassFileImporter()
             .importClasses(ThreadSleeper.class, TimeUnit.class);
 
@@ -76,7 +58,7 @@ class NoThreadSleepRuleTest {
         assertTrue(report.contains("ThreadSleeper"), report);
     }
 
-    /** Both premises asserted, so a JDK that changed either fails loudly rather than unpinning. */
+    /** Premises asserted, so a JDK that changed either fails loudly instead of unpinning the clause. */
     @Test
     void ignoresASleepInProductionCode() {
         JavaClass timeUnit = EXAMPLES.get(TimeUnit.class);
@@ -93,15 +75,11 @@ class NoThreadSleepRuleTest {
     }
 
     /**
-     * The finding also has to reach the committed store, in a file named for the rule's id — the key
-     * every consumer's debt is filed under. Committing it makes a widened predicate fail the build
-     * rather than quietly join the accepted set. Reseed, then commit the result:
-     * {@code ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true}
+     * {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a frozen rule captures its store
+     * when constructed, which is class initialisation, so naming one here races class loading. Only
+     * the path goes on the process-wide {@link ArchConfiguration}.
      *
-     * <p>The store goes in through {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a
-     * frozen rule captures its store when constructed, which is class initialisation, so naming one
-     * here races class loading. Only the path goes on {@link ArchConfiguration}, reset in a
-     * {@code finally}.
+     * <p>Reseed with {@code -Darchunit.freeze.store.default.allowStoreCreation=true}, then commit.
      */
     @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {

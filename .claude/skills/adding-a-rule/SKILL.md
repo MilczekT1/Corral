@@ -39,7 +39,7 @@ sequences and cross-references them for *this* catalog, it does not restate them
    cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
    package-private, so a test anywhere else cannot reach it without widening the published surface.
 
-4. **Declare the examples as `static` nested classes at the top of that test**, and reach them with
+4. **Declare the examples as `static` nested classes in that test**, and reach them with
    `importClasses(...)`. What each is for is then unmissable, and no runner selects them, so they
    need neither an `*IT` name nor a `fixtures` package: only the compiler has to see them, which is
    what puts them in test output and therefore in `TestScope.TEST_CLASSES`.
@@ -51,11 +51,6 @@ sequences and cross-references them for *this* catalog, it does not restate them
    the *class* needs one, because the first example is already a violation. What is not optional is
    that an over-broad predicate fails — a lone example with a lone matching call cannot do that,
    since every too-wide predicate still finds exactly that one call.
-
-   **Top, not bottom, and keep them there.** Stored violations carry the source line of each call
-   (`NoThreadSleepRuleTest.java:36`), so examples sitting below the tests rewrite the committed
-   store whenever a test above them gains a line — churn on edits that changed nothing about the
-   rule.
 
    Do **not** promote them to top-level classes named `*IT` outside a `fixtures` package. Failsafe
    includes `**/*IT.java` and excludes only `**/fixtures/**`, so such a class runs as a real

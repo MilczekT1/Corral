@@ -53,8 +53,8 @@ passes.
 Put the test in the **rule's own package**: `DEFINITION` is package-private, and a test anywhere
 else cannot reach it without widening what the rule publishes.
 
-The examples must not run as tests themselves. Corral declares them as `static` nested classes at
-the top of the rule's own test, which no runner selects — so they need no `fixtures` package and no
+The examples must not run as tests themselves. Corral declares them as `static` nested classes in
+the rule's own test, which no runner selects — so they need no `fixtures` package and no
 naming contortion, and what each one is for is unmissable. If you keep them as top-level classes
 instead, exclude them from your test runner (Corral excludes `**/fixtures/**` in both Surefire and
 Failsafe), remembering that Failsafe *includes* `**/*IT.java`.
@@ -89,8 +89,8 @@ Two things to know, both learned the hard way:
   during class initialisation — at whichever test touches the rule first. Setting `freeze.store` in
   a test body races class loading: green alone, stock store in a full run. Only the *path* belongs
   on the process-wide `ArchConfiguration`, reset in a `finally`.
-- **Keep the examples at the top of the file.** Stored violations carry the source line of each
-  call, so examples below the tests rewrite the store whenever a test above them gains a line.
+- **Line numbers do not matter.** ArchUnit's default `ViolationLineMatcher` compares stored
+  violations ignoring their source line, so moving code around does not churn the store.
 
 ## 5. Wire it into a group
 
