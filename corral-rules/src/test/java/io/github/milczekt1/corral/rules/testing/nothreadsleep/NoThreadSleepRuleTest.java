@@ -17,10 +17,11 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 /**
- * The three classes the rule is aimed at are declared at the bottom of this file.
+ * The three classes the rule is aimed at are declared first, and deliberately stay first: the
+ * committed freeze store records the <em>line</em> each sleep sits on, so anything inserted above
+ * them rewrites the store on an edit that changed nothing about the rule.
  *
  * <p>They are static nested classes, so no runner selects them and they need neither an {@code *IT}
  * name nor a {@code fixtures} package to stay unexecuted — only a compiler, which puts them in test
@@ -28,7 +29,40 @@ import org.junit.jupiter.api.io.TempDir;
  */
 class NoThreadSleepRuleTest {
 
+    /** The canonical violation: a guess about how long the charge takes, on someone else's machine. */
+    static class ThreadSleeper {
+
+        void awaitTheCharge() throws InterruptedException {
+            Thread.sleep(500);
+        }
+    }
+
+    /** The same wait spelled through TimeUnit — the rewrite the anti-fix guidance warns about. */
+    static class TimeUnitSleeper {
+
+        void awaitTheCharge() throws InterruptedException {
+            TimeUnit.MILLISECONDS.sleep(500);
+        }
+    }
+
+    /** Waits on the condition with a ceiling, and calls Thread and TimeUnit without sleeping. */
+    static class ConditionWaiter {
+
+        private final CountDownLatch charged = new CountDownLatch(1);
+
+        boolean awaitTheCharge() throws InterruptedException {
+            return charged.await(TimeUnit.SECONDS.toMillis(5), TimeUnit.MILLISECONDS);
+        }
+
+        String waitingThread() {
+            return Thread.currentThread().getName();
+        }
+    }
+
     private static final String ID = "corral.test.no-thread-sleep";
+
+    /** Committed, and resolved against the JVM's working directory — the module, under Surefire. */
+    private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter()
             .importClasses(ThreadSleeper.class, TimeUnitSleeper.class, ConditionWaiter.class);
@@ -80,20 +114,22 @@ class NoThreadSleepRuleTest {
     }
 
     /**
-     * Flagging the example is half the rule: the finding then has to reach a freeze store on disk,
-     * in a file named for this rule's id — the key every consumer's recorded debt lives under, and
-     * the reason an id is never renamed.
+     * Flagging the example is half the rule: the finding then has to reach the freeze store, in a
+     * file named for this rule's id — the key every consumer's recorded debt lives under, and the
+     * reason an id is never renamed. The store is committed, so what this rule records is reviewed
+     * like any other file and a reworded predicate shows up as a diff. Reseed it the way
+     * {@code corral-example} documents, then commit the result:
+     * {@code ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true}
      *
      * <p>The store is handed over by {@link FreezingArchRule#persistIn}, not named in
      * {@code freeze.store}: the published field is frozen during class initialisation, which happens
-     * at whichever test touches the rule first, so a configured store class is a race with class
-     * loading. Its path still comes from the process-wide {@link ArchConfiguration}, reset in a
-     * {@code finally}, because {@code FreezingArchRule} re-initialises whatever store it is given.
+     * at whichever test touches the rule first, so a configured store class races class loading. Its
+     * path still goes on the process-wide {@link ArchConfiguration}, reset in a {@code finally},
+     * because {@code FreezingArchRule} re-initialises whatever store it is given.
      */
     @Test
-    void freezesWhatItFindsIntoAFileNamedForTheRuleId(@TempDir Path storeDir) throws IOException {
-        ArchConfiguration.get().setProperty("freeze.store.default.path", storeDir.toString());
-        ArchConfiguration.get().setProperty("freeze.store.default.allowStoreCreation", "true");
+    void freezesWhatItFindsIntoTheCommittedStoreUnderTheRuleId() throws IOException {
+        ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
         try {
             ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoThreadSleepRule.rule,
                     "the published field must be frozen — an unfrozen rule fails on adoption")
@@ -101,48 +137,16 @@ class NoThreadSleepRuleTest {
 
             frozen.check(EXAMPLES);
 
-            String index = Files.readString(storeDir.resolve("stored.rules"));
+            String index = Files.readString(Path.of(STORE_PATH, "stored.rules"));
             assertTrue(index.contains(ID + "=" + ID),
                     "the index must file this rule's debt under its id: " + index);
 
-            String debt = Files.readString(storeDir.resolve(ID));
+            String debt = Files.readString(Path.of(STORE_PATH, ID));
             assertTrue(debt.contains("ThreadSleeper"), debt);
             assertTrue(debt.contains("TimeUnitSleeper"), debt);
             assertFalse(debt.contains("ConditionWaiter"), debt);
         } finally {
             ArchConfiguration.get().reset();
-        }
-    }
-
-    // --- the classes under examination -------------------------------------------------------
-
-    /** The canonical violation: a guess about how long the charge takes, on someone else's machine. */
-    static class ThreadSleeper {
-
-        void awaitTheCharge() throws InterruptedException {
-            Thread.sleep(500);
-        }
-    }
-
-    /** The same wait spelled through TimeUnit — the rewrite the anti-fix guidance warns about. */
-    static class TimeUnitSleeper {
-
-        void awaitTheCharge() throws InterruptedException {
-            TimeUnit.MILLISECONDS.sleep(500);
-        }
-    }
-
-    /** Waits on the condition with a ceiling, and calls Thread and TimeUnit without sleeping. */
-    static class ConditionWaiter {
-
-        private final CountDownLatch charged = new CountDownLatch(1);
-
-        boolean awaitTheCharge() throws InterruptedException {
-            return charged.await(TimeUnit.SECONDS.toMillis(5), TimeUnit.MILLISECONDS);
-        }
-
-        String waitingThread() {
-            return Thread.currentThread().getName();
         }
     }
 }
