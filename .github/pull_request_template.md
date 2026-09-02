@@ -11,7 +11,8 @@
 - [ ] No rule **predicate text** changed — predicate text is also a freeze-store matching key;
       changing it resurfaces old violations on upgrade
 - [ ] New or changed rules are tested against the raw `DEFINITION`, not the published frozen field
-- [ ] Fixtures cover **both** directions: a class the rule must flag, and one it must leave alone
+- [ ] Examples cover **both** directions: something the rule must flag, and something it must leave
+      alone — the same class may carry both
 - [ ] The [rules catalog](../docs/rules.md) matches `RuleRegistry` (maintained by hand)
 
 If you did break either of the first two, describe the migration for existing consumers here:

@@ -38,14 +38,22 @@ public static final ArchRule rule = new NoStdoutInServicesRule().guard();   // l
 
 ## 3. Examples and test
 
-Write at least one class the rule must **flag** and one it must **ignore**, and assert **both**
-directions against the raw `DEFINITION` — the published field is frozen, so it would seed and pass
-(see the traps below).
+Cover **both** directions against the raw `DEFINITION` — the published field is frozen, so it would
+seed and pass (see the traps below). Both directions is two *things*, not necessarily two classes.
+
+Where the verdict is about a **call**, one example carries both: a method that sleeps, plus a call on
+the same owner that is not a sleep. Write a second, deliberately-ignored class only when one example
+cannot hold both — a rule whose verdict is about the **class** (its name, its fields) needs one,
+because the first example is already a violation.
+
+Whatever shape you pick, an over-broad predicate has to fail. A single example with a single matching
+call cannot manage that: every predicate that matches too much still finds exactly that one call, and
+passes.
 
 Put the test in the **rule's own package**: `DEFINITION` is package-private, and a test anywhere
 else cannot reach it without widening what the rule publishes.
 
-Those classes must not run as tests themselves. Corral declares them as `static` nested classes at
+The examples must not run as tests themselves. Corral declares them as `static` nested classes at
 the top of the rule's own test, which no runner selects — so they need no `fixtures` package and no
 naming contortion, and what each one is for is unmissable. If you keep them as top-level classes
 instead, exclude them from your test runner (Corral excludes `**/fixtures/**` in both Surefire and

@@ -33,17 +33,23 @@ sequences and cross-references them for *this* catalog, it does not restate them
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
    `@ArchTest` field** — see Trap 1 below for why this order is load-bearing, not stylistic.
 
-3. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, asserting **both
-   directions** (flags the bad example, stays silent on the good one) against the raw `DEFINITION`
-   field — see Trap 2 below for why the published field cannot carry these assertions. The test shares the
-   rule's package deliberately: `DEFINITION` is package-private, so a test anywhere else cannot
-   reach it without widening the published surface. Group the assertions with `@Nested`.
+3. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, covering **both
+   directions** against the raw `DEFINITION` field — see Trap 2 below for why the published field
+   cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
+   package-private, so a test anywhere else cannot reach it without widening the published surface.
 
-4. **Declare the example classes as `static` nested classes at the top of that test**, and reach
-   them with `importClasses(...)` — at least one class the rule must flag and one it must leave
-   alone. What each is for is then unmissable, and no runner selects them, so they need neither an
-   `*IT` name nor a `fixtures` package: only the compiler has to see them, which is what puts them
-   in test output and therefore in `TestScope.TEST_CLASSES`.
+4. **Declare the examples as `static` nested classes at the top of that test**, and reach them with
+   `importClasses(...)`. What each is for is then unmissable, and no runner selects them, so they
+   need neither an `*IT` name nor a `fixtures` package: only the compiler has to see them, which is
+   what puts them in test output and therefore in `TestScope.TEST_CLASSES`.
+
+   **Both directions is two things, not necessarily two classes.** Where the verdict is about a
+   *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
+   `Thread.currentThread`, and the store recording one line rather than two is the assertion. Add a
+   second, deliberately-ignored class only when one cannot hold both: a rule whose verdict is about
+   the *class* needs one, because the first example is already a violation. What is not optional is
+   that an over-broad predicate fails — a lone example with a lone matching call cannot do that,
+   since every too-wide predicate still finds exactly that one call.
 
    **Top, not bottom, and keep them there.** Stored violations carry the source line of each call
    (`NoThreadSleepRuleTest.java:36`), so examples sitting below the tests rewrite the committed
