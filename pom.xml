@@ -42,7 +42,7 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <archunit.version>1.4.2</archunit.version>
     <junit.version>5.11.3</junit.version>
-    <spring.version>7.0.8</spring.version>
+    <spring.version>7.0.9</spring.version>
     <mockito.version>5.23.0</mockito.version>
     <slf4j.version>2.0.18</slf4j.version>
     <lombok.version>1.18.46</lombok.version>
