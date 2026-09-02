@@ -7,13 +7,14 @@ description: Use when adding a new ArchUnit rule to Corral's central catalog (co
 
 ## Overview
 
-Adding a rule to Corral's catalog touches 6+ files and has three failure modes that produce a
+Adding a rule to Corral's catalog touches 7+ files and has three failure modes that produce a
 **green build with zero enforcement** — no test catches them structurally; you have to build in the
-right order. This skill is that order, plus the three traps named explicitly.
+right order. This skill is that order, the three traps named explicitly, and a checklist for
+proving the rule checks something before you call it done.
 
-Read [CONTRIBUTING.md § Adding a rule to an existing group](../../../CONTRIBUTING.md#adding-a-rule-to-an-existing-group)
-and [§ Rule ids](../../../CONTRIBUTING.md#rule-ids) first — this skill sequences and cross-references
-them, it does not restate them.
+Read [docs/creating-a-rule.md](../../../docs/creating-a-rule.md), which is the contract every rule
+follows, and [CONTRIBUTING.md § Rule ids](../../../CONTRIBUTING.md#rule-ids) first — this skill
+sequences and cross-references them for *this* catalog, it does not restate them.
 
 ## The steps, in order
 
@@ -28,26 +29,77 @@ them, it does not restate them.
    "what classes does the predicate mention?".
 
 2. **Create the rule class** at
-   `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<Name>Rule.java` — a
+   `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` — a
    `final class implements DocumentedRule` with a private constructor and a name ending in `Rule`
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
    `@ArchTest` field** — see Trap 1 below for why this order is load-bearing, not stylistic.
 
-3. **Add fixtures** under `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/`
-   — at least one class the rule must flag and one it must leave alone. Surefire excludes
-   `**/fixtures/**`, so naming a fixture `*Test`/`*IT` does not make it run itself.
+3. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, covering **both
+   directions** against the raw `DEFINITION` field — see Trap 2 below for why the published field
+   cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
+   package-private, so a test anywhere else cannot reach it without widening the published surface.
 
-4. **Write the rule test** in `corral-rules/src/test/java/.../rules/<topic>/<Name>RuleTest.java`,
-   asserting **both directions** (flags the bad fixture, stays silent on the good one) against the
-   raw `DEFINITION` field — see Trap 2 below for why the published field cannot substitute.
+4. **Declare the examples as `static` nested classes in that test**, and reach them with
+   `importClasses(...)`. What each is for is then unmissable, and no runner selects them, so they
+   need neither an `*IT` name nor a `fixtures` package: only the compiler has to see them, which is
+   what puts them in test output and therefore in `TestScope.TEST_CLASSES`.
 
-5. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
+   **Both directions is two things, not necessarily two classes.** Where the verdict is about a
+   *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
+   `Thread.currentThread`, and the store recording one line rather than two is the assertion. Add a
+   second, deliberately-ignored class only when one cannot hold both: a rule whose verdict is about
+   the *class* needs one, because the first example is already a violation. What is not optional is
+   that an over-broad predicate fails — a lone example with a lone matching call cannot do that,
+   since every too-wide predicate still finds exactly that one call.
+
+   Do **not** promote them to top-level classes named `*IT` outside a `fixtures` package. Failsafe
+   includes `**/*IT.java` and excludes only `**/fixtures/**`, so such a class runs as a real
+   integration test — an example that sleeps then really sleeps. Nested classes sidestep the
+   question entirely.
+
+   Give them names where none is a substring of another: the assertions match on the report text.
+
+5. **Freeze the examples into the committed store**, in the same test. Steps 3 and 4 prove the
+   predicate; this proves the finding reaches
+   `corral-rules/src/test/resources/archunit/frozen/<id>` — the file every consumer's recorded debt
+   is the shape of. Committing it makes the store a reviewed artefact: widen or reword a predicate
+   and the extra findings fail the build instead of quietly joining the accepted set.
+
+   ```java
+   ArchConfiguration.get().setProperty("freeze.store.default.path", "src/test/resources/archunit/frozen");
+   try {
+       ArchRule frozen = assertInstanceOf(FreezingArchRule.class, TheRule.rule, "...")
+               .persistIn(new EmptyOmittingViolationStore());
+       frozen.check(EXAMPLES);
+       // then read stored.rules and the <id> file back off disk and assert on them
+   } finally {
+       ArchConfiguration.get().reset();
+   }
+   ```
+
+   **Hand the store over with `persistIn`; do not name it in `freeze.store`.**
+   `FreezingArchRule` captures its store when the rule object is *constructed*, and the published
+   field is constructed during class initialisation — at whichever test touches the rule first. A
+   `freeze.store` set in a test body therefore races class loading: it passes when the test runs
+   alone and silently gets ArchUnit's stock store in a full module run. Only the store *path* goes
+   on the process-wide `ArchConfiguration`, reset in a `finally`.
+
+   Seed the store once, then **commit it**:
+
+   ```bash
+   ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true
+   ```
+
+   Nothing in the build sets `allowStoreCreation`, so a missing store fails loudly rather than
+   re-seeding itself green.
+
+6. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
    class nobody points at is imported and compiled but never evaluated by any consumer.
 
-6. **Extend the expected id set** in
+7. **Extend the expected id set** in
    `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java`).
 
-7. **Add a row to the [rules catalog](../../../docs/rules.md).** Nothing in the build checks
+8. **Add a row to the [rules catalog](../../../docs/rules.md).** Nothing in the build checks
    this table — it drifts silently if you skip it.
 
 ## Three silent failure modes
@@ -58,7 +110,7 @@ catching them is why the steps above are ordered the way they are.
 | Trap | Why it's silent |
 |---|---|
 | **`@ArchTest` field declared above `DOC`/`DEFINITION`** | `guard()` runs during static class initialisation, at the moment the `@ArchTest` field's initialiser executes. Static fields initialise in **declaration order**, so a field declared before `DOC`/`DEFINITION` reads them as `null` — method order is irrelevant, only field order matters. The class still compiles; the rule freezes against `null`. |
-| **Test written against the published field, not `DEFINITION`** | The published field is wrapped in `FreezingArchRule`. On the test's first run it has no freeze-store entry, so it seeds every violation as accepted debt and reports zero — the test passes on the very run that should have shown a failure, and every run after. It proves nothing about the rule's predicate, ever. Test the raw `DEFINITION` field instead, which is unfrozen. |
+| **Predicate tested against the published field, not `DEFINITION`** | The published field is wrapped in `FreezingArchRule`. Against a store with no entry for the rule, it seeds every violation as accepted debt and reports zero — the test passes on the very run that should have shown a failure, and every run after. Assert the predicate against the raw `DEFINITION`, which is unfrozen. Step 5 does check the published field, and is *not* this trap: its store is committed, so the run compares against recorded lines instead of seeding. |
 | **Consumer sets `ImportOption.DoNotIncludeTests`** | Any rule scoped to test classes (see `TestScope`) then has no test classes to evaluate, so it passes vacuously for that consumer. This one binds *consumers*, not catalog authors — call it out in a rule's Javadoc whenever the rule inspects test-scope code, the way `TestClassNamingConventionRule` does. |
 
 ## Two loud failures — and what they mean
@@ -74,13 +126,38 @@ Skip a step above and one of these two tests fails the build, on purpose:
 - **`RuleIdGrammarTest`** — fails if the id violates the closed grammar (namespace, polarity marker,
   segment cap) from step 1. Fix the id, not the test.
 
+## Before you call it done
+
+The steps above wire the rule up; these prove it checks something. Rationale in
+[docs/creating-a-rule.md § 6](../../../docs/creating-a-rule.md). Every one of these caught a real
+defect in the last rule added here — none was caught by the build.
+
+- [ ] **Each predicate clause mutation-tested.** Delete a clause, run the rule's test, confirm a
+      *named* test fails; restore it. `NoThreadSleepRule` reached review with its scope clause and
+      its name clause both unpinned behind a green suite.
+- [ ] **The flagged example holds a call the rule must NOT match.** With one matching call and
+      nothing else, an over-broad predicate — up to `alwaysTrue()` — finds exactly the recorded
+      violation and passes.
+- [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
+      process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
+      full run, twice, for two different reasons.
+- [ ] **Test names re-read against their assertions.** Rename any that claim more.
+- [ ] **`RuleDoc` re-read against the predicate.** It renders into the failure output, so a dodge it
+      warns about but the predicate misses is a claim someone will act on.
+- [ ] **`./mvnw clean verify` green**, with the committed store either untouched or reseeded and
+      committed on purpose.
+
 ## Quick reference
 
 | Artifact | Path |
 |---|---|
-| Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<Name>Rule.java` |
-| Fixtures | `corral-rules/src/test/java/io/github/milczekt1/corral/fixtures/<topic>/` |
-| Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<Name>RuleTest.java` |
+| Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
+| Rule test + examples | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
+| Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` (plus its `stored.rules` line) |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
+
+`NoThreadSleepRule` is the worked example. The three rules that predate this layout still sit flat
+under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no committed
+store at all — copy the per-rule shape, not theirs.

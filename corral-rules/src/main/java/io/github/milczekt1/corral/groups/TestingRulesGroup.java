@@ -4,6 +4,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.testing.NoMockedRepositoryInIntegrationTestRule;
 import io.github.milczekt1.corral.rules.testing.TestClassNamingConventionRule;
+import io.github.milczekt1.corral.rules.testing.nothreadsleep.NoThreadSleepRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -12,6 +13,10 @@ public class TestingRulesGroup {
     @ArchTest
     public static final ArchTests noMockedRepositoryInIntegrationTest =
             ArchTests.in(NoMockedRepositoryInIntegrationTestRule.class);
+
+    @ArchTest
+    public static final ArchTests noThreadSleep =
+            ArchTests.in(NoThreadSleepRule.class);
 
     @ArchTest
     public static final ArchTests testClassNamingConvention =
