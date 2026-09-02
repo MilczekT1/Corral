@@ -3,6 +3,7 @@ package io.github.milczekt1.corral.fixtures.testing;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
@@ -13,7 +14,7 @@ public class PollingCheckoutIT {
 
     @Test
     void chargesTheCard() throws InterruptedException {
-        charged.countDown(); // stands in for the production code completing the charge
+        Executors.newSingleThreadExecutor().execute(charged::countDown);
 
         assertTrue(charged.await(5, TimeUnit.SECONDS));
     }

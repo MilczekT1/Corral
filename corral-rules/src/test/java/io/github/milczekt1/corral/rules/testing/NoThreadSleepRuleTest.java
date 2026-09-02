@@ -50,6 +50,14 @@ class NoThreadSleepRuleTest {
     }
 
     @Test
+    void allowsNonSleepMethodsOnThreadAndTimeUnit() {
+        // The owner alone must not decide: TimeUnit.toMillis and Thread.currentThread are not waits.
+        String report = report(NoThreadSleepRule.DEFINITION);
+
+        assertFalse(report.contains("ClockReadingIT"), report);
+    }
+
+    @Test
     void staysSilentOnTestsThatDoNotWaitAtAll() {
         String report = report(NoThreadSleepRule.DEFINITION);
 

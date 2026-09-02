@@ -50,9 +50,9 @@ public final class NoThreadSleepRule implements DocumentedRule {
                     system nobody can wait on deterministically cannot be operated or tested.""")
             .howNotToFix("""
                     Do NOT wrap the call to dodge the match: TimeUnit.SECONDS.sleep(1) is matched too, and \
-                    a Sleeper helper or a pause() method on a base test class is itself test code, so it is \
-                    matched where it is declared — the wait stays just as much a guess and is now harder to \
-                    find. Do NOT replace it with a busy-wait loop or a CountDownLatch.await() with no \
+                    a Sleeper helper or a pause() on a base test class is matched where it is declared, \
+                    whenever it compiles into test output. Relocating the wait until the rule stops seeing \
+                    it is not a fix — the wait is still a guess, now harder to find. Do NOT replace it with a busy-wait loop or a CountDownLatch.await() with no \
                     timeout, which turns a flaky failure into a hung build. Do NOT paper over the flake \
                     with @RepeatedTest or a retry extension, and do NOT disable the test.""")
             .build();
