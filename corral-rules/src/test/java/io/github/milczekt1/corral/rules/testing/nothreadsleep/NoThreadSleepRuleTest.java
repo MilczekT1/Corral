@@ -1,6 +1,5 @@
 package io.github.milczekt1.corral.rules.testing.nothreadsleep;
 
-import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -13,39 +12,33 @@ import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
 /**
- * The two classes under examination come first and stay first: the committed store records the line
- * each violation sits on, so anything inserted above them rewrites it on an unrelated edit.
+ * The class under examination comes first and stays first: the committed store records the line its
+ * violation sits on, so anything inserted above it rewrites the store on an unrelated edit.
  *
- * <p>They are static nested classes, so no runner selects them — no {@code *IT} name and no
- * {@code fixtures} package needed, only a compiler, which puts them in test output and therefore in
+ * <p>It is a static nested class, so no runner selects it — no {@code *IT} name and no
+ * {@code fixtures} package needed, only a compiler, which puts it in test output and therefore in
  * {@code TestScope.TEST_CLASSES}.
+ *
+ * <p>There is no second, deliberately-ignored class. The store is the negative direction instead:
+ * {@code check} fails on any violation the file does not already record, so a widened predicate
+ * fails here rather than passing quietly. That only works because the example holds a call the rule
+ * must <em>not</em> match — with a single matching call and nothing else, every over-broad
+ * predicate finds exactly the recorded violation and stays green.
  */
 class NoThreadSleepRuleTest {
 
-    /** Must be flagged: a guess about how long the charge takes, on someone else's machine. */
+    /**
+     * The sleep is a guess about how long the charge takes, on someone else's machine, and must be
+     * flagged. The {@code currentThread} call is on the same owner and must not be — the store
+     * recording one line and not two is what pins both directions from a single example.
+     */
     static class ThreadSleeper {
 
         void awaitTheCharge() throws InterruptedException {
             Thread.sleep(500);
-        }
-    }
-
-    /**
-     * Must not be flagged: the shape {@code howToFix} recommends. Its {@code Thread.currentThread}
-     * call is what pins the name clause — drop that clause from the predicate and the {@code Thread}
-     * owner alone reports this class.
-     */
-    static class ConditionWaiter {
-
-        private final CountDownLatch charged = new CountDownLatch(1);
-
-        boolean awaitTheCharge() throws InterruptedException {
-            return charged.await(TimeUnit.SECONDS.toMillis(5), TimeUnit.MILLISECONDS);
         }
 
         String waitingThread() {
@@ -59,7 +52,7 @@ class NoThreadSleepRuleTest {
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter()
-            .importClasses(ThreadSleeper.class, ConditionWaiter.class);
+            .importClasses(ThreadSleeper.class);
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
     private static String report() {
@@ -72,14 +65,6 @@ class NoThreadSleepRuleTest {
         String report = report();
 
         assertTrue(report.contains("ThreadSleeper"), report);
-    }
-
-    @Test
-    void ignoresAWaitThatNeverCallsSleep() {
-        String report = report();
-
-        assertFalse(report.contains("ConditionWaiter"),
-                "the fix this rule recommends must not itself be flagged: " + report);
     }
 
     /**
@@ -109,7 +94,6 @@ class NoThreadSleepRuleTest {
 
             String debt = Files.readString(Path.of(STORE_PATH, ID));
             assertTrue(debt.contains("ThreadSleeper"), debt);
-            assertFalse(debt.contains("ConditionWaiter"), debt);
         } finally {
             ArchConfiguration.get().reset();
         }
