@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.rules.testing.nothreadsleep;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -35,7 +36,6 @@ class NoThreadSleepRuleTest {
         @Test
         void aSleepOnThread() {
             String report = report();
-
             assertTrue(report.contains("ThreadSleeper"), report);
         }
 
@@ -54,7 +54,6 @@ class NoThreadSleepRuleTest {
         @Test
         void aWaitOnAConditionWithACeiling() {
             String report = report();
-
             assertFalse(report.contains("ConditionWaiter"),
                     "await(timeout) waits on the condition, not on the clock: " + report);
         }
@@ -69,9 +68,15 @@ class NoThreadSleepRuleTest {
         }
     }
 
+    /**
+     * The description is the freeze-store key, so this pins the id. It also proves {@code guard()}
+     * ran at all: only the rename inside it can turn ArchUnit's own prose into the id. That
+     * {@code guard()} freezes is pinned once, for every rule, by {@code DocumentedRuleTest}.
+     */
     @Test
-    void publicRuleIsFrozenAndIdPinned() {
+    void thePublishedRuleIsRenamedToTheIdThatKeysTheFreezeStore() {
         assertEquals("corral.test.no-thread-sleep", NoThreadSleepRule.rule.getDescription());
+        assertNotEquals("corral.test.no-thread-sleep", NoThreadSleepRule.DEFINITION.getDescription());
     }
 
     // --- the classes under examination -------------------------------------------------------
