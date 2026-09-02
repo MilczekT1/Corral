@@ -45,7 +45,12 @@ class NoThreadSleepRuleTest {
         }
     }
 
-    /** Waits on the condition with a ceiling, and calls Thread and TimeUnit without sleeping. */
+    /**
+     * The shape howToFix recommends — waits on the condition with a ceiling, and reads the clock —
+     * so it must not be flagged. Note what that does <em>not</em> prove: the rule has no notion of a
+     * timeout, and ignores this class only because no call here is named {@code sleep}. An
+     * {@code await()} with no ceiling would be ignored just the same.
+     */
     static class ConditionWaiter {
 
         private final CountDownLatch charged = new CountDownLatch(1);
@@ -96,11 +101,11 @@ class NoThreadSleepRuleTest {
     class Ignores {
 
         @Test
-        void aWaitOnAConditionWithACeiling() {
+        void aWaitThatNeverCallsSleep() {
             String report = report();
 
             assertFalse(report.contains("ConditionWaiter"),
-                    "await(timeout) waits on the condition, not on the clock: " + report);
+                    "the fix this rule recommends must not itself be flagged: " + report);
         }
 
         @Test
