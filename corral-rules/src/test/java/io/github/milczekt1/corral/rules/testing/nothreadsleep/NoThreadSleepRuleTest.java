@@ -37,7 +37,11 @@ class NoThreadSleepRuleTest {
         }
     }
 
-    /** The same wait spelled through TimeUnit — the rewrite the anti-fix guidance warns about. */
+    /**
+     * The same wait spelled through TimeUnit, and deliberately <em>out of scope</em>: that is a rule
+     * of its own, under its own freeze-store key. It earns its place here as the counterexample that
+     * pins the owner clause — drop {@code assignableTo(Thread.class)} and this class gets flagged.
+     */
     static class TimeUnitSleeper {
 
         void awaitTheCharge() throws InterruptedException {
@@ -87,14 +91,6 @@ class NoThreadSleepRuleTest {
 
             assertTrue(report.contains("ThreadSleeper"), report);
         }
-
-        @Test
-        void aSleepOnTimeUnit() {
-            // TimeUnit.sleep delegates to Thread.sleep, so the rewrite must not dodge the match.
-            String report = report();
-
-            assertTrue(report.contains("TimeUnitSleeper"), report);
-        }
     }
 
     @Nested
@@ -109,12 +105,20 @@ class NoThreadSleepRuleTest {
         }
 
         @Test
-        void otherMethodsOnThreadAndTimeUnit() {
-            // The owner alone must not decide: dropping the name clause reports these two calls.
+        void aSleepSpelledThroughTimeUnit() {
+            // Pins the owner clause: without it, "sleep" alone would report this.
+            String report = report();
+
+            assertFalse(report.contains("TimeUnitSleeper"),
+                    "TimeUnit.sleep is a rule of its own, not this one: " + report);
+        }
+
+        @Test
+        void otherMethodsOnThread() {
+            // Pins the name clause: without it, the Thread owner alone would report this.
             String report = report();
 
             assertFalse(report.contains("currentThread"), report);
-            assertFalse(report.contains("toMillis"), report);
         }
     }
 
@@ -148,7 +152,7 @@ class NoThreadSleepRuleTest {
 
             String debt = Files.readString(Path.of(STORE_PATH, ID));
             assertTrue(debt.contains("ThreadSleeper"), debt);
-            assertTrue(debt.contains("TimeUnitSleeper"), debt);
+            assertFalse(debt.contains("TimeUnitSleeper"), debt);
             assertFalse(debt.contains("ConditionWaiter"), debt);
         } finally {
             ArchConfiguration.get().reset();

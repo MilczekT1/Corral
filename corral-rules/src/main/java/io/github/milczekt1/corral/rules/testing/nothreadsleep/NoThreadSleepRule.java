@@ -13,12 +13,17 @@ import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.scope.TestScope;
-import java.util.concurrent.TimeUnit;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * Test code may not sleep: waiting for a duration is not waiting for a condition.
+ * Test code may not call {@code Thread.sleep}: waiting for a duration is not waiting for a
+ * condition.
+ *
+ * <p>Scoped to {@code Thread.sleep} alone. Every other way of spelling a wait —
+ * {@code TimeUnit.sleep} first among them — is the same mistake but a different predicate, and
+ * belongs in its own rule under its own freeze-store key, so a consumer can adopt and retire the
+ * two independently.
  *
  * <p>Scoped with {@link TestScope#TEST_CLASSES}, so a helper or abstract base in test output counts
  * even though it declares no test of its own — that is exactly where a {@code pause()} hides.
@@ -49,29 +54,26 @@ public final class NoThreadSleepRule implements DocumentedRule {
                     the code under test offers no way to observe completion, that is the finding — a \
                     system nobody can wait on deterministically cannot be operated or tested.""")
             .howNotToFix("""
-                    Do NOT wrap the call to dodge the match: TimeUnit.SECONDS.sleep(1) is matched too, and \
-                    a Sleeper helper or a pause() on a base test class is matched where it is declared, \
-                    whenever it compiles into test output. Relocating the wait until the rule stops seeing \
-                    it is not a fix — the wait is still a guess, now harder to find. Past that, this rule \
-                    matches a call named sleep on Thread or TimeUnit and nothing else, so what follows \
-                    passes it silently and is still wrong: a busy-wait loop, or an await() or Future.get() \
-                    with no timeout, trades a flaky failure for a hung build, and @RepeatedTest or a retry \
-                    extension averages the flake out rather than removing it. Green here means no sleep was \
-                    found, not that the test waits on anything.""")
+                    Do NOT move the sleep out of this rule's sight. A Sleeper helper or a pause() on a base \
+                    test class is matched where it is declared, whenever it compiles into test output, and \
+                    relocating the wait until the rule goes quiet leaves it exactly as much of a guess, now \
+                    harder to find. This rule matches Thread.sleep and nothing else, so what dodges it is \
+                    still wrong and now unenforced: the same duration spelled through another API is the \
+                    same guess, a busy-wait loop or an await() or Future.get() with no timeout trades a \
+                    flaky failure for a hung build, and @RepeatedTest or a retry extension averages the \
+                    flake out rather than removing it. Green here means no Thread.sleep was found, not that \
+                    the test waits on anything.""")
             .build();
 
     /**
      * Matched by owner and name rather than by signature, so the {@code (long)}, {@code (long, int)}
-     * and {@code (Duration)} overloads are all covered without a future rewording.
-     *
-     * <p>{@code TimeUnit.sleep} delegates to {@code Thread.sleep}, so it is the same wait; ArchUnit
-     * sees direct calls only, hence the second owner rather than a transitive walk.
+     * and {@code (Duration)} overloads are all covered without a future rewording. Assignable to
+     * {@code Thread}, so a call written against a subclass counts.
      */
     private static final DescribedPredicate<JavaCall<?>> SLEEP_CALL =
-            target(name("sleep"))
-                    .and(target(owner(assignableTo(Thread.class)))
-                            .or(target(owner(assignableTo(TimeUnit.class)))))
-                    .as("target is Thread.sleep or TimeUnit.sleep");
+            target(owner(assignableTo(Thread.class)))
+                    .and(target(name("sleep")))
+                    .as("target is Thread.sleep");
 
     static final ArchRule DEFINITION = noClasses()
             .that(TestScope.TEST_CLASSES)
