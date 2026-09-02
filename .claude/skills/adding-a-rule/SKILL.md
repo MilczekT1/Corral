@@ -9,7 +9,8 @@ description: Use when adding a new ArchUnit rule to Corral's central catalog (co
 
 Adding a rule to Corral's catalog touches 7+ files and has three failure modes that produce a
 **green build with zero enforcement** — no test catches them structurally; you have to build in the
-right order. This skill is that order, plus the three traps named explicitly.
+right order. This skill is that order, the three traps named explicitly, and a checklist for
+proving the rule checks something before you call it done.
 
 Read [docs/creating-a-rule.md](../../../docs/creating-a-rule.md), which is the contract every rule
 follows, and [CONTRIBUTING.md § Rule ids](../../../CONTRIBUTING.md#rule-ids) first — this skill
@@ -129,6 +130,27 @@ Skip a step above and one of these two tests fails the build, on purpose:
   replacementId, why)` in `corral-sdk` instead, and keep the retired id in the published set.
 - **`RuleIdGrammarTest`** — fails if the id violates the closed grammar (namespace, polarity marker,
   segment cap) from step 1. Fix the id, not the test.
+
+## Before you call it done
+
+The steps above wire the rule up; these prove it checks something. Rationale in
+[docs/creating-a-rule.md § 6](../../../docs/creating-a-rule.md). Every one of these caught a real
+defect in the last rule added here — none was caught by the build.
+
+- [ ] **Each predicate clause mutation-tested.** Delete a clause, run the rule's test, confirm a
+      *named* test fails; restore it. `NoThreadSleepRule` reached review with its scope clause and
+      its name clause both unpinned behind a green suite.
+- [ ] **The flagged example holds a call the rule must NOT match.** With one matching call and
+      nothing else, an over-broad predicate — up to `alwaysTrue()` — finds exactly the recorded
+      violation and passes.
+- [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
+      process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
+      full run, twice, for two different reasons.
+- [ ] **Test names re-read against their assertions.** Rename any that claim more.
+- [ ] **`RuleDoc` re-read against the predicate.** It renders into the failure output, so a dodge it
+      warns about but the predicate misses is a claim someone will act on.
+- [ ] **`./mvnw clean verify` green**, with the committed store either untouched or reseeded and
+      committed on purpose.
 
 ## Quick reference
 

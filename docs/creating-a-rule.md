@@ -98,6 +98,28 @@ A group is a `@UtilityClass` holding `@ArchTest ArchTests` fields. `ArchTests.in
 exactly those fields, so **the field is the membership** — a rule class nobody points at is never
 run.
 
+## 6. Prove it actually checks something
+
+A green rule test is not evidence. Four checks, roughly in order of how often they catch something:
+
+- **Delete each clause of the predicate and watch a *named* test fail.** Not the suite — a specific
+  test. A clause no test reacts to could be anything. This is the highest-yield check by a distance,
+  because the flagged example passes either way, so nothing about a green run distinguishes a
+  precise predicate from a reckless one.
+- **Run the whole suite, not one test class.** ArchUnit's `ArchConfiguration` is process-wide and
+  test runners reuse the JVM, so a rule that behaves in isolation can pick up another test's
+  configuration in a full run. Isolation is the misleading case, not the honest one.
+- **Read every test name back against what it asserts.** A name that claims more than its assertion
+  does is worse than no test: it marks the gap as covered.
+- **Read `RuleDoc` back against the predicate.** `why`, `howToFix` and `howNotToFix` render into the
+  failure output and are acted on as fact — by people, and increasingly by agents. Where the
+  anti-fix text names a dodge the predicate does not catch, say so: name where the rule's sight
+  ends, and that what lies past it is still wrong but unenforced.
+
+One shaping decision makes all four easier: **one id, one mistake**. An id is a freeze-store key, so
+two problems sharing one can never be adopted, frozen or retired separately — and a predicate
+covering both is harder to pin clause by clause than two predicates covering one each.
+
 ## ⚠️ Three ways to ship a rule that enforces nothing
 
 | Mistake | Why it's silent |
