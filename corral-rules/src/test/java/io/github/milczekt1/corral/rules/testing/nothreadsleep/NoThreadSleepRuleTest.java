@@ -4,19 +4,20 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
-import com.tngtech.archunit.library.freeze.ViolationStore;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * The three classes the rule is aimed at are declared at the bottom of this file.
@@ -26,6 +27,8 @@ import org.junit.jupiter.api.Test;
  * output and therefore in {@code TestScope.TEST_CLASSES}.
  */
 class NoThreadSleepRuleTest {
+
+    private static final String ID = "corral.test.no-thread-sleep";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter()
             .importClasses(ThreadSleeper.class, TimeUnitSleeper.class, ConditionWaiter.class);
@@ -42,6 +45,7 @@ class NoThreadSleepRuleTest {
         @Test
         void aSleepOnThread() {
             String report = report();
+
             assertTrue(report.contains("ThreadSleeper"), report);
         }
 
@@ -60,6 +64,7 @@ class NoThreadSleepRuleTest {
         @Test
         void aWaitOnAConditionWithACeiling() {
             String report = report();
+
             assertFalse(report.contains("ConditionWaiter"),
                     "await(timeout) waits on the condition, not on the clock: " + report);
         }
@@ -75,55 +80,37 @@ class NoThreadSleepRuleTest {
     }
 
     /**
-     * Flagging the example is half the rule: the finding then has to reach the freeze store, filed
-     * under this rule's id — the key every consumer's recorded debt lives under, and the reason an
-     * id is never renamed. How freezing itself behaves is ArchUnit's, pinned once by
-     * {@code DocumentedRuleTest} and {@code EmptyOmittingViolationStoreTest}.
+     * Flagging the example is half the rule: the finding then has to reach a freeze store on disk,
+     * in a file named for this rule's id — the key every consumer's recorded debt lives under, and
+     * the reason an id is never renamed.
      *
-     * <p>The store is a map handed to this one rule by {@link FreezingArchRule#persistIn}; a
-     * configured {@code freeze.store} would be process-wide and leak across the Surefire JVM.
+     * <p>The store is handed over by {@link FreezingArchRule#persistIn}, not named in
+     * {@code freeze.store}: the published field is frozen during class initialisation, which happens
+     * at whichever test touches the rule first, so a configured store class is a race with class
+     * loading. Its path still comes from the process-wide {@link ArchConfiguration}, reset in a
+     * {@code finally}, because {@code FreezingArchRule} re-initialises whatever store it is given.
      */
     @Test
-    void freezesWhatItFindsUnderTheRuleId() {
-        InMemoryViolationStore store = new InMemoryViolationStore();
-        ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoThreadSleepRule.rule,
-                "the published field must be frozen — an unfrozen rule fails on adoption")
-                .persistIn(store);
+    void freezesWhatItFindsIntoAFileNamedForTheRuleId(@TempDir Path storeDir) throws IOException {
+        ArchConfiguration.get().setProperty("freeze.store.default.path", storeDir.toString());
+        ArchConfiguration.get().setProperty("freeze.store.default.allowStoreCreation", "true");
+        try {
+            ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoThreadSleepRule.rule,
+                    "the published field must be frozen — an unfrozen rule fails on adoption")
+                    .persistIn(new EmptyOmittingViolationStore());
 
-        frozen.check(EXAMPLES);
+            frozen.check(EXAMPLES);
 
-        List<String> debt = store.violationsFiledUnder("corral.test.no-thread-sleep");
-        assertTrue(debt.stream().anyMatch(line -> line.contains("ThreadSleeper")), debt::toString);
-        assertTrue(debt.stream().anyMatch(line -> line.contains("TimeUnitSleeper")), debt::toString);
-    }
+            String index = Files.readString(storeDir.resolve("stored.rules"));
+            assertTrue(index.contains(ID + "=" + ID),
+                    "the index must file this rule's debt under its id: " + index);
 
-    /** Keyed on the rule description, which {@code guard()} has renamed to the doc id. */
-    private static final class InMemoryViolationStore implements ViolationStore {
-
-        private final Map<String, List<String>> violationsByRuleDescription = new HashMap<>();
-
-        List<String> violationsFiledUnder(String ruleId) {
-            return violationsByRuleDescription.getOrDefault(ruleId, List.of());
-        }
-
-        @Override
-        public void initialize(Properties properties) {
-            // The map is the store. FreezingArchRule re-initialises whatever it is handed.
-        }
-
-        @Override
-        public boolean contains(ArchRule rule) {
-            return violationsByRuleDescription.containsKey(rule.getDescription());
-        }
-
-        @Override
-        public void save(ArchRule rule, List<String> violations) {
-            violationsByRuleDescription.put(rule.getDescription(), List.copyOf(violations));
-        }
-
-        @Override
-        public List<String> getViolations(ArchRule rule) {
-            return violationsByRuleDescription.getOrDefault(rule.getDescription(), List.of());
+            String debt = Files.readString(storeDir.resolve(ID));
+            assertTrue(debt.contains("ThreadSleeper"), debt);
+            assertTrue(debt.contains("TimeUnitSleeper"), debt);
+            assertFalse(debt.contains("ConditionWaiter"), debt);
+        } finally {
+            ArchConfiguration.get().reset();
         }
     }
 
