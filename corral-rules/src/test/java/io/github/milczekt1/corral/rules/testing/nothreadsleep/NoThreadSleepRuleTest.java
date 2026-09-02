@@ -6,68 +6,103 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
+import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+/**
+ * The three classes the rule is aimed at are declared at the bottom of this file.
+ *
+ * <p>They are static nested classes, so no runner selects them and they need neither an {@code *IT}
+ * name nor a {@code fixtures} package to stay unexecuted — only a compiler, which puts them in test
+ * output and therefore in {@code TestScope.TEST_CLASSES}.
+ */
 class NoThreadSleepRuleTest {
 
-    /** This rule's own examples, and nothing else — they live one package down from this test. */
-    private static final JavaClasses FIXTURES = new ClassFileImporter()
-            .importPackages("io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures");
+    private static final JavaClasses EXAMPLES = new ClassFileImporter()
+            .importClasses(ThreadSleeper.class, TimeUnitSleeper.class, ConditionWaiter.class);
 
-    private static String report(ArchRule rule) {
-        return String.join("\n", rule.allowEmptyShould(true).evaluate(FIXTURES).getFailureReport().getDetails());
+    /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
+    private static String report() {
+        return String.join("\n", NoThreadSleepRule.DEFINITION
+                .allowEmptyShould(true).evaluate(EXAMPLES).getFailureReport().getDetails());
     }
 
-    @Test
-    void flagsThreadSleepInATest() {
-        String report = report(NoThreadSleepRule.DEFINITION);
+    @Nested
+    class Flags {
 
-        assertTrue(report.contains("SleepingCheckoutIT"), report);
+        @Test
+        void aSleepOnThread() {
+            String report = report();
+
+            assertTrue(report.contains("ThreadSleeper"), report);
+        }
+
+        @Test
+        void aSleepOnTimeUnit() {
+            // TimeUnit.sleep delegates to Thread.sleep, so the rewrite must not dodge the match.
+            String report = report();
+
+            assertTrue(report.contains("TimeUnitSleeper"), report);
+        }
     }
 
-    @Test
-    void flagsTimeUnitSleepInATest() {
-        // TimeUnit.sleep delegates to Thread.sleep, so the rewrite must not dodge the match.
-        String report = report(NoThreadSleepRule.DEFINITION);
+    @Nested
+    class Ignores {
 
-        assertTrue(report.contains("TimeUnitSleepingIT"), report);
-    }
+        @Test
+        void aWaitOnAConditionWithACeiling() {
+            String report = report();
 
-    @Test
-    void flagsASleepParkedOnATestHelperThatDeclaresNoTest() {
-        String report = report(NoThreadSleepRule.DEFINITION);
+            assertFalse(report.contains("ConditionWaiter"),
+                    "await(timeout) waits on the condition, not on the clock: " + report);
+        }
 
-        assertTrue(report.contains("SleepingTestSupport"),
-                "a helper in test output is test code, which is where a pause() hides: " + report);
-    }
+        @Test
+        void otherMethodsOnThreadAndTimeUnit() {
+            // The owner alone must not decide: dropping the name clause reports these two calls.
+            String report = report();
 
-    @Test
-    void allowsWaitingOnAConditionWithACeiling() {
-        String report = report(NoThreadSleepRule.DEFINITION);
-
-        assertFalse(report.contains("PollingCheckoutIT"),
-                "await(timeout) is a wait on the condition, not on the clock: " + report);
-    }
-
-    @Test
-    void allowsNonSleepMethodsOnThreadAndTimeUnit() {
-        // The owner alone must not decide: TimeUnit.toMillis and Thread.currentThread are not waits.
-        String report = report(NoThreadSleepRule.DEFINITION);
-
-        assertFalse(report.contains("ClockReadingIT"), report);
-    }
-
-    @Test
-    void staysSilentOnTestsThatDoNotWaitAtAll() {
-        String report = report(NoThreadSleepRule.DEFINITION);
-
-        assertFalse(report.contains("WellNamedTest"), report);
-        assertFalse(report.contains("PlainUnitTest"), report);
+            assertFalse(report.contains("currentThread"), report);
+            assertFalse(report.contains("toMillis"), report);
+        }
     }
 
     @Test
     void publicRuleIsFrozenAndIdPinned() {
         assertEquals("corral.test.no-thread-sleep", NoThreadSleepRule.rule.getDescription());
+    }
+
+    // --- the classes under examination -------------------------------------------------------
+
+    /** The canonical violation: a guess about how long the charge takes, on someone else's machine. */
+    static class ThreadSleeper {
+
+        void awaitTheCharge() throws InterruptedException {
+            Thread.sleep(500);
+        }
+    }
+
+    /** The same wait spelled through TimeUnit — the rewrite the anti-fix guidance warns about. */
+    static class TimeUnitSleeper {
+
+        void awaitTheCharge() throws InterruptedException {
+            TimeUnit.MILLISECONDS.sleep(500);
+        }
+    }
+
+    /** Waits on the condition with a ceiling, and calls Thread and TimeUnit without sleeping. */
+    static class ConditionWaiter {
+
+        private final CountDownLatch charged = new CountDownLatch(1);
+
+        boolean awaitTheCharge() throws InterruptedException {
+            return charged.await(TimeUnit.SECONDS.toMillis(5), TimeUnit.MILLISECONDS);
+        }
+
+        String waitingThread() {
+            return Thread.currentThread().getName();
+        }
     }
 }

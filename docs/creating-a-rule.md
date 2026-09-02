@@ -36,15 +36,16 @@ public static final ArchRule rule = new NoStdoutInServicesRule().guard();   // l
 
 `guard()` registers the doc, renames the rule to the id, freezes it, and applies exclusions.
 
-## 3. Fixtures and test
+## 3. Examples and test
 
 Write at least one class the rule must **flag** and one it must **ignore**, and test against the raw
 `DEFINITION`, asserting **both** directions.
 
-If you keep fixtures in your test sources, exclude them from your test runner — Corral excludes
-`**/fixtures/**` in both Surefire and Failsafe — so fixtures named `*Test`/`*IT` don't run
-themselves. Corral keeps each rule's fixtures in a `fixtures` package beside that rule's test, so
-what a fixture is for is legible from its path.
+Those classes must not run as tests themselves. Corral declares them as `static` nested classes at
+the bottom of the rule's own test, which no runner selects — so they need no `fixtures` package and
+no naming contortion, and what each one is for is unmissable. If you keep them as top-level classes
+instead, exclude them from your test runner (Corral excludes `**/fixtures/**` in both Surefire and
+Failsafe), remembering that Failsafe *includes* `**/*IT.java`.
 
 ## 4. Wire it into a group
 
