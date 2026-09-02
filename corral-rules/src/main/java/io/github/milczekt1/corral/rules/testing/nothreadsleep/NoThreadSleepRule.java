@@ -52,9 +52,12 @@ public final class NoThreadSleepRule implements DocumentedRule {
                     Do NOT wrap the call to dodge the match: TimeUnit.SECONDS.sleep(1) is matched too, and \
                     a Sleeper helper or a pause() on a base test class is matched where it is declared, \
                     whenever it compiles into test output. Relocating the wait until the rule stops seeing \
-                    it is not a fix — the wait is still a guess, now harder to find. Do NOT replace it with a busy-wait loop or a CountDownLatch.await() with no \
-                    timeout, which turns a flaky failure into a hung build. Do NOT paper over the flake \
-                    with @RepeatedTest or a retry extension, and do NOT disable the test.""")
+                    it is not a fix — the wait is still a guess, now harder to find. Past that, this rule \
+                    matches a call named sleep on Thread or TimeUnit and nothing else, so what follows \
+                    passes it silently and is still wrong: a busy-wait loop, or an await() or Future.get() \
+                    with no timeout, trades a flaky failure for a hung build, and @RepeatedTest or a retry \
+                    extension averages the flake out rather than removing it. Green here means no sleep was \
+                    found, not that the test waits on anything.""")
             .build();
 
     /**
