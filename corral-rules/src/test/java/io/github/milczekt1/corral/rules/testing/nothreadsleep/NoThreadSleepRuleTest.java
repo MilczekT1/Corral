@@ -1,12 +1,18 @@
 package io.github.milczekt1.corral.rules.testing.nothreadsleep;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import com.tngtech.archunit.library.freeze.ViolationStore;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Nested;
@@ -69,14 +75,56 @@ class NoThreadSleepRuleTest {
     }
 
     /**
-     * The description is the freeze-store key, so this pins the id. It also proves {@code guard()}
-     * ran at all: only the rename inside it can turn ArchUnit's own prose into the id. That
-     * {@code guard()} freezes is pinned once, for every rule, by {@code DocumentedRuleTest}.
+     * Flagging the example is half the rule: the finding then has to reach the freeze store, filed
+     * under this rule's id — the key every consumer's recorded debt lives under, and the reason an
+     * id is never renamed. How freezing itself behaves is ArchUnit's, pinned once by
+     * {@code DocumentedRuleTest} and {@code EmptyOmittingViolationStoreTest}.
+     *
+     * <p>The store is a map handed to this one rule by {@link FreezingArchRule#persistIn}; a
+     * configured {@code freeze.store} would be process-wide and leak across the Surefire JVM.
      */
     @Test
-    void thePublishedRuleIsRenamedToTheIdThatKeysTheFreezeStore() {
-        assertEquals("corral.test.no-thread-sleep", NoThreadSleepRule.rule.getDescription());
-        assertNotEquals("corral.test.no-thread-sleep", NoThreadSleepRule.DEFINITION.getDescription());
+    void freezesWhatItFindsUnderTheRuleId() {
+        InMemoryViolationStore store = new InMemoryViolationStore();
+        ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoThreadSleepRule.rule,
+                "the published field must be frozen — an unfrozen rule fails on adoption")
+                .persistIn(store);
+
+        frozen.check(EXAMPLES);
+
+        List<String> debt = store.violationsFiledUnder("corral.test.no-thread-sleep");
+        assertTrue(debt.stream().anyMatch(line -> line.contains("ThreadSleeper")), debt::toString);
+        assertTrue(debt.stream().anyMatch(line -> line.contains("TimeUnitSleeper")), debt::toString);
+    }
+
+    /** Keyed on the rule description, which {@code guard()} has renamed to the doc id. */
+    private static final class InMemoryViolationStore implements ViolationStore {
+
+        private final Map<String, List<String>> violationsByRuleDescription = new HashMap<>();
+
+        List<String> violationsFiledUnder(String ruleId) {
+            return violationsByRuleDescription.getOrDefault(ruleId, List.of());
+        }
+
+        @Override
+        public void initialize(Properties properties) {
+            // The map is the store. FreezingArchRule re-initialises whatever it is handed.
+        }
+
+        @Override
+        public boolean contains(ArchRule rule) {
+            return violationsByRuleDescription.containsKey(rule.getDescription());
+        }
+
+        @Override
+        public void save(ArchRule rule, List<String> violations) {
+            violationsByRuleDescription.put(rule.getDescription(), List.copyOf(violations));
+        }
+
+        @Override
+        public List<String> getViolations(ArchRule rule) {
+            return violationsByRuleDescription.getOrDefault(rule.getDescription(), List.of());
+        }
     }
 
     // --- the classes under examination -------------------------------------------------------
