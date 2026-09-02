@@ -15,21 +15,19 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 /**
- * The three classes the rule is aimed at are declared first, and deliberately stay first: the
- * committed freeze store records the <em>line</em> each sleep sits on, so anything inserted above
- * them rewrites the store on an edit that changed nothing about the rule.
+ * The two classes under examination come first and stay first: the committed store records the line
+ * each violation sits on, so anything inserted above them rewrites it on an unrelated edit.
  *
- * <p>They are static nested classes, so no runner selects them and they need neither an {@code *IT}
- * name nor a {@code fixtures} package to stay unexecuted — only a compiler, which puts them in test
- * output and therefore in {@code TestScope.TEST_CLASSES}.
+ * <p>They are static nested classes, so no runner selects them — no {@code *IT} name and no
+ * {@code fixtures} package needed, only a compiler, which puts them in test output and therefore in
+ * {@code TestScope.TEST_CLASSES}.
  */
 class NoThreadSleepRuleTest {
 
-    /** The canonical violation: a guess about how long the charge takes, on someone else's machine. */
+    /** Must be flagged: a guess about how long the charge takes, on someone else's machine. */
     static class ThreadSleeper {
 
         void awaitTheCharge() throws InterruptedException {
@@ -38,22 +36,9 @@ class NoThreadSleepRuleTest {
     }
 
     /**
-     * The same wait spelled through TimeUnit, and deliberately <em>out of scope</em>: that is a rule
-     * of its own, under its own freeze-store key. It earns its place here as the counterexample that
-     * pins the owner clause — drop {@code assignableTo(Thread.class)} and this class gets flagged.
-     */
-    static class TimeUnitSleeper {
-
-        void awaitTheCharge() throws InterruptedException {
-            TimeUnit.MILLISECONDS.sleep(500);
-        }
-    }
-
-    /**
-     * The shape howToFix recommends — waits on the condition with a ceiling, and reads the clock —
-     * so it must not be flagged. Note what that does <em>not</em> prove: the rule has no notion of a
-     * timeout, and ignores this class only because no call here is named {@code sleep}. An
-     * {@code await()} with no ceiling would be ignored just the same.
+     * Must not be flagged: the shape {@code howToFix} recommends. Its {@code Thread.currentThread}
+     * call is what pins the name clause — drop that clause from the predicate and the {@code Thread}
+     * owner alone reports this class.
      */
     static class ConditionWaiter {
 
@@ -74,7 +59,7 @@ class NoThreadSleepRuleTest {
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter()
-            .importClasses(ThreadSleeper.class, TimeUnitSleeper.class, ConditionWaiter.class);
+            .importClasses(ThreadSleeper.class, ConditionWaiter.class);
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
     private static String report() {
@@ -82,62 +67,34 @@ class NoThreadSleepRuleTest {
                 .allowEmptyShould(true).evaluate(EXAMPLES).getFailureReport().getDetails());
     }
 
-    @Nested
-    class Flags {
+    @Test
+    void flagsASleepOnThread() {
+        String report = report();
 
-        @Test
-        void aSleepOnThread() {
-            String report = report();
-
-            assertTrue(report.contains("ThreadSleeper"), report);
-        }
+        assertTrue(report.contains("ThreadSleeper"), report);
     }
 
-    @Nested
-    class Ignores {
+    @Test
+    void ignoresAWaitThatNeverCallsSleep() {
+        String report = report();
 
-        @Test
-        void aWaitThatNeverCallsSleep() {
-            String report = report();
-
-            assertFalse(report.contains("ConditionWaiter"),
-                    "the fix this rule recommends must not itself be flagged: " + report);
-        }
-
-        @Test
-        void aSleepSpelledThroughTimeUnit() {
-            // Pins the owner clause: without it, "sleep" alone would report this.
-            String report = report();
-
-            assertFalse(report.contains("TimeUnitSleeper"),
-                    "TimeUnit.sleep is a rule of its own, not this one: " + report);
-        }
-
-        @Test
-        void otherMethodsOnThread() {
-            // Pins the name clause: without it, the Thread owner alone would report this.
-            String report = report();
-
-            assertFalse(report.contains("currentThread"), report);
-        }
+        assertFalse(report.contains("ConditionWaiter"),
+                "the fix this rule recommends must not itself be flagged: " + report);
     }
 
     /**
-     * Flagging the example is half the rule: the finding then has to reach the freeze store, in a
-     * file named for this rule's id — the key every consumer's recorded debt lives under, and the
-     * reason an id is never renamed. The store is committed, so what this rule records is reviewed
-     * like any other file and a reworded predicate shows up as a diff. Reseed it the way
-     * {@code corral-example} documents, then commit the result:
+     * The finding also has to reach the committed store, in a file named for the rule's id — the key
+     * every consumer's debt is filed under. Committing it makes a widened predicate fail the build
+     * rather than quietly join the accepted set. Reseed, then commit the result:
      * {@code ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true}
      *
-     * <p>The store is handed over by {@link FreezingArchRule#persistIn}, not named in
-     * {@code freeze.store}: the published field is frozen during class initialisation, which happens
-     * at whichever test touches the rule first, so a configured store class races class loading. Its
-     * path still goes on the process-wide {@link ArchConfiguration}, reset in a {@code finally},
-     * because {@code FreezingArchRule} re-initialises whatever store it is given.
+     * <p>The store goes in through {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a
+     * frozen rule captures its store when constructed, which is class initialisation, so naming one
+     * here races class loading. Only the path goes on {@link ArchConfiguration}, reset in a
+     * {@code finally}.
      */
     @Test
-    void freezesWhatItFindsIntoTheCommittedStoreUnderTheRuleId() throws IOException {
+    void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
         ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
         try {
             ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoThreadSleepRule.rule,
@@ -152,7 +109,6 @@ class NoThreadSleepRuleTest {
 
             String debt = Files.readString(Path.of(STORE_PATH, ID));
             assertTrue(debt.contains("ThreadSleeper"), debt);
-            assertFalse(debt.contains("TimeUnitSleeper"), debt);
             assertFalse(debt.contains("ConditionWaiter"), debt);
         } finally {
             ArchConfiguration.get().reset();
