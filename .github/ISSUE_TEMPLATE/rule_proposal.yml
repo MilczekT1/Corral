@@ -1,6 +1,6 @@
 name: Rule proposal
 description: Propose a new rule for the central catalog
-labels: [rule-proposal]
+labels: ["rule proposal"]
 body:
   - type: markdown
     attributes:
@@ -13,8 +13,14 @@ body:
     id: rule-id
     attributes:
       label: Proposed rule id
-      description: "`<topic>.<kebab-case-rule>`, matching `^[a-z0-9]++(?:\\.[a-z0-9-]++)++$`"
-      placeholder: "spring.no-field-injection"
+      description: >
+        `corral.<concern>.<slug>`, or `corral.<concern>.<library>.<slug>` for a rule specific to one
+        library. Segment 2 is a closed vocabulary and the slug carries a polarity marker — it starts
+        with `no-` or contains `-must-`. Both are enforced by `RuleIdGrammarTest`; see
+        [Rule ids](https://github.com/MilczekT1/Corral/blob/main/CONTRIBUTING.md#rule-ids). An id is
+        a freeze-store key in every consumer's repo and is never renamed, so it is worth getting
+        right here.
+      placeholder: "corral.spring.no-field-injection"
     validations:
       required: true
   - type: textarea
@@ -22,6 +28,32 @@ body:
     attributes:
       label: Why this matters
       description: What goes wrong in a real codebase when this is violated?
+    validations:
+      required: true
+  - type: textarea
+    id: example
+    attributes:
+      label: Example violation
+      description: |
+        The smallest piece of Java the rule must flag, and — where it clarifies the boundary — the
+        nearby code it must leave alone. This is what makes the proposal checkable against reality,
+        and what the implementer turns into the test's examples. Mark each with a comment, for example:
+
+        ```java
+        // must flag
+        @Test
+        void chargesTheCard() throws Exception {
+            Thread.sleep(500);
+            assertTrue(gateway.wasCharged());
+        }
+
+        // must ignore — waits on the condition, not the clock
+        @Test
+        void chargesTheCardEventually() {
+            await().atMost(ofSeconds(5)).untilAsserted(() -> assertTrue(gateway.wasCharged()));
+        }
+        ```
+      render: java
     validations:
       required: true
   - type: textarea
