@@ -1,11 +1,11 @@
-package io.github.milczekt1.corral.fixtures.testing;
+package io.github.milczekt1.corral.rules.testing.testclassnamingconvention.fixtures;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * Holds no {@code @Test} method at all — only {@code @ParameterizedTest}. Exactly as unexecutable
- * as {@link BadlyNamedTestCase}, so the naming rule must flag it too.
+ * MUST FLAG: holds no {@code @Test} at all, only {@code @ParameterizedTest}, which JUnit reaches
+ * through {@code @TestTemplate}. Exactly as unexecutable as {@link BadlyNamedTestCase}.
  */
 public class BadlyNamedParameterizedCase {
 

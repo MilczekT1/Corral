@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing;
+package io.github.milczekt1.corral.rules.testing.testclassnamingconvention;
 
 import static com.tngtech.archunit.base.DescribedPredicate.describe;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
