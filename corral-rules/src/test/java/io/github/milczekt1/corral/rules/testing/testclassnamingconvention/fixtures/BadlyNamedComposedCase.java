@@ -7,6 +7,6 @@ package io.github.milczekt1.corral.rules.testing.testclassnamingconvention.fixtu
 public class BadlyNamedComposedCase {
 
     @FastTest
-    void surefireWillNeverRunMeThroughAComposedAnnotation() {
+    void notSelectedByNameConventionThoughComposedAnnotation() {
     }
 }
