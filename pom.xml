@@ -42,6 +42,8 @@
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <archunit.version>1.4.2</archunit.version>
     <junit.version>5.11.3</junit.version>
+    <!-- JUnit 4, test-scoped in corral-rules only, so the examples corral.test.no-junit4 flags compile. -->
+    <junit4.version>4.13.2</junit4.version>
     <spring.version>7.0.9</spring.version>
     <mockito.version>5.23.0</mockito.version>
     <slf4j.version>2.0.18</slf4j.version>
@@ -95,6 +97,11 @@
         <groupId>org.junit.jupiter</groupId>
         <artifactId>junit-jupiter-api</artifactId>
         <version>${junit.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>junit</groupId>
+        <artifactId>junit</artifactId>
+        <version>${junit4.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
