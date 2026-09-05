@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.rules.testing.nojunit4.NoJUnit4Rule;
 import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.NoMockedRepositoryInIntegrationTestRule;
 import io.github.milczekt1.corral.rules.testing.nothreadsleep.NoThreadSleepRule;
 import io.github.milczekt1.corral.rules.testing.testclassnamingconvention.TestClassNamingConventionRule;
@@ -9,6 +10,10 @@ import lombok.experimental.UtilityClass;
 
 @UtilityClass
 public class TestingRulesGroup {
+
+    @ArchTest
+    public static final ArchTests noJUnit4 =
+            ArchTests.in(NoJUnit4Rule.class);
 
     @ArchTest
     public static final ArchTests noMockedRepositoryInIntegrationTest =
