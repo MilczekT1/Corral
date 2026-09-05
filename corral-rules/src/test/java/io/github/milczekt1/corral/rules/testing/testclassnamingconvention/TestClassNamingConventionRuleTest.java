@@ -23,8 +23,9 @@ import org.junit.jupiter.params.provider.ValueSource;
  * The examples are top-level classes in this rule's own {@code fixtures} package, not nested classes
  * as elsewhere in the catalog: this rule's predicate ends at {@code areNotMemberClasses()}, so a
  * nested example is exempt by construction and could never be flagged. The {@code fixtures} path
- * segment is what keeps {@code BadlyNamedTestCase} and {@code ConventionalIntegrationIT} from being
- * selected as real tests — Surefire and Failsafe both exclude it.
+ * segment is what keeps the conventionally named examples — {@code ConventionalUnitTest} and
+ * {@code ConventionalIntegrationIT} among them — from being selected as real tests here: Surefire
+ * and Failsafe both exclude that segment.
  */
 class TestClassNamingConventionRuleTest {
 
@@ -49,13 +50,13 @@ class TestClassNamingConventionRuleTest {
     }
 
     /**
-     * Every class a build tool would never run, whatever route JUnit takes to its test methods: a
-     * plain {@code @Test}, a {@code @ParameterizedTest} with no {@code @Test} anywhere, and a
-     * consumer's own {@code @FastTest} composed annotation.
+     * Every class a name-based selection convention passes over, whatever route JUnit takes to its
+     * test methods: a plain {@code @Test}, a {@code @ParameterizedTest} with no {@code @Test}
+     * anywhere, and a consumer's own {@code @FastTest} composed annotation.
      */
     @ParameterizedTest(name = "flags {0}")
-    @ValueSource(strings = {"BadlyNamedTestCase", "BadlyNamedParameterizedCase", "BadlyNamedComposedCase"})
-    void flagsTestClassesThatSurefireWouldNeverRun(String example) {
+    @ValueSource(strings = {"BadlyNamedPlainCase", "BadlyNamedParameterizedCase", "BadlyNamedComposedCase"})
+    void flagsTestClassesNoNameConventionSelects(String example) {
         String report = report();
 
         assertTrue(report.contains(example), report);
@@ -72,7 +73,7 @@ class TestClassNamingConventionRuleTest {
 
     @Test
     void staysSilentOnJunit5NestedGroups() {
-        // A @Nested class is its own JavaClass, but a build tool only ever selects the enclosing one.
+        // A @Nested class is its own JavaClass, but selection only ever reads the enclosing name.
         String report = report();
 
         assertFalse(report.contains("WhenEmpty"), report);
@@ -115,7 +116,7 @@ class TestClassNamingConventionRuleTest {
                     "the index must file this rule's debt under its id: " + index);
 
             String debt = Files.readString(Path.of(STORE_PATH, ID));
-            assertTrue(debt.contains("BadlyNamedTestCase"), debt);
+            assertTrue(debt.contains("BadlyNamedPlainCase"), debt);
             assertFalse(debt.contains("ConventionalUnitTest"),
                     "an accepted class must never reach the store: " + debt);
         } finally {

@@ -5,12 +5,12 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * MUST FLAG: holds no {@code @Test} at all, only {@code @ParameterizedTest}, which JUnit reaches
- * through {@code @TestTemplate}. Exactly as unexecutable as {@link BadlyNamedTestCase}.
+ * through {@code @TestTemplate}. Unselected for exactly the same reason as {@link BadlyNamedPlainCase}.
  */
 public class BadlyNamedParameterizedCase {
 
     @ParameterizedTest
     @ValueSource(strings = {"a", "b"})
-    void surefireWillNeverRunMeEither(String value) {
+    void notSelectedByNameConventionEither(String value) {
     }
 }

@@ -28,7 +28,12 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
                     Surefire and Failsafe plugins, for example, match *Test and *IT respectively). A \
                     top-level class holding JUnit test methods — @Test, @ParameterizedTest, @RepeatedTest, \
                     @TestFactory or @TestTemplate — whose name ends in none of Test, Tests or IT is silently \
-                    never executed: it looks like coverage in the source tree while proving nothing in CI.""")
+                    skipped by such a build: it looks like coverage in the source tree while proving nothing \
+                    in CI. The three accepted suffixes are deliberately narrower than any single tool's \
+                    defaults — Surefire also matches Test* and *TestCase, and tools that discover tests by \
+                    annotation rather than by name (Gradle on the JUnit Platform, IDE runners) execute them \
+                    whatever they are called — so a flagged class may well run in some builds. The point is \
+                    a name every tool selects and every reader can classify at a glance.""")
             .howToFix("""
                     Rename the reported top-level class to end in Test or Tests (unit tests) or IT (integration \
                     tests) so your build tool's test-selection convention picks it up (with Maven, Surefire \
