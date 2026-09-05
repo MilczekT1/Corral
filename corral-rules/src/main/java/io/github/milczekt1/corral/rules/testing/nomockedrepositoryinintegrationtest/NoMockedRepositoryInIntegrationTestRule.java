@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing;
+package io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
