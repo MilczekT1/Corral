@@ -1,5 +1,6 @@
-package io.github.milczekt1.corral.fixtures.testing;
+package io.github.milczekt1.corral.rules.testing.testclassnamingconvention.fixtures;
 
+import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
@@ -11,7 +12,7 @@ import org.junit.jupiter.api.Test;
  * <p>JUnit resolves {@code @Test} through the meta-annotation and runs methods annotated with it.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(java.lang.annotation.ElementType.METHOD)
+@Target(ElementType.METHOD)
 @Test
 public @interface FastTest {
 }
