@@ -85,3 +85,4 @@ body:
         - label: Broadly applicable — true for most JVM projects, not a house style
         - label: Objectively checkable — no judgement call about intent
         - label: Stable — the predicate is unlikely to need rewording, which would break consumers
+        - label: Non-obvious to fix — the HOW TO FIX says something the reader would not have done unprompted
