@@ -1,13 +1,15 @@
 # Corral
 
-**Architecture rules that survive contact with a coding agent.**
+**ArchUnit rules that fail in the test loop your coding agent already runs, and tell it how to fix
+them.**
 
-Your rules live in a wiki nobody reads, or in an [ArchUnit](https://www.archunit.org/) test class
-copy-pasted into thirty repos and drifted in all thirty. Corral makes them a dependency.
+A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
+fails deterministically, the failure explains why the rule exists and how to fix it, and violations
+that predate the rule are frozen as debt, so you can adopt it on any codebase today.
 
 [![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml)
 
-[**Rules**](docs/rules.md) · [**Quick start**](#quick-start) · [**Configuration**](docs/configuration.md) · [**Write your own**](docs/creating-a-rule.md) · [**Example consumer**](corral-example)
+[**Why Corral**](#why-corral) · [**Evidence**](docs/evidence.md) · [**Quick start**](#quick-start) · [**Rules**](docs/rules.md) · [**Write your own**](docs/creating-a-rule.md) · [**Example consumer**](corral-example)
 
 ```mermaid
 ---
@@ -38,8 +40,8 @@ flowchart LR
 Corral verifies concrete statements, not vague descriptions. *No field injection* is something a
 build can decide; *prefer boring solutions* is not, and stays in `CLAUDE.md`.
 
-When the build goes red, an agent takes the cheapest path back to green: widen the scan, silence the
-test, edit the frozen store. Every Corral failure names those paths before anyone reaches for one.
+This is what a failure looks like. The agent reads it in the same test output it was already going
+to read, and nothing about the rule occupies its context until then:
 
 ```text
 Architecture Violation [corral.logging.no-system-out] [Priority: MEDIUM]
@@ -55,46 +57,46 @@ HOW TO FIX:
 
 HOW NOT TO FIX (this rule):
   Do NOT route the same write through a wrapper to dodge the field match — a PrintStream local, a
-  Console helper, a stream fetched reflectively — the output stays just as unmanaged and is now
-  harder to find […]
+  Console helper, a stream fetched reflectively — the output stays just as unmanaged […]
 
 HOW NOT TO FIX (always):
   - Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation
     disappear. The store records pre-existing debt only; new violations must be fixed in code.
-  - Do NOT re-run with archunit.freeze.refreeze=true, and do NOT commit
-    freeze.store.default.allowStoreCreation=true. Either one converts every current violation in
-    every rule into accepted debt at once.
-  - Do NOT add to or create archunit_ignore_patterns.txt. ArchUnit discards anything matching that
-    file before this rule, the freeze store, or this message ever sees it, leaving no record
-    anywhere. Nothing in this catalog is exempted that way.
-  - Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.
-  - …and five more…
-  - The ONLY acceptable resolution is changing the production/test code so the rule genuinely
-    passes — then follow this rule's HOW TO FIX.
+  - …and nine more…
 
 Offending locations:
   Method <com.example.consumer.service.NoisyService.announce(java.lang.String)> gets field
   <java.lang.System.out> in (NoisyService.java:7)
 ```
 
-Ten clauses, fixed in
-[`AntiFixPolicy`](corral-sdk/src/main/java/io/github/milczekt1/corral/format/AntiFixPolicy.java),
-appended to **every** failure, droppable by no rule. Two of them are enforced in code, not just
-stated: an `archunit_ignore_patterns.txt` anywhere on the classpath fails every rule and names every
-copy it found, and an exclusion needs a written reason that is then reprinted on every *other* rule's
-failure for as long as it stands. The rest are guidance — legible in the diff, not blocked.
+## Why Corral
 
+- **It runs where the agent already looks.** A Corral rule is a JUnit test. It fails in `mvn test`,
+  in the IDE gutter, and in CI, with no extra tool to install or remember to run.
+- **Every failure carries its own fix.** WHY the rule exists, HOW TO FIX it, and the tempting wrong
+  moves, written for whoever reads the failure next — increasingly a coding agent.
 - **Adoption never blocks.** Every rule ships frozen: the first run records today's violations as
   debt and passes, only *new* ones fail. Adopt a rule on a codebase that breaks it 200 times, today.
-- **Failures are written for whoever fixes them — increasingly a coding agent.** Every violation
-  prints why the rule exists, how to fix it, and ten ways not to.
-- **One test-scoped dependency, and you pick the groups you want.** Rules live in one versioned
-  artifact, not copy-pasted into every repo. Ids carry a `corral.` prefix and are
-  [never renamed](docs/rules.md#rule-ids), because an id is a freeze-store key in your repo.
+- **It wraps any `ArchRule`.** Rules you already have, or write for your own layers and packages,
+  get the same failure format and the same freeze through `corral-sdk`.
+- **The cheap ways back to green are named before anyone reaches for one.** Ten clauses in
+  [`AntiFixPolicy`](corral-sdk/src/main/java/io/github/milczekt1/corral/format/AntiFixPolicy.java)
+  ride on every failure. Two are enforced in code: an `archunit_ignore_patterns.txt` on the classpath
+  fails every rule, and an exclusion needs a written reason that is reprinted on every other rule's
+  failure for as long as it stands.
+
+## Evidence
+
+Twelve fresh-context coding-agent sessions, three models at two effort levels, were pointed at a
+red build with two planted violations and told to make it green. All twelve fixed the code; none
+touched the freeze store, the exclusions or the test annotations. Half ran with Corral's failure
+format and half with ArchUnit's default output, and the outcome was the same in both halves — what
+the guidance changed was *how* they fixed it, not whether. Setup, per-run results and the caveats
+that go with a twelve-run sample are in **[docs/evidence.md](docs/evidence.md)**.
 
 ## Quick start
 
-**1. Depend on it** — see [Install](#install) for the repository and auth.
+**1. Depend on it** — see [Install](#install) for where the artifact comes from today.
 
 ```xml
 <dependency>
@@ -152,16 +154,37 @@ silently), and **pinning `allowStoreCreation` in `archunit.properties`** instead
 lost store then silently re-freezes everything). Both are covered in
 [Configuration](docs/configuration.md).
 
+## Break it yourself
+
+The fastest way to see what an agent sees. In [`corral-example`](corral-example), add a line to any
+service:
+
+```java
+System.out.println("hello");
+```
+
+then run `./mvnw -q test` from that module and read the failure. Delete the line, and it is green
+again. The example's own [README](corral-example/README.md#expected-output) walks through what each
+part of the output means, and what happens when you try each of the wrong fixes.
+
 ## What's in the catalog
 
-Four rules today, in `TestingRulesGroup` and `LoggingRulesGroup` — ids and what each enforces are in
-the **[rules catalog](docs/rules.md)**. Two jars: `corral-sdk` is the framework for authoring rules,
-`corral-rules` the catalog built on it. Depend on the SDK alone to publish a catalog of your own.
+Rules ship in groups, one per concern, and you wire the groups you want. The current groups and
+every rule in them are in the **[rules catalog](docs/rules.md)** — that table is checked against the
+published groups by the build, so it cannot go stale.
+
+Two jars, two jobs. **`corral-sdk`** is the framework: `DocumentedRule`, the failure format, the
+freeze store, exclusions. It is small and meant to stay small. **`corral-rules`** is the catalog built
+on it, and it is where growth happens — rules that hold for most JVM projects, with a fix worth
+spelling out. Rules shaped by *your* project — its layers, packages and names — are written with the
+SDK in your own repo, in your own namespace, and get the same failure format and freeze. Depend on the
+SDK alone to do only that.
 
 ## Docs
 
 | I want to… | Guide |
 |---|---|
+| See what happened when agents met a Corral failure | [Evidence](docs/evidence.md) |
 | See every rule and what it enforces | [Rules catalog](docs/rules.md) |
 | Tune freezing, the store and the formatter | [Configuration](docs/configuration.md) |
 | Turn off one rule and keep the group | [Excluding a rule](docs/excluding-a-rule.md) |
@@ -172,14 +195,16 @@ the **[rules catalog](docs/rules.md)**. Two jars: `corral-sdk` is the framework 
 
 ## Install
 
-**Pre-release: no `x.y.z` is published yet**, so `0.1.0` does not resolve — publish a snapshot from
-`main` if you want something to depend on today ([release process](docs/release-process.md)).
+Corral is heading to Maven Central. No release is published yet, so until then build it from source
+and depend on the snapshot:
 
-Artifacts go to GitHub Packages. Add `https://maven.pkg.github.com/MilczekT1/Corral` as a
-`<repository>` with snapshots enabled, and a matching `<server>` in `~/.m2/settings.xml` under the
-same `<id>` — GitHub authenticates even public reads, so it needs a classic PAT with `read:packages`
-(in CI, `${env.GITHUB_TOKEN}`). Without both, Maven reports
-`Could not find artifact io.github.milczekt1:corral-rules`.
+```bash
+git clone https://github.com/MilczekT1/Corral.git && cd Corral && ./mvnw -q install -DskipTests
+```
+
+That puts `io.github.milczekt1:corral-rules:0.1.0-SNAPSHOT` (and `corral-sdk`) in your local
+repository, which is what the quick start's dependency resolves against. The
+[release process](docs/release-process.md) describes how versions are cut.
 
 ## Contributing
 

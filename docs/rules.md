@@ -13,7 +13,9 @@ inside one you do can be switched off with [an exclusion](excluding-a-rule.md).
 | `corral.logging.no-system-out` | `LoggingRulesGroup` | No class may access `System.out`. Matched as a field access, so every overload of `println`, plus `print`, `printf` and `write`, is covered — static initializers included. |
 | `corral.logging.no-system-err` | `LoggingRulesGroup` | No class may access `System.err`. Same field-access match. Kept separate from `corral.logging.no-system-out` so stdout debt and stderr debt freeze under their own keys. `throwable.printStackTrace()` is *not* matched: the field access happens inside `java.lang.Throwable`. |
 
-This table is maintained by hand; nothing in the build checks it.
+This table is written by hand and checked by the build: `RulesCatalogDocTest` in `corral-rules`
+fails when an id here is not published, a published id is missing here, or a row names the wrong
+group. The prose in the third column is not checked.
 
 ## Rule ids
 
