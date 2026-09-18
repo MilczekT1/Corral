@@ -1,0 +1,5 @@
+Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.NoDisabledWithoutReasonRuleTest$PendingFix is @Disabled with no reason
+Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.NoDisabledWithoutReasonRuleTest$ReceiptWriting is @Disabled with no reason
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.NoDisabledWithoutReasonRuleTest$OrderPlacement.placesTheOrder() is @Disabled with no reason
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.NoDisabledWithoutReasonRuleTest$ShipmentTracking.notifiesTheCustomer() is @Disabled with no reason
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.NoDisabledWithoutReasonRuleTest$ShipmentTracking.tracksTheParcel() is @Disabled with no reason

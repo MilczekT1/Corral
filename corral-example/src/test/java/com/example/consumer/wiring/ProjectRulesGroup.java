@@ -3,6 +3,7 @@ package com.example.consumer.wiring;
 import com.example.consumer.custom.NoStdoutInServicesRule;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.groups.TestingJunitRulesGroup;
 import io.github.milczekt1.corral.groups.TestingRulesGroup;
 
 /**
@@ -22,6 +23,9 @@ final class ProjectRulesGroup {
 
     @ArchTest
     static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
+
+    @ArchTest
+    static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
 
     @ArchTest
     static final ArchTests ownRules = ArchTests.in(NoStdoutInServicesRule.class);
