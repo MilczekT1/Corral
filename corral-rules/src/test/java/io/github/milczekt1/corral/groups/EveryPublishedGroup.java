@@ -24,5 +24,8 @@ public class EveryPublishedGroup {
     public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
 
     @ArchTest
+    public static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
+
+    @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 }
