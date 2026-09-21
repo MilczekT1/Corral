@@ -94,6 +94,7 @@ class PublishedCatalogTest {
 
         assertEquals(Set.of(
                 "corral.test.class-names-must-end-with-test-or-it",
+                "corral.test.junit.no-disabled-without-reason",
                 "corral.test.no-junit4",
                 "corral.test.no-mocked-repository-in-integration-test",
                 "corral.test.no-thread-sleep",

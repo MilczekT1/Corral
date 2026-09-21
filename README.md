@@ -115,12 +115,14 @@ import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.groups.LoggingRulesGroup;
+import io.github.milczekt1.corral.groups.TestingJunitRulesGroup;
 import io.github.milczekt1.corral.groups.TestingRulesGroup;
 
 @AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)
 class ProjectArchitectureTest {
 
     @ArchTest static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
+    @ArchTest static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
     @ArchTest static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 }
 ```
