@@ -72,7 +72,7 @@ convention: `corral-sdk` has no dependency on `corral-rules`, so a framework cla
 concrete rule does not compile.
 
 The step-by-step for adding a rule is **[Creating a rule](docs/creating-a-rule.md)** — id, class,
-fixtures, wiring, and the three ways to ship a rule that silently enforces nothing.
+fixtures, wiring, and the four ways to ship a rule that silently enforces nothing.
 
 ## A rule in more than one group
 
