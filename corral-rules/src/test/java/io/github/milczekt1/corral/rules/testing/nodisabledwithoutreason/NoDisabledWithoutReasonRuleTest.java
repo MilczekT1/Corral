@@ -10,99 +10,26 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.DeliveryScheduling;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.InvoiceRendering;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.OrderPlacement;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.PendingFix;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.PendingMigration;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ReceiptWriting;
+import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking;
 import io.github.milczekt1.corral.scope.TestScope;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
-import org.junit.jupiter.api.condition.DisabledOnOs;
-import org.junit.jupiter.api.condition.OS;
 
 /**
- * The examples are nested and static, so no runner selects them — a top-level {@code *IT} outside a
- * {@code fixtures} package is run by Failsafe for real, and a top-level {@code *Test} carrying a
- * bare {@code @Disabled} would be a disabled test in this very suite.
+ * The examples live in {@code fixtures/}, which Surefire and Sonar both exclude: a bare
+ * {@code @Disabled} is the violation under test, and anywhere else it would be a disabled test in
+ * this very suite and a linter would be told to delete it.
  */
 class NoDisabledWithoutReasonRuleTest {
-
-    /**
-     * The enabled method and the explained one are load-bearing: {@code alwaysTrue()} would pass
-     * without them.
-     */
-    static class OrderPlacement {
-
-        @Disabled
-        @Test
-        void placesTheOrder() {
-        }
-
-        @Test
-        void reservesStock() {
-        }
-
-        @Disabled("Blocked on gateway sandbox outage, see #412 — re-enable when it closes")
-        @Test
-        void refundsTheOrder() {
-        }
-    }
-
-    @Disabled
-    static class ReceiptWriting {
-
-        @Test
-        void writesTheReceipt() {
-        }
-    }
-
-    static class ShipmentTracking {
-
-        @Disabled("")
-        @Test
-        void tracksTheParcel() {
-        }
-
-        @Disabled("   ")
-        @Test
-        void notifiesTheCustomer() {
-        }
-    }
-
-    @Disabled("Blocked on the carrier sandbox, see #900 — re-enable when it returns")
-    static class DeliveryScheduling {
-
-        @DisabledOnOs(OS.WINDOWS)
-        @Test
-        void schedulesTheDelivery() {
-        }
-
-        @DisabledIfEnvironmentVariable(named = "CI", matches = "true")
-        @Test
-        void retriesTheDelivery() {
-        }
-    }
-
-    @Disabled
-    @Retention(RetentionPolicy.RUNTIME)
-    @interface PendingFix {
-    }
-
-    @Disabled("Pending the 2026 pricing migration, see #900")
-    @Retention(RetentionPolicy.RUNTIME)
-    @interface PendingMigration {
-    }
-
-    static class InvoiceRendering {
-
-        @PendingFix
-        @Test
-        void rendersTheInvoice() {
-        }
-    }
 
     private static final String ID = "corral.test.junit.no-disabled-without-reason";
 
