@@ -9,9 +9,6 @@ import lombok.experimental.UtilityClass;
 /**
  * Testing rules that only mean something to a JUnit suite; {@code TestingRulesGroup} holds the ones
  * that hold for a TestNG or Spock suite just as well.
- *
- * <p>{@code corral.test.no-junit4} moved here from that group. A consumer wiring only
- * {@code TestingRulesGroup} silently stops running it — wire this group alongside.
  */
 @UtilityClass
 public class TestingJunitRulesGroup {
