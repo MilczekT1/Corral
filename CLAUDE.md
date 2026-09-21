@@ -86,7 +86,7 @@ A rule may sit in two groups: it then runs once per path and the catalog test re
 rule *object* per id (two objects sharing an id is the real hazard — `RuleRegistry` misses it when
 their docs are identical).
 
-## Three ways to ship a rule that enforces nothing (all green)
+## Four ways to ship a rule that enforces nothing (all green)
 
 1. `@ArchTest` field declared above `DOC`/`DEFINITION` → freezes against `null`.
 2. Testing the predicate through the published (frozen) field instead of raw `DEFINITION` → against a
@@ -94,6 +94,9 @@ their docs are identical).
    published field against a *committed* store is a different thing and is correct (step 4 below).
 3. A consumer setting `ImportOption.DoNotIncludeTests` → every test-scope rule passes vacuously. Call
    this out in the Javadoc of any rule scoped through `TestScope`.
+4. A typo in a fully-qualified string naming another library's type → indistinguishable from a
+   consumer who does not use that library: the predicate matches nothing. Only a fixture built from
+   the real type tells them apart, which is what the test-scope dependency is for.
 
 A green rule test is not evidence. Mutation-test each predicate clause (delete it, confirm a *named*
 test fails), and make sure the flagged example also contains a call the rule must **not** match —

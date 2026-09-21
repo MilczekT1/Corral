@@ -36,6 +36,62 @@ public static final ArchRule rule = new NoStdoutInServicesRule().guard();   // l
 
 `guard()` registers the doc, renames the rule to the id, freezes it, and applies exclusions.
 
+### Targeting a library you don't depend on
+
+Most rules are about somebody else's annotation — `@Entity`, `@Disabled`, `@MockBean`. Name it as a
+**fully-qualified string**, never a class literal, and take no dependency on the library:
+
+```java
+static final String DISABLED = "org.junit.jupiter.api.Disabled";
+```
+
+Consumers not inheriting the dependency is the smaller reason. The larger one is that a class
+literal does not degrade — it is resolved when the field initialises, and `guard()` runs during
+class init:
+
+```text
+StringOnly: initialised OK
+Holder:     java.lang.NoClassDefFoundError caused by ClassNotFoundException: Missing
+```
+
+The *holder class* fails to load, not the field. On a consumer without the library, a class literal
+therefore kills the rule class, which kills the `ArchTests` field naming it, which kills that whole
+node of their tree. A string cannot do that, and `static final String` is a compile-time constant,
+so it is inlined at every use site and the rule class need not initialise at all. An
+`<optional>true</optional>` dependency is not a middle ground: it puts the type back on the compile
+path and defers the failure to the machine without the jar.
+
+**Match as weakly as the defect allows.** In descending order of robustness:
+
+| Matching on | Needs the type to resolve? |
+|---|---|
+| package prefix — `dependOnClassesThat().resideInAPackage("javax.persistence..")` | no — reads a recorded name |
+| fully-qualified name, annotation presence | no, provided the annotation survives to bytecode |
+| assignability, meta-annotations | **yes** |
+
+`dependOnClassesThat` already reaches annotations, superclasses, field and parameter types and
+method calls, so one package check usually replaces a list. Assignability is the one to avoid:
+ArchUnit resolves unimported types from the classpath (`resolveMissingDependenciesFromClassPath`,
+on by default), and when the type is absent you get a stub with no hierarchy, so the check silently
+returns false.
+
+**Check the annotation survives compilation.** `@Retention(SOURCE)` annotations — every Lombok one —
+are gone before a class file exists. Target what the tool *generated* instead.
+
+**Get the set complete on day one.** The strings land in the rule description, which is the
+freeze-store key, so adding one later resurfaces every consumer's recorded violations.
+
+**Then add the library at `test` scope and build the fixture from the real types.** This is what
+makes the whole approach safe rather than merely compiling: a typo in the string and a consumer who
+does not use the library are otherwise indistinguishable — the rule matches nothing, the build is
+green, and nothing is enforced, permanently. A real-typed fixture turns a typo into a failing test.
+`corral-rules` carries `junit:junit`, `spring-test` and `mockito-core` on exactly these terms.
+
+If even a test-scope dependency is unwanted, the fixture only has to be as faithful as the matching
+is strong: against a package or name check, a stub declared under the real package is byte-identical
+evidence (`javax.*` and `jakarta.*` are legal to declare; only `java.*` is sealed by the
+classloader). Against assignability, only the real artifact will do.
+
 ## 3. Examples and test
 
 Cover **both** directions against the raw `DEFINITION` — the published field is frozen, so it would
@@ -131,10 +187,11 @@ One shaping decision makes all four easier: **one id, one mistake**. An id is a 
 two problems sharing one can never be adopted, frozen or retired separately — and a predicate
 covering both is harder to pin clause by clause than two predicates covering one each.
 
-## ⚠️ Three ways to ship a rule that enforces nothing
+## ⚠️ Four ways to ship a rule that enforces nothing
 
 | Mistake | Why it's silent |
 |---|---|
+| A **typo in a fully-qualified string**, or a library the consumer does not use | Both look identical: the predicate matches nothing. Only a fixture built from the real type tells them apart |
 | `@ArchTest` declared **above** `DOC`/`DEFINITION` | `guard()` runs at class init and reads them — they're still `null`. Only *fields* initialise in order; method order is irrelevant |
 | Testing the **predicate** through the published field instead of `DEFINITION` | The published field is frozen. Against a store with no entry for the rule it seeds on first run and passes; the test proves nothing. Freezing it against a *committed* store, as in step 4, is a different thing and is fine |
 | Consumers setting `ImportOption.DoNotIncludeTests` | Every test-scope rule passes vacuously |

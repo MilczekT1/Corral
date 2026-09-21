@@ -34,6 +34,14 @@ sequences and cross-references them for *this* catalog, it does not restate them
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
    `@ArchTest` field** — see Trap 1 below for why this order is load-bearing, not stylistic.
 
+   **If the rule targets another library's type, name it as a fully-qualified string, never a class
+   literal**, and add no dependency for it. A class literal is resolved when the field initialises,
+   and `guard()` runs at class init — so on a consumer without the library the rule class fails to
+   load and takes the whole group node with it. Match as weakly as the defect allows: a package
+   prefix through `dependOnClassesThat()` needs no resolution at all, while assignability and
+   meta-annotation checks silently return false when the type is absent. See
+   [Targeting a library you don't depend on](../../../docs/creating-a-rule.md#targeting-a-library-you-dont-depend-on).
+
 3. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, covering **both
    directions** against the raw `DEFINITION` field — see Trap 2 below for why the published field
    cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
