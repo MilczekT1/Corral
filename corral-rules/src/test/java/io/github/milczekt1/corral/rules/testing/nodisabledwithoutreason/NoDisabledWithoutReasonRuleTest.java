@@ -31,8 +31,8 @@ import org.junit.jupiter.api.condition.OS;
 class NoDisabledWithoutReasonRuleTest {
 
     /**
-     * One flagged method beside an enabled one and an explained one: without the latter two, a
-     * predicate matching every method — up to {@code alwaysTrue()} — would pass here.
+     * The enabled method and the explained one are load-bearing: {@code alwaysTrue()} would pass
+     * without them.
      */
     static class OrderPlacement {
 
@@ -51,7 +51,6 @@ class NoDisabledWithoutReasonRuleTest {
         }
     }
 
-    /** The class-level branch: the disable is on the type, and its method carries nothing. */
     @Disabled
     static class ReceiptWriting {
 
@@ -60,7 +59,6 @@ class NoDisabledWithoutReasonRuleTest {
         }
     }
 
-    /** Blank is blank: an explicit empty string and a whitespace-only one are both bare. */
     static class ShipmentTracking {
 
         @Disabled("")
@@ -74,7 +72,6 @@ class NoDisabledWithoutReasonRuleTest {
         }
     }
 
-    /** Nothing here is a violation: a stated reason, and two conditional annotations. */
     @Disabled("Blocked on the carrier sandbox, see #900 — re-enable when it returns")
     static class DeliveryScheduling {
 
@@ -89,19 +86,16 @@ class NoDisabledWithoutReasonRuleTest {
         }
     }
 
-    /** A composed annotation hiding a bare disable — flagged here, at its declaration. */
     @Disabled
     @Retention(RetentionPolicy.RUNTIME)
     @interface PendingFix {
     }
 
-    /** The same composition with the reason written once, for every use. */
     @Disabled("Pending the 2026 pricing migration, see #900")
     @Retention(RetentionPolicy.RUNTIME)
     @interface PendingMigration {
     }
 
-    /** A <em>use</em> of the composed annotation: the declared non-goal, never flagged. */
     static class InvoiceRendering {
 
         @PendingFix
@@ -165,7 +159,6 @@ class NoDisabledWithoutReasonRuleTest {
         assertFalse(report.contains("writesTheReceipt"), report);
     }
 
-    /** Separate annotation types, so the predicate cannot reach them — this pins that it does not. */
     @Test
     void ignoresTheConditionalDisableAnnotations() {
         String report = report();
@@ -174,10 +167,6 @@ class NoDisabledWithoutReasonRuleTest {
         assertFalse(report.contains("retriesTheDelivery"), report);
     }
 
-    /**
-     * The declaration is the one place a composed disable can be caught, and the one place a reason
-     * written once covers every use.
-     */
     @Test
     void flagsTheDeclarationOfAComposedAnnotationHidingABareDisabled() {
         String report = report();
@@ -185,10 +174,6 @@ class NoDisabledWithoutReasonRuleTest {
         assertTrue(report.contains("PendingFix"), report);
     }
 
-    /**
-     * The declared non-goal. The premise is asserted first: were the meta-annotation not actually
-     * there, this would pass while pinning nothing.
-     */
     @Test
     void ignoresAUseOfAComposedAnnotation() {
         assertTrue(EXAMPLES.get(InvoiceRendering.class)
@@ -200,10 +185,8 @@ class NoDisabledWithoutReasonRuleTest {
     }
 
     /**
-     * Asserted through the description rather than through an example: every class this module
-     * compiles lands in test output, so no example can be production-scoped, and no class on any
-     * classpath here carries a bare {@code @Disabled} outside it. Deleting the {@code that(...)}
-     * clause drops "test classes" from the description, which is also the freeze-store key's wording.
+     * Every class this module compiles lands in test output, so no example can be production-scoped:
+     * the scope is asserted through the description, which is also the freeze-store key's wording.
      */
     @Test
     void scopesItselfToTestClasses() {

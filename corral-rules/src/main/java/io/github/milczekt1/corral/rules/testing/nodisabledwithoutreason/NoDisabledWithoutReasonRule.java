@@ -19,18 +19,15 @@ import lombok.NoArgsConstructor;
 /**
  * {@code @Disabled} must carry a reason, on the class or on the method that declares it.
  *
- * <p>Matches <em>direct</em> annotations only. A project's own {@code @DisabledPendingFix}, itself
- * annotated {@code @Disabled}, is flagged where it is <em>declared</em> — the one place a reason can
- * be written once for every use — and never where it is used. Reaching the {@code @Disabled}
- * instance through a meta-annotation has no ArchUnit API, and walking {@code getAnnotations()} by
- * hand is import-scope dependent: the meta-annotation graph has self-loops ({@code @Retention} is
- * itself {@code @Retention}), and whether the walk terminates or overflows the stack depends on
- * whether the consumer imported {@code java.lang.annotation}. A false negative costs coverage; that
- * walk costs consumers their build.
+ * <p>Matches <em>direct</em> annotations only: a composed annotation such as a project's own
+ * {@code @DisabledPendingFix} is flagged at its <em>declaration</em>, never at its uses. Do not
+ * close that gap by walking {@code getAnnotations()} — the meta-annotation graph has self-loops
+ * ({@code @Retention} is itself {@code @Retention}), so whether the walk terminates depends on the
+ * consumer's import scope.
  *
  * <p>Conditional variants — {@code @DisabledOnOs}, {@code @DisabledIfEnvironmentVariable} and the
- * rest — are separate annotation types and are deliberately never matched: they state their
- * condition and still run everywhere else.
+ * rest — are separate annotation types and are never matched: they state their condition and still
+ * run everywhere else.
  *
  * <p>Inspects <em>test</em> classes, so consumers must not set
  * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
@@ -106,9 +103,8 @@ public final class NoDisabledWithoutReasonRule implements DocumentedRule {
     /**
      * Used with {@code noClasses().should(...)}, so a satisfied event is reported as a violation.
      *
-     * <p>One event per offending element rather than one per class: a class and its methods are one
-     * failure mode under one freeze-store key, but a fourth unexplained disable added to a class
-     * whose first three are frozen debt must still fail the build.
+     * <p>One event per offending element, not one per class: freeze-store debt is recorded per
+     * event, so a new bare disable in a class whose others are frozen still fails the build.
      */
     private static ArchCondition<JavaClass> declareADisabledWithoutAReason() {
         return new ArchCondition<>("declare @Disabled without a reason") {

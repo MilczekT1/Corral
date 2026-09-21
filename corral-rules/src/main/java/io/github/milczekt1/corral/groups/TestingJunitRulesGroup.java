@@ -7,15 +7,11 @@ import io.github.milczekt1.corral.rules.testing.nojunit4.NoJUnit4Rule;
 import lombok.experimental.UtilityClass;
 
 /**
- * Testing rules that only mean something to a JUnit suite.
+ * Testing rules that only mean something to a JUnit suite; {@code TestingRulesGroup} holds the ones
+ * that hold for a TestNG or Spock suite just as well.
  *
- * <p>Split from {@code TestingRulesGroup}, which holds the rules that hold for a TestNG or Spock
- * suite just as well: keeping both in one node means a non-JUnit consumer either takes the JUnit
- * rules or loses the framework-agnostic ones.
- *
- * <p>Group membership is not part of a rule id, so nothing here changed a freeze-store key — but a
- * consumer wiring only {@code TestingRulesGroup} stops running {@code corral.test.no-junit4} and
- * nothing tells them. Wire this group alongside it.
+ * <p>{@code corral.test.no-junit4} moved here from that group. A consumer wiring only
+ * {@code TestingRulesGroup} silently stops running it — wire this group alongside.
  */
 @UtilityClass
 public class TestingJunitRulesGroup {
