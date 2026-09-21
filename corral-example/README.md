@@ -9,13 +9,13 @@ would have both writing the same entry.
 
 | File | What it shows |
 |---|---|
-| `wiring/ProjectRulesGroup` | **Your own catalog root** — the groups and rules this module runs, composed as one node. It wires `TestingRulesGroup`, `TestingJunitRulesGroup` and this module's own rule; `LoggingRulesGroup` is wired by `exclusions/` instead. |
+| `wiring/ProjectRulesGroup` | **Your own catalog root** — the groups and rules this module runs, composed as one node. It wires the central groups this project opted into, plus this module's own rule; `LoggingRulesGroup` is deliberately not among them — `exclusions/` wires that one instead. |
 | `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. Wired from `ProjectRulesGroup`, alongside the library's. |
 | `exclusions/ExcludedRuleTest` | Wiring `LoggingRulesGroup`, the group holding the excluded rule. |
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
-| `archunit/frozen/` | The committed freeze store. Nine entries, three files named after their rule ids — the clean rules have no file, and the retired id has no entry at all. |
+| `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
 | `corral-exclusions.txt` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
