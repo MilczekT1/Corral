@@ -39,10 +39,20 @@ sequences and cross-references them for *this* catalog, it does not restate them
    cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
    package-private, so a test anywhere else cannot reach it without widening the published surface.
 
-4. **Declare the examples as `static` nested classes in that test**, and reach them with
-   `importClasses(...)`. What each is for is then unmissable, and no runner selects them, so they
-   need neither an `*IT` name nor a `fixtures` package: only the compiler has to see them, which is
-   what puts them in test output and therefore in `TestScope.TEST_CLASSES`.
+4. **Put the examples where nothing will run them and nothing will lint them**, and reach them with
+   `importClasses(...)`. Only the compiler has to see them, which is what puts them in test output
+   and therefore in `TestScope.TEST_CLASSES`.
+
+   Examples made of plain code — a call, a field, a name — go in `static` nested classes in that
+   test, as `NoThreadSleepRule`'s `ThreadSleeper` does: no runner selects them, and what each is
+   for is unmissable. Give their methods real bodies.
+
+   Examples carrying test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before` — go in a
+   `fixtures/` package beside the test instead, as `NoJUnit4Rule` and `NoDisabledWithoutReasonRule`
+   do. Sonar reads a nested class in a test file as a test of that file and flags the deliberate
+   violation under test; `**/fixtures/**` is excluded from Surefire, Failsafe and Sonar, and
+   nothing excludes a nested class from analysis. Getting this wrong costs a dozen findings on the
+   PR, not a build failure, so it surfaces late.
 
    **Both directions is two things, not necessarily two classes.** Where the verdict is about a
    *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
@@ -52,10 +62,9 @@ sequences and cross-references them for *this* catalog, it does not restate them
    that an over-broad predicate fails — a lone example with a lone matching call cannot do that,
    since every too-wide predicate still finds exactly that one call.
 
-   Do **not** promote them to top-level classes named `*IT` outside a `fixtures` package. Failsafe
-   includes `**/*IT.java` and excludes only `**/fixtures/**`, so such a class runs as a real
-   integration test — an example that sleeps then really sleeps. Nested classes sidestep the
-   question entirely.
+   Never name a top-level example `*IT` outside a `fixtures` package. Failsafe includes
+   `**/*IT.java` and excludes only `**/fixtures/**`, so such a class runs as a real integration
+   test — an example that sleeps then really sleeps.
 
    Give them names where none is a substring of another: the assertions match on the report text.
 
@@ -152,7 +161,8 @@ defect in the last rule added here — none was caught by the build.
 | Artifact | Path |
 |---|---|
 | Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
-| Rule test + examples | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
+| Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
+| Examples | nested in that test when they are plain code; `.../<topic>/<rule>/fixtures/` when they carry test annotations |
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` (plus its `stored.rules` line) |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |

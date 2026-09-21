@@ -53,11 +53,22 @@ passes.
 Put the test in the **rule's own package**: `DEFINITION` is package-private, and a test anywhere
 else cannot reach it without widening what the rule publishes.
 
-The examples must not run as tests themselves. Corral declares them as `static` nested classes in
-the rule's own test, which no runner selects — so they need no `fixtures` package and no
-naming contortion, and what each one is for is unmissable. If you keep them as top-level classes
-instead, exclude them from your test runner (Corral excludes `**/fixtures/**` in both Surefire and
-Failsafe), remembering that Failsafe *includes* `**/*IT.java`.
+The examples must not run as tests, and must not be *analysed* as tests. Those are two different
+exclusions, and a nested class only escapes the first.
+
+**Plain code — a call, a field, a name:** declare it as a `static` nested class in the rule's own
+test. No runner selects it and what it is for is unmissable. `NoThreadSleepRule`'s `ThreadSleeper`
+is that shape. Give its methods real bodies; an empty method is a smell wherever it sits.
+
+**Test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before`:** put it in a `fixtures/`
+package beside the rule's test. A static analyser reads a nested class in a test file as a test of
+that file, so it flags the deliberate violation under test and asks you to delete it. Corral
+excludes `**/fixtures/**` from Surefire, from Failsafe and from Sonar (`sonar.test.exclusions`);
+nothing excludes a nested class from analysis. `NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are
+that shape.
+
+Either way, never name a top-level example `*IT` outside `fixtures` — Failsafe *includes*
+`**/*IT.java`, so it runs as a real integration test.
 
 ## 4. Freeze the examples into a committed store
 
@@ -136,7 +147,7 @@ Contributing a rule *here* adds these project-specific steps:
 
 | | |
 |---|---|
-| One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test — so everything about a rule is one directory name. `NoThreadSleepRule` is the worked example; the three older rules still sit flat under `rules/<topic>/` with a shared `fixtures/<topic>/` package and no committed store, and move as they are next touched |
+| One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test, plus a `fixtures/` sub-package when the examples are annotation-shaped — so everything about a rule is one directory name. `NoThreadSleepRule` and `NoJUnit4Rule` are the worked examples; the three older rules still sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package, with no committed store, and move as they are next touched |
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
 | Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true`, then commit. Nothing in the build sets that flag, so a missing store fails loudly |
 | Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | It asserts the wired root's ids exactly, so an id change shows as a diff in review |
