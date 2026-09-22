@@ -27,5 +27,8 @@ public class EveryPublishedGroup {
     public static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
 
     @ArchTest
+    public static final ArchTests testingMockito = ArchTests.in(TestingMockitoRulesGroup.class);
+
+    @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 }
