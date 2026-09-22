@@ -55,8 +55,10 @@ Everything unusual here follows from this. An id becomes a file name in every co
 - Shape-only checks (regex, length, depth) live in `RuleDoc`'s constructor because they bind consumer
   ids too. Vocabulary checks deliberately do **not**, so consumers keep their own namespace.
 
-Other consumer-visible surfaces with no automated check: raising the Java baseline, and letting
-`docs/rules.md` drift from the published groups. See `CONTRIBUTING.md § What breaks consumers`.
+The consumer-visible surface with no automated check is raising the Java baseline.
+`docs/rules.md` drifting from the published groups *is* checked, by `RulesCatalogDocTest` — but only
+its id and group columns, so prose in the third column can still go stale or name a rule that does
+not exist. See `CONTRIBUTING.md § What breaks consumers`.
 
 ## How a rule is put together
 
@@ -115,7 +117,7 @@ files and the traps. The contract is `docs/creating-a-rule.md`. In short:
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` + its `stored.rules` line |
 | Group wiring | `.../groups/<Topic>RulesGroup.java`, plus a field on `EveryPublishedGroup` |
 | Expected id set | `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` |
-| Catalog table | `docs/rules.md` (hand-maintained, unchecked) |
+| Catalog table | `docs/rules.md` — `RulesCatalogDocTest` checks the id set and the group column |
 
 Seed a store once, then commit it — nothing in the build sets the flag, so a missing store fails loudly:
 

@@ -116,8 +116,9 @@ sequences and cross-references them for *this* catalog, it does not restate them
 7. **Extend the expected id set** in
    `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java`).
 
-8. **Add a row to the [rules catalog](../../../docs/rules.md).** Nothing in the build checks
-   this table — it drifts silently if you skip it.
+8. **Add a row to the [rules catalog](../../../docs/rules.md).** `RulesCatalogDocTest` fails the
+   build if you skip it: it checks the id set against the published groups *and* the group named in
+   column 2. Only those two columns — a dangling rule id in the prose column passes.
 
 ## Three silent failure modes
 
@@ -130,9 +131,9 @@ catching them is why the steps above are ordered the way they are.
 | **Predicate tested against the published field, not `DEFINITION`** | The published field is wrapped in `FreezingArchRule`. Against a store with no entry for the rule, it seeds every violation as accepted debt and reports zero — the test passes on the very run that should have shown a failure, and every run after. Assert the predicate against the raw `DEFINITION`, which is unfrozen. Step 5 does check the published field, and is *not* this trap: its store is committed, so the run compares against recorded lines instead of seeding. |
 | **Consumer sets `ImportOption.DoNotIncludeTests`** | Any rule scoped to test classes (see `TestScope`) then has no test classes to evaluate, so it passes vacuously for that consumer. This one binds *consumers*, not catalog authors — call it out in a rule's Javadoc whenever the rule inspects test-scope code, the way `TestClassNamingConventionRule` does. |
 
-## Two loud failures — and what they mean
+## Three loud failures — and what they mean
 
-Skip a step above and one of these two tests fails the build, on purpose:
+Skip a step above and one of these tests fails the build, on purpose:
 
 - **`PublishedCatalogTest`** — fails if the published id set no longer matches its expected set
   (step 6 skipped, or an id changed). If it fails on a rule you did **not** mean to touch, an id got
@@ -142,6 +143,8 @@ Skip a step above and one of these two tests fails the build, on purpose:
   replacementId, why)` in `corral-sdk` instead, and keep the retired id in the published set.
 - **`RuleIdGrammarTest`** — fails if the id violates the closed grammar (namespace, polarity marker,
   segment cap) from step 1. Fix the id, not the test.
+- **`RulesCatalogDocTest`** — fails if `docs/rules.md` and the published groups disagree, on either
+  the id set or the group column (step 8 skipped, or a rule moved group).
 
 ## Before you call it done
 
@@ -151,10 +154,19 @@ defect in the last rule added here — none was caught by the build.
 
 - [ ] **Each predicate clause mutation-tested.** Delete a clause, run the rule's test, confirm a
       *named* test fails; restore it. `NoThreadSleepRule` reached review with its scope clause and
-      its name clause both unpinned behind a green suite.
+      its name clause both unpinned behind a green suite. Mutate a *list* entry by entry, not the
+      list as a whole: one `mockConstruction` string reached review unpinned because the handle
+      clause was covering for it.
+      **Back up `src/test/resources/archunit/frozen/` first and restore it after each run.** The
+      published field is frozen, so a mutation that finds fewer violations makes
+      `FreezingArchRule` prune the committed store — and `EmptyOmittingViolationStore` deletes the
+      file outright when nothing is left. Reseed and re-run before you call the rule done.
 - [ ] **The flagged example holds a call the rule must NOT match.** With one matching call and
       nothing else, an over-broad predicate — up to `alwaysTrue()` — finds exactly the recorded
       violation and passes.
+- [ ] **No example's name is a substring of another's.** Assertions match on report text, so
+      `ConstructionHandoffCaller` inside `AnswerConstructionHandoffCaller` makes one case pass on
+      another's violations — and the mutation that should have killed it survives.
 - [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
       process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
       full run, twice, for two different reasons.
