@@ -155,8 +155,8 @@ defect in the last rule added here — none was caught by the build.
 - [ ] **Each predicate clause mutation-tested.** Delete a clause, run the rule's test, confirm a
       *named* test fails; restore it. `NoThreadSleepRule` reached review with its scope clause and
       its name clause both unpinned behind a green suite. Mutate a *list* entry by entry, not the
-      list as a whole: one `mockConstruction` string reached review unpinned because the handle
-      clause was covering for it.
+      list as a whole — one clause covers for another, so deleting a whole clause can fail a test
+      while a single entry of it stays unpinned.
       **Back up `src/test/resources/archunit/frozen/` first and restore it after each run.** The
       published field is frozen, so a mutation that finds fewer violations makes
       `FreezingArchRule` prune the committed store — and `EmptyOmittingViolationStore` deletes the
@@ -164,9 +164,9 @@ defect in the last rule added here — none was caught by the build.
 - [ ] **The flagged example holds a call the rule must NOT match.** With one matching call and
       nothing else, an over-broad predicate — up to `alwaysTrue()` — finds exactly the recorded
       violation and passes.
-- [ ] **No example's name is a substring of another's.** Assertions match on report text, so
-      `ConstructionHandoffCaller` inside `AnswerConstructionHandoffCaller` makes one case pass on
-      another's violations — and the mutation that should have killed it survives.
+- [ ] **No example's name is a substring of another's.** Assertions match on report text, so a
+      contained name makes one case pass on another's violations, and a mutation that should have
+      killed it survives.
 - [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
       process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
       full run, twice, for two different reasons.
