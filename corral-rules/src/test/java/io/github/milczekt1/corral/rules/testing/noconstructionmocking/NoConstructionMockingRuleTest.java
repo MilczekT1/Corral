@@ -11,6 +11,12 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.ConstructionHandleHolder;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.ConstructionHandleReceiver;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.ConstructionHandoffCaller;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.ConstructionMockingCaller;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.PlainMockitoUser;
+import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.WithAnswerHandoffCaller;
 import io.github.milczekt1.corral.scope.TestScope;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
@@ -21,84 +27,13 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Answers;
-import org.mockito.MockedConstruction;
 import org.mockito.Mockito;
 
 /**
- * The examples are nested and static, so no runner selects them — a top-level {@code *IT} outside a
- * {@code fixtures} package is run by Failsafe for real. They carry no test annotation, so nothing
- * lints them as tests of this file either.
+ * The examples live in {@code fixtures/}, which Surefire and Sonar both exclude: they exist to be
+ * flagged, and a linter told to tidy any of them would delete the violation under test.
  */
 class NoConstructionMockingRuleTest {
-
-    /** {@code Mockito.mock} is deliberate: same owner, not an installer, so an over-broad predicate fails. */
-    static class ConstructionMockingCaller {
-
-        void buildsTheClient() {
-            try (MockedConstruction<StringBuilder> clients = Mockito.mockConstruction(StringBuilder.class)) {
-                clients.constructed();
-            }
-        }
-
-        Runnable ordinaryMock() {
-            return Mockito.mock(Runnable.class);
-        }
-    }
-
-    /** The shared-base-class shape: the handle outlives the test that opened it. */
-    static class ConstructionHandleHolder {
-
-        MockedConstruction<StringBuilder> openClients;
-    }
-
-    /** The helper the installer was moved into. */
-    static class ConstructionHandleReceiver {
-
-        private MockedConstruction<StringBuilder> openClients;
-
-        void register(MockedConstruction<StringBuilder> clients) {
-            openClients = clients;
-        }
-    }
-
-    /** Erased sink, so the class depends on no handle type: only the call clause sees this. */
-    static class ConstructionHandoffCaller {
-
-        private final StringBuilder installed = new StringBuilder();
-
-        void install() {
-            keep(Mockito.mockConstruction(StringBuilder.class));
-        }
-
-        void keep(Object handle) {
-            installed.append(handle);
-        }
-    }
-
-    /** {@code mockConstructionWithAnswer} is a name of its own, and only the call clause can see it here. */
-    static class WithAnswerHandoffCaller {
-
-        private final StringBuilder installed = new StringBuilder();
-
-        void install() {
-            keep(Mockito.mockConstructionWithAnswer(StringBuilder.class, Answers.RETURNS_DEFAULTS));
-        }
-
-        void keep(Object handle) {
-            installed.append(handle);
-        }
-    }
-
-    /** Ordinary Mockito. */
-    static class PlainMockitoUser {
-
-        Runnable stubbed() {
-            Runnable runnable = Mockito.mock(Runnable.class);
-            Mockito.when(runnable.toString()).thenReturn("stubbed");
-            return runnable;
-        }
-    }
 
     private static final String ID = "corral.test.mockito.no-construction-mocking";
 
