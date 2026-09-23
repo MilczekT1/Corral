@@ -113,7 +113,7 @@ files and the traps. The contract is `docs/creating-a-rule.md`. In short:
 |---|---|
 | Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
 | Test | same package under `src/test/java/...` (`DEFINITION` is package-private) |
-| Examples | nested in the test when plain code; a `fixtures/` sub-package when they carry test annotations — Sonar lints nested ones as real tests |
+| Examples | a `fixtures/` sub-package when a linter would want to change them; nested in the test otherwise. Nothing excludes a nested class from analysis |
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` + its `stored.rules` line |
 | Group wiring | `.../groups/<Topic>RulesGroup.java`, plus a field on `EveryPublishedGroup` |
 | Expected id set | `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` |
@@ -130,8 +130,9 @@ Hand the store to a test with `persistIn(new EmptyOmittingViolationStore())`, ne
 during class init at whichever test touches the rule first. Only the store *path* goes on the
 process-wide `ArchConfiguration`, reset in a `finally`.
 
-`NoThreadSleepRule` is the worked example for plain-code examples (nested, committed store) and
-`NoJUnit4Rule` for annotation-shaped ones (per-rule `fixtures/`, committed store). The three older
+`NoThreadSleepRule` is the worked example for examples a linter reads without complaint (nested,
+committed store) and `NoJUnit4Rule` for deliberately bad ones (per-rule `fixtures/`, committed
+store). The three older
 rules sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package with no committed
 store — copy the newer shape.
 

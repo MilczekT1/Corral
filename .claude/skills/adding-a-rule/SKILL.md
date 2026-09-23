@@ -51,16 +51,21 @@ sequences and cross-references them for *this* catalog, it does not restate them
    `importClasses(...)`. Only the compiler has to see them, which is what puts them in test output
    and therefore in `TestScope.TEST_CLASSES`.
 
-   Examples made of plain code — a call, a field, a name — go in `static` nested classes in that
-   test, as `NoThreadSleepRule`'s `ThreadSleeper` does: no runner selects them, and what each is
-   for is unmissable. Give their methods real bodies.
+   Ask **would a linter want to change this example?** Nothing excludes a nested class from
+   analysis, so whatever Sonar objects to becomes a finding on the PR, and its advice is to delete
+   the violation under test. `**/fixtures/**` is excluded from Surefire, Failsafe and Sonar.
 
-   Examples carrying test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before` — go in a
-   `fixtures/` package beside the test instead, as `NoJUnit4Rule` and `NoDisabledWithoutReasonRule`
-   do. Sonar reads a nested class in a test file as a test of that file and flags the deliberate
-   violation under test; `**/fixtures/**` is excluded from Surefire, Failsafe and Sonar, and
-   nothing excludes a nested class from analysis. Getting this wrong costs a dozen findings on the
-   PR, not a build failure, so it surfaces late.
+   Deliberately bad code goes in a `fixtures/` package beside the test, as `NoJUnit4Rule`,
+   `NoDisabledWithoutReasonRule` and `NoStaticMockingRule` do. Test-shaped annotations are one way
+   in — a bare `@Disabled` is an `S1607`, an assertion-free `@Test` an `S2699` — but not the only
+   one: a field that exists only to be a field-type dependency is an unused field (`S1068`).
+
+   Ordinary code that happens to do the wrong thing, and that a linter would read without
+   complaint, goes in `static` nested classes in the test, as `NoThreadSleepRule`'s `ThreadSleeper`
+   does: no runner selects them, and what each is for is unmissable. Give their methods real bodies.
+
+   When in doubt use `fixtures/`. Getting this wrong costs findings on the PR rather than a build
+   failure, so it surfaces late — and the fix renames every entry in the committed freeze store.
 
    **Both directions is two things, not necessarily two classes.** Where the verdict is about a
    *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls

@@ -112,16 +112,27 @@ else cannot reach it without widening what the rule publishes.
 The examples must not run as tests, and must not be *analysed* as tests. Those are two different
 exclusions, and a nested class only escapes the first.
 
-**Plain code — a call, a field, a name:** declare it as a `static` nested class in the rule's own
-test. No runner selects it and what it is for is unmissable. `NoThreadSleepRule`'s `ThreadSleeper`
-is that shape. Give its methods real bodies; an empty method is a smell wherever it sits.
+The question to ask is **would a linter want to change this example?** Nothing excludes a nested
+class from analysis, so anything a static analyser objects to becomes a finding on the PR — and
+taking its advice deletes the violation under test. `**/fixtures/**` is excluded from Surefire,
+from Failsafe and from Sonar (`sonar.test.exclusions`), which is the only placement that settles it.
 
-**Test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before`:** put it in a `fixtures/`
-package beside the rule's test. A static analyser reads a nested class in a test file as a test of
-that file, so it flags the deliberate violation under test and asks you to delete it. Corral
-excludes `**/fixtures/**` from Surefire, from Failsafe and from Sonar (`sonar.test.exclusions`);
-nothing excludes a nested class from analysis. `NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are
-that shape.
+**Put it in a `fixtures/` package beside the rule's test** when the example is deliberately bad
+code. Test-shaped annotations are one way in — a bare `@Disabled` is both the violation under test
+and an `S1607` finding, and a `@Test` method with no assertions is an `S2699` — but they are not
+the only way. A field that exists solely to be a field-type dependency is an unused field
+(`S1068`); an example that must not assert is a test without assertions. `NoJUnit4Rule`,
+`NoDisabledWithoutReasonRule` and `NoStaticMockingRule` are that shape.
+
+**Declare it as a `static` nested class in the rule's own test** when the example is ordinary code
+that happens to do the wrong thing — a call, a field type, a name — and a linter reading it would
+find nothing to say. No runner selects it and what it is for is unmissable.
+`NoThreadSleepRule`'s `ThreadSleeper` is that shape: it calls `Thread.sleep` and
+`Thread.currentThread`, both from methods with real bodies.
+
+When in doubt, use `fixtures/`. Getting it wrong costs findings on the PR rather than a build
+failure, so it surfaces late — and the fix is a move that renames every entry in the committed
+freeze store.
 
 Either way, never name a top-level example `*IT` outside `fixtures` — Failsafe *includes*
 `**/*IT.java`, so it runs as a real integration test.
