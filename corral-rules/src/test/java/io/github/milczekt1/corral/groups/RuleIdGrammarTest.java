@@ -6,20 +6,21 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import io.github.milczekt1.corral.doc.DeprecatedRule;
 import io.github.milczekt1.corral.reflect.PublishedRules;
+import java.util.LinkedHashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 /**
- * Enforces the shape of every id Corral itself publishes: {@code corral} at segment 1, a closed
- * concern vocabulary at segment 2, a polarity marker on the slug. Checked against
- * {@link EveryPublishedGroup} only — {@code RuleDoc} applies the hygiene caps a consumer's own id
- * needs.
+ * Enforces the shape of every id Corral itself ships: {@code corral} at segment 1, a closed concern
+ * vocabulary at segment 2, a polarity marker on the slug. Checked against {@link EveryPublishedGroup}
+ * and {@link EveryStandaloneRule} — an id is a freeze-store key whether or not a group names the rule.
+ * {@code RuleDoc} applies the hygiene caps a consumer's own id needs.
  *
  * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
  * checks, but not from the qualifier-segment check.
  *
- * <p>Those two read {@link DeprecatedRule#retiredIds()} only after {@link #publishedIds()} has run,
+ * <p>Those two read {@link DeprecatedRule#retiredIds()} only after {@link #shippedIds()} has run,
  * which is what forces every retirement to register. Do not hoist the call.
  */
 class RuleIdGrammarTest {
@@ -38,31 +39,35 @@ class RuleIdGrammarTest {
     /** Segment-3 values allowed to precede the slug: a library qualifier. */
     private static final Set<String> QUALIFIERS = Set.of("mockito", "powermock", "junit");
 
-    private static Set<String> publishedIds() {
-        return PublishedRules.idsOf(EveryPublishedGroup.class);
+    private static Set<String> shippedIds() {
+        Set<String> ids = new LinkedHashSet<>(PublishedRules.idsOf(EveryPublishedGroup.class));
+        ids.addAll(PublishedRules.idsOf(EveryStandaloneRule.class));
+        return ids;
     }
 
     /** Guards the three tests below, whose loops would pass vacuously over an empty catalog. */
     @Test
-    void publishedIdsIsNotEmpty() {
-        assertFalse(publishedIds().isEmpty(),
+    void bothRootsYieldIds() {
+        assertFalse(PublishedRules.idsOf(EveryPublishedGroup.class).isEmpty(),
                 "EveryPublishedGroup published no id at all — the other tests here iterate this same set"
                         + " and would pass vacuously if it were empty");
+        assertFalse(PublishedRules.idsOf(EveryStandaloneRule.class).isEmpty(),
+                "EveryStandaloneRule yielded no id at all, so no standalone rule's id is grammar-checked here");
     }
 
     @Test
-    void everyPublishedIdStartsWithTheVendorPrefixAndAClosedConcern() {
-        assertNamespaceGrammar(publishedIds());
+    void everyShippedIdStartsWithTheVendorPrefixAndAClosedConcern() {
+        assertNamespaceGrammar(shippedIds());
     }
 
     @Test
-    void everyPublishedSlugCarriesAPolarityMarker() {
-        assertPolarityGrammar(publishedIds());
+    void everyShippedSlugCarriesAPolarityMarker() {
+        assertPolarityGrammar(shippedIds());
     }
 
     @Test
     void aFourthSegmentIsOnlyALibraryQualifier() {
-        assertQualifierSegmentGrammar(publishedIds());
+        assertQualifierSegmentGrammar(shippedIds());
     }
 
     /** Package-private so {@code DeprecatedRuleRetirementTest} runs this same check on a fixture. */

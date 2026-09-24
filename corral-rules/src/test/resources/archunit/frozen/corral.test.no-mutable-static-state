@@ -1,0 +1,2 @@
+Field <io.github.milczekt1.corral.rules.testing.nomutablestaticstate.fixtures.OrderCounting.placedOrders> has modifier STATIC in (OrderCounting.java:0)
+Field <io.github.milczekt1.corral.rules.testing.nomutablestaticstate.fixtures.PriceCapturing.capturedPrices> has modifier STATIC in (PriceCapturing.java:0)
