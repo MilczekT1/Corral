@@ -51,16 +51,14 @@ sequences and cross-references them for *this* catalog, it does not restate them
    `importClasses(...)`. Only the compiler has to see them, which is what puts them in test output
    and therefore in `TestScope.TEST_CLASSES`.
 
-   Examples made of plain code — a call, a field, a name — go in `static` nested classes in that
-   test, as `NoThreadSleepRule`'s `ThreadSleeper` does: no runner selects them, and what each is
-   for is unmissable. Give their methods real bodies.
-
-   Examples carrying test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before` — go in a
-   `fixtures/` package beside the test instead, as `NoJUnit4Rule` and `NoDisabledWithoutReasonRule`
-   do. Sonar reads a nested class in a test file as a test of that file and flags the deliberate
-   violation under test; `**/fixtures/**` is excluded from Surefire, Failsafe and Sonar, and
-   nothing excludes a nested class from analysis. Getting this wrong costs a dozen findings on the
-   PR, not a build failure, so it surfaces late.
+   **Every example is a top-level class in a `fixtures/` package beside the test**, as
+   `NoJUnit4Rule` and `NoDisabledWithoutReasonRule` do — plain code included. Never a `static` nested
+   class in the test: it clutters the test, and Sonar reads a nested class in a test file as part of
+   that test and flags the deliberate violation under test. `**/fixtures/**` is excluded from
+   Surefire, Failsafe and Sonar; nothing excludes a nested class from analysis. Getting this wrong
+   costs a dozen findings on the PR, not a build failure, so it surfaces late. Give example methods
+   real bodies, and open each with a one-line Javadoc saying `MUST FLAG` or `MUST IGNORE` and why.
+   (`NoThreadSleepRule`'s nested `ThreadSleeper` predates this — do not copy its placement.)
 
    **Both directions is two things, not necessarily two classes.** Where the verdict is about a
    *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
@@ -189,12 +187,12 @@ defect in the last rule added here — none was caught by the build.
 |---|---|
 | Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
 | Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
-| Examples | nested in that test when they are plain code; `.../<topic>/<rule>/fixtures/` when they carry test annotations |
+| Examples | `.../<topic>/<rule>/fixtures/`, always — never nested in the test |
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` (plus its `stored.rules` line) |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
 
-`NoThreadSleepRule` is the worked example. The three rules that predate this layout still sit flat
+`NoJUnit4Rule` is the worked example. The three rules that predate this layout still sit flat
 under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no committed
 store at all — copy the per-rule shape, not theirs.
