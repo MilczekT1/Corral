@@ -112,18 +112,16 @@ else cannot reach it without widening what the rule publishes.
 The examples must not run as tests, and must not be *analysed* as tests. Those are two different
 exclusions, and a nested class only escapes the first.
 
-**Plain code — a call, a field, a name:** declare it as a `static` nested class in the rule's own
-test. No runner selects it and what it is for is unmissable. `NoThreadSleepRule`'s `ThreadSleeper`
-is that shape. Give its methods real bodies; an empty method is a smell wherever it sits.
+**Put every example in a `fixtures/` package beside the rule's test**, one top-level class each —
+plain code and annotated code alike, never a `static` nested class in the test. A static analyser
+reads a nested class in a test file as a test of that file, so it flags the deliberate violation
+under test and asks you to delete it. Corral excludes `**/fixtures/**` from Surefire, from Failsafe
+and from Sonar (`sonar.test.exclusions`); nothing excludes a nested class from analysis.
+`NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are that shape; `NoThreadSleepRule`'s nested
+`ThreadSleeper` predates it. Give example methods real bodies; an empty method is a smell wherever
+it sits.
 
-**Test-shaped annotations — `@Test`, `@Disabled`, JUnit 4's `@Before`:** put it in a `fixtures/`
-package beside the rule's test. A static analyser reads a nested class in a test file as a test of
-that file, so it flags the deliberate violation under test and asks you to delete it. Corral
-excludes `**/fixtures/**` from Surefire, from Failsafe and from Sonar (`sonar.test.exclusions`);
-nothing excludes a nested class from analysis. `NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are
-that shape.
-
-Either way, never name a top-level example `*IT` outside `fixtures` — Failsafe *includes*
+Never name a top-level example `*IT` outside `fixtures` — Failsafe *includes*
 `**/*IT.java`, so it runs as a real integration test.
 
 ## 4. Freeze the examples into a committed store
