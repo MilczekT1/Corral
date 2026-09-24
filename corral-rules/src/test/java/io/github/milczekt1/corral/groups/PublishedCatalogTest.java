@@ -101,6 +101,7 @@ class PublishedCatalogTest {
                 "corral.test.no-mocked-repository-in-integration-test",
                 "corral.test.no-thread-sleep",
                 "corral.logging.no-system-out",
-                "corral.logging.no-system-err"), ids);
+                "corral.logging.no-system-err",
+                "corral.jakarta.no-javax-validation"), ids);
     }
 }

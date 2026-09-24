@@ -1,3 +1,4 @@
+corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
 corral.test.class-names-must-end-with-test-or-it=corral.test.class-names-must-end-with-test-or-it
 corral.test.junit.no-disabled-without-reason=corral.test.junit.no-disabled-without-reason
 corral.test.mockito.no-construction-mocking=corral.test.mockito.no-construction-mocking
