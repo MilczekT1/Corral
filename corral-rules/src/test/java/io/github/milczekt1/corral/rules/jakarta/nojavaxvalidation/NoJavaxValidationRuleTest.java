@@ -9,68 +9,23 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.HalfMigratedOrder;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.HandCheckedRefund;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.JakartaPayment;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.JavaxReferenceValidator;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.ViolationRethrower;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.ViolationSwallower;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import javax.naming.InvalidNameException;
-import javax.validation.ConstraintValidator;
-import javax.validation.ConstraintValidatorContext;
-import javax.validation.ConstraintViolationException;
-import javax.validation.constraints.NotBlank;
 import org.junit.jupiter.api.Test;
 
+/**
+ * The examples live in {@code fixtures/}, which Surefire and Sonar both exclude: they are
+ * deliberately bad code, and a linter told to fix any of it would delete the violation under test.
+ */
 class NoJavaxValidationRuleTest {
-
-    /** Half-migrated on purpose: the {@code jakarta} field must not be reported beside the {@code javax} one. */
-    record HalfMigratedOrder(@NotBlank String reference,
-                             @jakarta.validation.constraints.NotNull Integer quantity) {
-    }
-
-    static class JavaxReferenceValidator implements ConstraintValidator<NotBlank, String> {
-
-        @Override
-        public boolean isValid(String value, ConstraintValidatorContext context) {
-            return value != null && !value.isBlank();
-        }
-    }
-
-    static class ViolationRethrower {
-
-        void submit(Runnable submission) {
-            try {
-                submission.run();
-            } catch (ConstraintViolationException e) {
-                throw new IllegalArgumentException(e.getMessage(), e);
-            }
-        }
-    }
-
-    /** ArchUnit records no dependency for a catch clause, so this is invisible and the rule's docs say so. */
-    static class ViolationSwallower {
-
-        boolean trySubmit(Runnable submission) {
-            try {
-                submission.run();
-                return true;
-            } catch (ConstraintViolationException e) {
-                return false;
-            }
-        }
-    }
-
-    record JakartaPayment(@jakarta.validation.constraints.NotBlank String reference) {
-    }
-
-    /** {@code javax.naming} is a JDK {@code javax} package, so a predicate widened to {@code javax..} fails. */
-    static class HandCheckedRefund {
-
-        void validate(String reference) throws InvalidNameException {
-            if (reference == null || reference.isBlank()) {
-                throw new InvalidNameException("reference is required");
-            }
-        }
-    }
 
     private static final String ID = "corral.jakarta.no-javax-validation";
 
