@@ -13,8 +13,8 @@ import lombok.NoArgsConstructor;
 /**
  * A test class must not declare a {@code static} non-{@code final} field.
  *
- * <p>Ships in no group: wire it one rule at a time with
- * {@code ArchTests.in(NoMutableStaticStateRule.class)}, the same way a group names it.
+ * <p>Stands alone, in no group: wire it with {@code ArchTests.in(NoMutableStaticStateRule.class)},
+ * the same way a group names it.
  *
  * <p>{@code @TempDir} is exempt because JUnit assigns that field, so it cannot be {@code final}.
  * {@code @RegisterExtension} and Testcontainers' {@code @Container} can both be {@code static final}

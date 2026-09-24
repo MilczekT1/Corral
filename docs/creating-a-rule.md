@@ -165,8 +165,8 @@ A group is a `@UtilityClass` holding `@ArchTest ArchTests` fields. `ArchTests.in
 exactly those fields, so **the field is the membership** — a rule class nobody points at is never
 run.
 
-A group is adopted whole, so every rule in one is on by default for everybody who wires it. A rule
-that is sound but that a team can reasonably decline can ship in no group instead: consumers then
+A group is adopted whole, so every rule in one runs for everybody who wires it. A rule that is sound
+but that a team can reasonably decline can stand alone instead, in no group at all: consumers then
 name the rule class themselves, `ArchTests.in(TheRule.class)`, which is the same field a group would
 have declared. Nothing else about the rule changes — it freezes, excludes and reports identically.
 
@@ -212,9 +212,9 @@ Contributing a rule *here* adds these project-specific steps:
 | One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test, plus a `fixtures/` sub-package when the examples are annotation-shaped — so everything about a rule is one directory name. `NoThreadSleepRule` and `NoJUnit4Rule` are the worked examples; the three older rules still sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package, with no committed store, and move as they are next touched |
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
 | Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true`, then commit. Nothing in the build sets that flag, so a missing store fails loudly |
-| Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | Grouped rules only — it asserts `EveryPublishedGroup`'s ids exactly, so an id change shows as a diff in review, and an opt-in id listed there can never be yielded |
+| Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | Grouped rules only — it asserts `EveryPublishedGroup`'s ids exactly, so an id change shows as a diff in review, and a standalone id listed there can never be yielded |
 | Add a row to the [rules catalog](rules.md) | `RulesCatalogDocTest` checks the id set and the second column — the group, or the wiring line for a rule that ships outside one. The prose column is not checked |
-| List it on a root in test sources | `EveryPublishedGroup` for a grouped rule, `EveryOptInRule` for one that ships without a group. That root is what the grammar, doc and id-uniqueness tests walk |
+| List it on a root in test sources | `EveryPublishedGroup` for a grouped rule, `EveryStandaloneRule` for one that ships without a group. That root is what the grammar, doc and id-uniqueness tests walk |
 
 And the bar is higher: broadly applicable, objectively checkable, stable — see
 [Is a rule catalog-worthy?](../CONTRIBUTING.md#is-a-rule-catalog-worthy). A rule encoding one team's

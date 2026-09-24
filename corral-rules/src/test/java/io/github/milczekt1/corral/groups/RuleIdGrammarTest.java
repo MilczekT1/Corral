@@ -14,7 +14,7 @@ import org.junit.jupiter.api.Test;
 /**
  * Enforces the shape of every id Corral itself ships: {@code corral} at segment 1, a closed concern
  * vocabulary at segment 2, a polarity marker on the slug. Checked against {@link EveryPublishedGroup}
- * and {@link EveryOptInRule} — an id is a freeze-store key whether or not a group names the rule.
+ * and {@link EveryStandaloneRule} — an id is a freeze-store key whether or not a group names the rule.
  * {@code RuleDoc} applies the hygiene caps a consumer's own id needs.
  *
  * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
@@ -41,7 +41,7 @@ class RuleIdGrammarTest {
 
     private static Set<String> shippedIds() {
         Set<String> ids = new LinkedHashSet<>(PublishedRules.idsOf(EveryPublishedGroup.class));
-        ids.addAll(PublishedRules.idsOf(EveryOptInRule.class));
+        ids.addAll(PublishedRules.idsOf(EveryStandaloneRule.class));
         return ids;
     }
 
@@ -51,8 +51,8 @@ class RuleIdGrammarTest {
         assertFalse(PublishedRules.idsOf(EveryPublishedGroup.class).isEmpty(),
                 "EveryPublishedGroup published no id at all — the other tests here iterate this same set"
                         + " and would pass vacuously if it were empty");
-        assertFalse(PublishedRules.idsOf(EveryOptInRule.class).isEmpty(),
-                "EveryOptInRule yielded no id at all, so no opt-in rule's id is grammar-checked here");
+        assertFalse(PublishedRules.idsOf(EveryStandaloneRule.class).isEmpty(),
+                "EveryStandaloneRule yielded no id at all, so no standalone rule's id is grammar-checked here");
     }
 
     @Test

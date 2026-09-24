@@ -37,8 +37,8 @@ class RulesCatalogDocTest {
     /** A catalog row: the id in the first cell and the group or wiring in the second, both in backticks. */
     private static final Pattern RULE_ROW = Pattern.compile("^\\|\\s*`([^`]+)`\\s*\\|\\s*`([^`]+)`\\s*\\|");
 
-    /** The heading the opt-in table sits under; the grouped table sits above every heading. */
-    private static final String OPT_IN_HEADING = "## Opt-in rules";
+    /** The heading the standalone table sits under; the grouped table sits above every heading. */
+    private static final String STANDALONE_HEADING = "## Standalone rules";
 
     private static final String GROUPED_SECTION = "";
 
@@ -67,20 +67,20 @@ class RulesCatalogDocTest {
     }
 
     @Test
-    void optInTableListsExactlyTheRulesThatShipOutsideAGroup() throws IOException {
-        Set<String> optIn = PublishedRules.idsOf(EveryOptInRule.class);
+    void standaloneTableListsExactlyTheRulesThatShipOutsideAGroup() throws IOException {
+        Set<String> standalone = PublishedRules.idsOf(EveryStandaloneRule.class);
 
-        assertEquals(optIn, rowsUnder(OPT_IN_HEADING).keySet(),
-                "docs/rules.md disagrees with the opt-in rules. A rule in no group is only ever found"
+        assertEquals(standalone, rowsUnder(STANDALONE_HEADING).keySet(),
+                "docs/rules.md disagrees with the standalone rules. A rule in no group is only ever found"
                         + " by reading this table, so the row is the whole of its discoverability.");
     }
 
     /** The cell is the line a consumer copies, so it has to name the class they wire. */
     @Test
-    void optInTableNamesTheRuleClassToWire() throws IOException {
-        Map<String, String> documented = rowsUnder(OPT_IN_HEADING);
+    void standaloneTableNamesTheRuleClassToWire() throws IOException {
+        Map<String, String> documented = rowsUnder(STANDALONE_HEADING);
 
-        for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryOptInRule.class)) {
+        for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryStandaloneRule.class)) {
             Class<?> ruleClass = member.getDefinitionLocation();
             for (String id : PublishedRules.idsOf(ruleClass)) {
                 assertTrue(documented.getOrDefault(id, "").contains(ruleClass.getSimpleName()),

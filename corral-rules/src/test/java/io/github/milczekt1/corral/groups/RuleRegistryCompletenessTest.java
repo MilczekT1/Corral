@@ -26,10 +26,10 @@ import org.junit.jupiter.api.Test;
  */
 class RuleRegistryCompletenessTest {
 
-    /** Grouped and opt-in alike: a rule consumers wire one class at a time is shipped just the same. */
+    /** Grouped or standalone: a rule consumers wire one class at a time is shipped just the same. */
     private static List<ArchRule> shippedRules() {
         List<ArchRule> rules = new ArrayList<>(PublishedRules.rulesReachableFrom(EveryPublishedGroup.class));
-        rules.addAll(PublishedRules.rulesReachableFrom(EveryOptInRule.class));
+        rules.addAll(PublishedRules.rulesReachableFrom(EveryStandaloneRule.class));
         return rules;
     }
 
