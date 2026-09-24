@@ -2,7 +2,8 @@
 
 Every rule Corral publishes. Groups are the unit you wire, one line each from your own root — see the
 [quick start](../README.md#quick-start). A group you do not wire is not enforced; a single rule
-inside one you do can be switched off with [an exclusion](excluding-a-rule.md).
+inside one you do can be switched off with [an exclusion](excluding-a-rule.md). A few rules ship in
+no group at all and are wired one at a time — they are in [Opt-in rules](#opt-in-rules) below.
 
 | Rule id | Group | What it enforces |
 |---|---|---|
@@ -19,6 +20,27 @@ inside one you do can be switched off with [an exclusion](excluding-a-rule.md).
 This table is written by hand and checked by the build: `RulesCatalogDocTest` in `corral-rules`
 fails when an id here is not published, a published id is missing here, or a row names the wrong
 group. The prose in the third column is not checked.
+
+## Opt-in rules
+
+These ship in the artifact but belong to no group, because a group is adopted whole: everything in
+one is on by default for everybody who wires it, and these are rules a team can reasonably decline.
+Wire one by naming the rule class, which is exactly what a group's own field does — same freezing,
+same exclusions, same failure output.
+
+```java
+import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.NoMutableStaticStateRule;
+
+@ArchTest
+static final ArchTests noMutableStaticState = ArchTests.in(NoMutableStaticStateRule.class);
+```
+
+| Rule id | Wire with | What it enforces |
+|---|---|---|
+| `corral.test.no-mutable-static-state` | `ArchTests.in(NoMutableStaticStateRule.class)` | A test class must not declare a `static` non-`final` field. JUnit builds a fresh instance per test method to isolate tests from one another, and a static field opts out of that: it carries whatever the last test wrote into it, across methods and across classes in the same fork. `@TempDir` is exempt, because JUnit assigns that field and it therefore cannot be `final`; `@RegisterExtension` and Testcontainers' `@Container` can both be `static final` and are not exempt, so one declared without `final` is flagged and freezes as debt on adoption. Modifiers only — nothing else in the predicate is JUnit-specific, and a test class is identified by its output location or a declared test method, never by its name; compiler-generated fields are not excluded, so a JVM language emitting static non-final fields of its own is flagged on them. A `static final` field holding a mutable object — `static final List<Order> ORDERS = new ArrayList<>()` — is *not* matched and is not made safe by that: it is where this rule's sight ends. |
+
+Opt-in rows are checked by the same test as the table above, on the id set and on the class named in
+column 2.
 
 ## Rule ids
 

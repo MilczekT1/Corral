@@ -113,6 +113,13 @@ sequences and cross-references them for *this* catalog, it does not restate them
 6. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
    class nobody points at is imported and compiled but never evaluated by any consumer.
 
+   A group is adopted whole, so everything in one is on by default for whoever wires it. A rule a
+   team can reasonably decline ships in **no** group instead: list it on `EveryOptInRule` (test
+   sources) so the grammar, doc and id-uniqueness tests still walk it, give it a row in the
+   **Opt-in rules** table of `docs/rules.md` rather than the main one, and leave
+   `PublishedCatalogTest` alone — step 7 does not apply. Consumers wire it with
+   `ArchTests.in(TheRule.class)`.
+
 7. **Extend the expected id set** in
    `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` (`corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java`).
 

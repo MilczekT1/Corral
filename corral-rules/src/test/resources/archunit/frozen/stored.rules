@@ -4,4 +4,5 @@ corral.test.mockito.no-construction-mocking=corral.test.mockito.no-construction-
 corral.test.mockito.no-static-mocking=corral.test.mockito.no-static-mocking
 corral.test.no-junit4=corral.test.no-junit4
 corral.test.no-mocked-repository-in-integration-test=corral.test.no-mocked-repository-in-integration-test
+corral.test.no-mutable-static-state=corral.test.no-mutable-static-state
 corral.test.no-thread-sleep=corral.test.no-thread-sleep
