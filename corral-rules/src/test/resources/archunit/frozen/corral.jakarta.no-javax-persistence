@@ -1,0 +1,8 @@
+Class <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.JavaxMoneyConverter> implements interface <javax.persistence.AttributeConverter> in (JavaxMoneyConverter.java:0)
+Class <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.JavaxMoneyConverter> is annotated with <javax.persistence.Converter> in (JavaxMoneyConverter.java:0)
+Constructor <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.<init>(javax.persistence.EntityManager)> has parameter of type <javax.persistence.EntityManager> in (LegacyOrderLookup.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.HalfMigratedInvoice.number> is annotated with <javax.persistence.Column> in (HalfMigratedInvoice.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.entityManager> has type <javax.persistence.EntityManager> in (LegacyOrderLookup.java:0)
+Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> calls method <javax.persistence.EntityManager.createQuery(java.lang.String)> in (LegacyOrderLookup.java:16)
+Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> calls method <javax.persistence.Query.setParameter(java.lang.String, java.lang.Object)> in (LegacyOrderLookup.java:17)
+Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> has return type <javax.persistence.Query> in (LegacyOrderLookup.java:0)

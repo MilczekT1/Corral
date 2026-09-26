@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.NoJavaxPersistenceRule;
 import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.NoJavaxValidationRule;
 import lombok.experimental.UtilityClass;
 
@@ -14,4 +15,8 @@ public class JakartaMigrationRulesGroup {
     @ArchTest
     public static final ArchTests noJavaxValidation =
             ArchTests.in(NoJavaxValidationRule.class);
+
+    @ArchTest
+    public static final ArchTests noJavaxPersistence =
+            ArchTests.in(NoJavaxPersistenceRule.class);
 }
