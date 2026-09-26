@@ -31,4 +31,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests jakartaMigration = ArchTests.in(JakartaMigrationRulesGroup.class);
 }
