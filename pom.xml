@@ -47,6 +47,8 @@
     <jakarta-validation.version>3.1.1</jakarta-validation.version>
     <javax-persistence.version>2.2</javax-persistence.version>
     <jakarta-persistence.version>3.2.0</jakarta-persistence.version>
+    <javax-servlet.version>4.0.1</javax-servlet.version>
+    <jakarta-servlet.version>6.1.0</jakarta-servlet.version>
     <spring.version>7.0.9</spring.version>
     <mockito.version>5.23.0</mockito.version>
     <slf4j.version>2.0.18</slf4j.version>
@@ -125,6 +127,16 @@
         <groupId>jakarta.persistence</groupId>
         <artifactId>jakarta.persistence-api</artifactId>
         <version>${jakarta-persistence.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.servlet</groupId>
+        <artifactId>javax.servlet-api</artifactId>
+        <version>${javax-servlet.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.servlet</groupId>
+        <artifactId>jakarta.servlet-api</artifactId>
+        <version>${jakarta-servlet.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework</groupId>
