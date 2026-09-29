@@ -30,7 +30,7 @@ class RuleIdGrammarTest {
 
     /** Segment-2 values, closed on purpose — see CONTRIBUTING. {@code java<N>} is matched separately. */
     private static final Set<String> CONCERNS = Set.of(
-            "api", "concurrency", "exception", "jackson", "jakarta", "java",
+            "api", "concurrency", "dependencies", "exception", "jackson", "jakarta", "java",
             "layering", "logging", "lombok", "naming", "security", "spring", "test");
 
     /** A JDK-version concern, for a rule about an API that exists only from that release. */

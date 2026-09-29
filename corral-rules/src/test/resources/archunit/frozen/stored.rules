@@ -1,3 +1,4 @@
+corral.dependencies.no-javax=corral.dependencies.no-javax
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
 corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
