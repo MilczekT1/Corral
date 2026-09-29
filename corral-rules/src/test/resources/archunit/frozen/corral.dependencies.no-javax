@@ -1,0 +1,4 @@
+Constructor <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.DataSourceHealthCheck.<init>(javax.sql.DataSource)> has parameter of type <javax.sql.DataSource> in (DataSourceHealthCheck.java:0)
+Field <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.DataSourceHealthCheck.dataSource> has type <javax.sql.DataSource> in (DataSourceHealthCheck.java:0)
+Field <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.HalfMigratedRepository.tenant> is annotated with <javax.validation.constraints.NotNull> in (HalfMigratedRepository.java:0)
+Method <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.DataSourceHealthCheck.isReachable()> calls method <javax.sql.DataSource.getConnection()> in (DataSourceHealthCheck.java:17)
