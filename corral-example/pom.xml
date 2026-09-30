@@ -15,7 +15,7 @@
   <packaging>jar</packaging>
 
   <name>Corral Example Consumer (JUnit 5)</name>
-  <description>module with examples</description>
+  <description>A working consumer of the Corral rules and SDK, with deliberate violations and a committed freeze store.</description>
 
   <properties>
     <!--
@@ -27,6 +27,9 @@
     <jacoco.lineCoverage.minimum>0.0</jacoco.lineCoverage.minimum>
     <jacoco.branches.minimum>0.0</jacoco.branches.minimum>
     <jacoco.classes.maxMissed>100</jacoco.classes.maxMissed>
+
+    <maven.source.skip>true</maven.source.skip>
+    <maven.javadoc.skip>true</maven.javadoc.skip>
   </properties>
 
   <dependencies>
@@ -52,10 +55,10 @@
   <build>
     <plugins>
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-deploy-plugin</artifactId>
+        <groupId>org.sonatype.central</groupId>
+        <artifactId>central-publishing-maven-plugin</artifactId>
         <configuration>
-          <skip>true</skip>
+          <skipPublishing>true</skipPublishing>
         </configuration>
       </plugin>
     </plugins>
