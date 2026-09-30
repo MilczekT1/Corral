@@ -1,0 +1,6 @@
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.AuditTrail.entries> is annotated with @Inject in (AuditTrail.java:0)
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.BillingLedger.invoices> is annotated with @Resource in (BillingLedger.java:0)
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.CheckoutService.archive> is annotated with @Autowired in (CheckoutService.java:0)
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.CheckoutService.orders> is annotated with @Autowired in (CheckoutService.java:0)
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.MailSender.outbox> is annotated with @Inject in (MailSender.java:0)
+Field <io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.ReportWriter.source> is annotated with @Resource in (ReportWriter.java:0)
