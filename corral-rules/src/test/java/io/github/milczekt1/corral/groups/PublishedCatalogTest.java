@@ -107,6 +107,7 @@ class PublishedCatalogTest {
                 "corral.jakarta.no-javax-servlet",
                 "corral.spring.no-field-injection",
                 "corral.spring.no-setter-injection",
-                "corral.spring.no-transactional-on-private-method"), ids);
+                "corral.spring.no-transactional-on-private-method",
+                "corral.spring.no-transactional-on-final-or-static"), ids);
     }
 }
