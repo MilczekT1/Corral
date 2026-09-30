@@ -105,6 +105,7 @@ class PublishedCatalogTest {
                 "corral.jakarta.no-javax-validation",
                 "corral.jakarta.no-javax-persistence",
                 "corral.jakarta.no-javax-servlet",
+                "corral.spring.no-field-injection",
                 "corral.spring.no-setter-injection"), ids);
     }
 }
