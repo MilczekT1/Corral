@@ -54,6 +54,8 @@
     <jakarta-annotation.version>3.0.0</jakarta-annotation.version>
     <javax-inject.version>1</javax-inject.version>
     <javax-annotation.version>1.3.2</javax-annotation.version>
+    <jakarta-transaction.version>2.0.1</jakarta-transaction.version>
+    <javax-transaction.version>1.3</javax-transaction.version>
     <mockito.version>5.23.0</mockito.version>
     <slf4j.version>2.0.18</slf4j.version>
     <lombok.version>1.18.46</lombok.version>
@@ -153,6 +155,11 @@
         <version>${spring.version}</version>
       </dependency>
       <dependency>
+        <groupId>org.springframework</groupId>
+        <artifactId>spring-tx</artifactId>
+        <version>${spring.version}</version>
+      </dependency>
+      <dependency>
         <groupId>jakarta.inject</groupId>
         <artifactId>jakarta.inject-api</artifactId>
         <version>${jakarta-inject.version}</version>
@@ -171,6 +178,16 @@
         <groupId>javax.annotation</groupId>
         <artifactId>javax.annotation-api</artifactId>
         <version>${javax-annotation.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>jakarta.transaction</groupId>
+        <artifactId>jakarta.transaction-api</artifactId>
+        <version>${jakarta-transaction.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>javax.transaction</groupId>
+        <artifactId>javax.transaction-api</artifactId>
+        <version>${javax-transaction.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
