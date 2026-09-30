@@ -1,14 +1,17 @@
-# MANUAL PUBLISH. Two supported uses, neither of which bumps versions, commits, or tags:
+# MANUAL PUBLISH to Maven Central. Two supported uses, neither of which bumps versions, commits,
+# or tags:
 #
-#   1. Re-publish an already-released x.y.z (e.g. after a transient GitHub Packages
-#      outage). Note this only works if the version is NOT already present: GitHub
-#      Packages rejects re-deploying an existing release version.
-#   2. Publish a -SNAPSHOT so consumers can try a change before a release is cut.
-#      Snapshots may be re-deployed as often as needed — GitHub Packages accepts
-#      repeated snapshot uploads, unlike release versions.
+#   1. Re-upload an already-released x.y.z whose release run failed before its Central upload
+#      validated. A version already published on Central can never be uploaded again.
+#   2. Publish a -SNAPSHOT to Central's snapshot repository so consumers can try a change before
+#      a release is cut. Snapshots may be re-deployed as often as needed. Requires snapshots to be
+#      enabled for the namespace in the Central Portal.
+#
+# A release upload stops at VALIDATED: press Publish in the Central Portal. Snapshots publish
+# immediately.
 #
 # Normal releases go through .github/workflows/release.yml (workflow_dispatch "Release"),
-# which bumps the version, tags, and publishes in one job.
+# which bumps the version, tags, and uploads in one job.
 # IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
 # When running this workflow, select the tag v<version> as the workflow ref; the `version`
 # input is only used to assert against what's actually checked out.
@@ -33,7 +36,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -43,9 +45,9 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-          server-id: github
-          server-username: GITHUB_ACTOR
-          server-password: GITHUB_TOKEN
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
       - name: Assert checked-out version matches input
         env:
           EXPECTED_VERSION: ${{ inputs.version }}
@@ -62,7 +64,10 @@ jobs:
           echo "Checked-out project version matches input: $actual_version"
       - name: Build with Maven
         run: ./mvnw package --file pom.xml -DskipTests=true ${{ env.MVN_CONFIG }}
-      - name: Publish to GitHub Packages Apache Maven
+      - name: Upload to Maven Central
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: ./mvnw deploy -DskipTests=true ${{ env.MVN_CONFIG }}
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
