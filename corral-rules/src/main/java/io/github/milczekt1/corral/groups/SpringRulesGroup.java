@@ -4,6 +4,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.spring.nofieldinjection.NoFieldInjectionRule;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.NoSetterInjectionRule;
+import io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.NoTransactionalOnPrivateMethodRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -14,4 +15,7 @@ public class SpringRulesGroup {
 
     @ArchTest
     public static final ArchTests noSetterInjection = ArchTests.in(NoSetterInjectionRule.class);
+
+    @ArchTest
+    public static final ArchTests noTransactionalOnPrivateMethod = ArchTests.in(NoTransactionalOnPrivateMethodRule.class);
 }

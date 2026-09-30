@@ -1,0 +1,6 @@
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.InventoryService.reserveStock()> has modifier PRIVATE in (InventoryService.java:16)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.LedgerService.postEntries()> has modifier PRIVATE in (LedgerService.java:31)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.LegacyBillingService.chargeCard()> has modifier PRIVATE in (LegacyBillingService.java:16)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.RefundService.issueRefund()> has modifier PRIVATE in (RefundService.java:16)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.ReportService.loadTotals()> has modifier PRIVATE in (ReportService.java:15)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonprivatemethod.fixtures.ShipmentService.dispatchParcel()> has modifier PRIVATE in (ShipmentService.java:16)
