@@ -1,0 +1,175 @@
+# Uploads a release to Maven Central and tags it, from the "Release Corral <version>" commit as it
+# landed on main. Runs when a release/v* PR opened by release.yml merges; dispatch it by hand with the
+# version to retry a run that failed. Every step is skipped or idempotent when already done.
+name: Publish release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to publish, e.g. 0.1.1 — its "Release Corral <version>" commit must be on main'
+        required: true
+
+concurrency:
+  group: publish-release
+  cancel-in-progress: false
+
+env:
+  MVN_CONFIG: -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+
+jobs:
+  publish:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.pull_request.merged == true &&
+       startsWith(github.event.pull_request.head.ref, 'release/v') &&
+       github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Authorize triggerer
+        if: github.event_name == 'workflow_dispatch'
+        env:
+          # Space-separated GitHub usernames allowed to publish by hand. Keep in sync with release.yml.
+          RELEASE_ALLOWED_ACTORS: "MilczekT1"
+          TRIGGER_ACTOR: ${{ github.actor }}
+        run: |
+          for allowed in $RELEASE_ALLOWED_ACTORS; do
+            if [[ "$allowed" == "$TRIGGER_ACTOR" ]]; then
+              echo "$TRIGGER_ACTOR is authorized to publish."
+              exit 0
+            fi
+          done
+          echo "::error::$TRIGGER_ACTOR is not authorized to publish a release. Allowed: $RELEASE_ALLOWED_ACTORS" >&2
+          exit 1
+
+      - name: Resolve version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          version=${INPUT_VERSION:-${HEAD_REF#release/v}}
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release version: '$version'" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Checkout main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: main
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Locate release commit on main
+        run: |
+          subject_regex="^Release Corral ${RELEASE_VERSION//./\\.}\$"
+          mapfile -t shas < <(git log --format=%H --grep="$subject_regex" HEAD)
+          if [[ ${#shas[@]} -ne 1 ]]; then
+            echo "::error::Expected exactly one 'Release Corral $RELEASE_VERSION' commit on main, found ${#shas[@]}. A squash merge folds it into one commit with the snapshot bump; merge release PRs with rebase." >&2
+            exit 1
+          fi
+          echo "RELEASE_SHA=${shas[0]}" >> "$GITHUB_ENV"
+          git checkout --quiet --detach "${shas[0]}"
+          echo "Release commit: ${shas[0]}"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@dd06d9cba3e5552c54d9f8ea23572deb30010f7c # v6.0.0
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+          server-id: central
+          server-username: CENTRAL_TOKEN_USERNAME
+          server-password: CENTRAL_TOKEN_PASSWORD
+
+      - name: Assert project version and tag
+        id: tag
+        run: |
+          actual_version=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
+          if [[ "$actual_version" != "$RELEASE_VERSION" ]]; then
+            echo "::error::Release commit $RELEASE_SHA has project version '$actual_version', expected '$RELEASE_VERSION'." >&2
+            exit 1
+          fi
+          if tagged_sha=$(git rev-parse --verify --quiet "refs/tags/v$RELEASE_VERSION^{commit}"); then
+            if [[ "$tagged_sha" != "$RELEASE_SHA" ]]; then
+              echo "::error::Tag v$RELEASE_VERSION already points at $tagged_sha, not the release commit $RELEASE_SHA." >&2
+              exit 1
+            fi
+            echo "exists=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "exists=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Check if version already published
+        id: check_deployed
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq libxml2-utils
+
+          all_exist=true
+          mapfile -t poms < <(find . -name pom.xml -not -path '*/target/*')
+          for pom in "${poms[@]}"; do
+            # Skip modules that are never published, or they keep all_exist false forever and
+            # the short-circuit below never fires.
+            skip=$(xmllint --xpath "string(//*[local-name()='plugin'][*[local-name()='artifactId']='central-publishing-maven-plugin']/*[local-name()='configuration']/*[local-name()='skipPublishing'])" "$pom" 2>/dev/null)
+            [[ "$skip" == "true" ]] && continue
+
+            groupId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='groupId'])" "$pom" 2>/dev/null)
+            if [[ -z "$groupId" ]]; then
+              groupId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='parent']/*[local-name()='groupId'])" "$pom" 2>/dev/null)
+            fi
+            artifactId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='artifactId'])" "$pom" 2>/dev/null)
+            groupPath=${groupId//./\/}
+
+            # Only a version the maintainer pressed Publish on appears here; one left at
+            # VALIDATED in the Central Portal does not.
+            url="https://repo1.maven.org/maven2/${groupPath}/${artifactId}/${RELEASE_VERSION}/${artifactId}-${RELEASE_VERSION}.pom"
+            status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
+
+            if [[ "$status" == "200" ]]; then
+              echo "$artifactId:$RELEASE_VERSION already published"
+            else
+              echo "$artifactId:$RELEASE_VERSION not yet published"
+              all_exist=false
+            fi
+          done
+          echo "skip=$all_exist" >> "$GITHUB_OUTPUT"
+
+      # The tree about to be uploaded has never been built on its own: the release PR's checks ran on
+      # the snapshot-bump commit above it.
+      - name: Verify release tree before publishing
+        if: steps.check_deployed.outputs.skip != 'true'
+        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
+
+      - name: Upload to Maven Central
+        if: steps.check_deployed.outputs.skip != 'true'
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
+          echo "Corral $RELEASE_VERSION is VALIDATED, not published. Press **Publish** at https://central.sonatype.com/publishing/deployments" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag release commit
+        if: steps.tag.outputs.exists != 'true'
+        run: |
+          git tag "v$RELEASE_VERSION" "$RELEASE_SHA"
+          git push origin "refs/tags/v$RELEASE_VERSION"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if gh release view "v$RELEASE_VERSION" >/dev/null 2>&1; then
+            echo "GitHub Release v$RELEASE_VERSION already exists."
+          else
+            gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" --generate-notes --verify-tag
+          fi

@@ -1,3 +1,6 @@
+# Prepares a release; .github/workflows/publish-release.yml uploads and tags it once the release PR
+# merges. Nothing is tagged or uploaded here: the rebase merge re-creates both commits on main, so a
+# tag or upload made from the release branch would not match what lands on main.
 name: Release
 
 on:
@@ -54,9 +57,6 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
           cache: maven
-          server-id: central
-          server-username: CENTRAL_TOKEN_USERNAME
-          server-password: CENTRAL_TOKEN_PASSWORD
 
       - name: Generate GitHub App token
         id: app_token
@@ -93,64 +93,14 @@ jobs:
       - name: Set release version
         run: ./mvnw versions:set -DnewVersion="$RELEASE_VERSION" -DprocessAllModules=true -DgenerateBackupPoms=false ${{ env.MVN_CONFIG }}
 
-      - name: Commit and tag release
+      # publish-release.yml finds this commit on main by this exact subject.
+      - name: Commit release version
         env:
           TRIGGER_ACTOR: ${{ github.actor }}
           TRIGGER_ACTOR_ID: ${{ github.actor_id }}
         run: |
           git commit -a -m "Release Corral $RELEASE_VERSION" \
             -m "Co-authored-by: ${TRIGGER_ACTOR} <${TRIGGER_ACTOR_ID}+${TRIGGER_ACTOR}@users.noreply.github.com>"
-          git tag "v$RELEASE_VERSION"
-
-      - name: Check if version already published
-        id: check_deployed
-        run: |
-          sudo apt-get update -qq
-          sudo apt-get install -y -qq libxml2-utils
-
-          all_exist=true
-          mapfile -t poms < <(find . -name pom.xml -not -path '*/target/*')
-          for pom in "${poms[@]}"; do
-            # Skip modules that are never published, or they keep all_exist false forever and
-            # the short-circuit below never fires.
-            skip=$(xmllint --xpath "string(//*[local-name()='plugin'][*[local-name()='artifactId']='central-publishing-maven-plugin']/*[local-name()='configuration']/*[local-name()='skipPublishing'])" "$pom" 2>/dev/null)
-            [[ "$skip" == "true" ]] && continue
-
-            groupId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='groupId'])" "$pom" 2>/dev/null)
-            if [[ -z "$groupId" ]]; then
-              groupId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='parent']/*[local-name()='groupId'])" "$pom" 2>/dev/null)
-            fi
-            artifactId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='artifactId'])" "$pom" 2>/dev/null)
-            groupPath=${groupId//./\/}
-
-            # Only a version the maintainer pressed Publish on appears here; one left at
-            # VALIDATED in the Central Portal does not.
-            url="https://repo1.maven.org/maven2/${groupPath}/${artifactId}/${RELEASE_VERSION}/${artifactId}-${RELEASE_VERSION}.pom"
-            status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
-
-            if [[ "$status" == "200" ]]; then
-              echo "$artifactId:$RELEASE_VERSION already published"
-            else
-              echo "$artifactId:$RELEASE_VERSION not yet published"
-              all_exist=false
-            fi
-          done
-          echo "skip=$all_exist" >> "$GITHUB_OUTPUT"
-
-      - name: Verify release tree before publishing
-        if: steps.check_deployed.outputs.skip != 'true'
-        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
-
-      - name: Upload to Maven Central
-        if: steps.check_deployed.outputs.skip != 'true'
-        env:
-          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
-          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
-          MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
-          echo "Corral $RELEASE_VERSION is VALIDATED, not published. Press **Publish** at https://central.sonatype.com/publishing/deployments" >> "$GITHUB_STEP_SUMMARY"
 
       - name: Set next development version
         run: ./mvnw versions:set -DnewVersion="$NEXT_VERSION-SNAPSHOT" -DprocessAllModules=true -DgenerateBackupPoms=false ${{ env.MVN_CONFIG }}
@@ -158,31 +108,29 @@ jobs:
       - name: Commit next development version
         run: git commit -a -m "Prepare next release Corral $NEXT_VERSION-SNAPSHOT"
 
-      - name: Push release branch and tag
-        run: git push --atomic origin "$RELEASE_BRANCH" "v$RELEASE_VERSION"
-
-      - name: Create GitHub Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" --generate-notes
+      - name: Push release branch
+        run: git push origin "$RELEASE_BRANCH"
 
       - name: Open release pull request
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}
           TRIGGER_ACTOR: ${{ github.actor }}
         run: |
+          body="Automated release PR for \`v$RELEASE_VERSION\`. Triggered by @${TRIGGER_ACTOR}. Merging it runs **Publish release**, which uploads \`$RELEASE_VERSION\` to Maven Central and tags it."
           gh pr create \
             --base main \
             --head "$RELEASE_BRANCH" \
             --title "Release Corral $RELEASE_VERSION" \
-            --body "Automated release PR for \`v$RELEASE_VERSION\`. Triggered by @${TRIGGER_ACTOR}." \
+            --body "$body" \
             --assignee "$TRIGGER_ACTOR" || \
           gh pr create \
             --base main \
             --head "$RELEASE_BRANCH" \
             --title "Release Corral $RELEASE_VERSION" \
-            --body "Automated release PR for \`v$RELEASE_VERSION\`. Triggered by @${TRIGGER_ACTOR}."
+            --body "$body"
 
+      # Rebase, not squash: publish-release.yml expects the release commit and the snapshot bump as
+      # two separate commits on main.
       - name: Enable auto-merge
         env:
           GH_TOKEN: ${{ steps.app_token.outputs.token }}

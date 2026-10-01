@@ -1,17 +1,14 @@
-# MANUAL PUBLISH to Maven Central. Two supported uses, neither of which bumps versions, commits,
-# or tags:
+# MANUAL PUBLISH to Maven Central, without bumping versions, committing, or tagging. For:
 #
-#   1. Re-upload an already-released x.y.z whose release run failed before its Central upload
-#      validated. A version already published on Central can never be uploaded again.
-#   2. Publish a -SNAPSHOT to Central's snapshot repository so consumers can try a change before
+#   1. Publishing a -SNAPSHOT to Central's snapshot repository so consumers can try a change before
 #      a release is cut. Snapshots may be re-deployed as often as needed. Requires snapshots to be
 #      enabled for the namespace in the Central Portal.
+#   2. Re-uploading an already-tagged x.y.z, e.g. after a deployment was dropped in the Portal. A
+#      version already published on Central can never be uploaded again.
 #
-# A release upload stops at VALIDATED: press Publish in the Central Portal. Snapshots publish
-# immediately.
-#
-# Normal releases go through .github/workflows/release.yml (workflow_dispatch "Release"),
-# which bumps the version, tags, and uploads in one job.
+# Releases go through .github/workflows/release.yml, which opens the release PR, and
+# .github/workflows/publish-release.yml, which uploads and tags once it merges. Retry a failed
+# release with "Publish release", not this workflow: only that one tags.
 # IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
 # When running this workflow, select the tag v<version> as the workflow ref; the `version`
 # input is only used to assert against what's actually checked out.
