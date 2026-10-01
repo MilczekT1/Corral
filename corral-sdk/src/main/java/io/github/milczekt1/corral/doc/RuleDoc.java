@@ -17,7 +17,7 @@ import lombok.Builder;
  * @param howNotToFix rule-specific anti-fix guidance, or {@code null} when the rule adds none;
  *                    blank text is normalised to {@code null}
  */
-@Builder(builderClassName = "Builder")
+@Builder
 public record RuleDoc(String id, String why, String howToFix, String howNotToFix) {
 
     /**
