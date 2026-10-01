@@ -13,10 +13,6 @@ on:
         description: 'Version to publish, e.g. 0.1.1 — its "Release Corral <version>" commit must be on main'
         required: true
 
-concurrency:
-  group: publish-release
-  cancel-in-progress: false
-
 env:
   MVN_CONFIG: -B -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
 
@@ -28,6 +24,11 @@ jobs:
        startsWith(github.event.pull_request.head.ref, 'release/v') &&
        github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
+    # Job-level, not workflow-level: every closed PR starts a run of this workflow, and a
+    # workflow-level group would let those skipped runs cancel a pending publish.
+    concurrency:
+      group: publish-release
+      cancel-in-progress: false
     permissions:
       contents: write
     steps:
