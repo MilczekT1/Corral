@@ -96,7 +96,7 @@ that go with a twelve-run sample are in **[docs/evidence.md](docs/evidence.md)**
 
 ## Quick start
 
-**1. Depend on it** — from Maven Central, no repository or credentials needed.
+**1. Depend on it.**
 
 ```xml
 <dependency>
@@ -197,10 +197,22 @@ SDK alone to do only that.
 
 ## Install
 
-Corral is on [Maven Central](https://central.sonatype.com/artifact/io.github.milczekt1/corral-rules):
-the quick start's dependency resolves with no extra setup. Depend on `corral-sdk` alone to write
-your own rules without the catalog. Snapshots, when published, are in Central's snapshot repository;
-[the release process](docs/release-process.md#snapshots) has the repository block.
+`corral-sdk` and `corral-rules` are on Maven Central:
+
+```xml
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-sdk</artifactId>
+  <version>0.1.0</version>
+  <scope>test</scope>
+</dependency>
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-rules</artifactId>
+  <version>0.1.0</version>
+  <scope>test</scope>
+</dependency>
+```
 
 ## Contributing
 
