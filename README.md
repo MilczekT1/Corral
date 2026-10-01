@@ -7,7 +7,7 @@ A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in
 fails deterministically, the failure explains why the rule exists and how to fix it, and violations
 that predate the rule are frozen as debt, so you can adopt it on any codebase today.
 
-[![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml)
+[![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral) [![Maven Central](https://img.shields.io/maven-central/v/io.github.milczekt1/corral-rules)](https://central.sonatype.com/artifact/io.github.milczekt1/corral-rules) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml)
 
 [**Why Corral**](#why-corral) · [**Evidence**](docs/evidence.md) · [**Quick start**](#quick-start) · [**Rules**](docs/rules.md) · [**Write your own**](docs/creating-a-rule.md) · [**Example consumer**](corral-example)
 
@@ -96,13 +96,13 @@ that go with a twelve-run sample are in **[docs/evidence.md](docs/evidence.md)**
 
 ## Quick start
 
-**1. Depend on it** — see [Install](#install) for where the artifact comes from today.
+**1. Depend on it.**
 
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
   <artifactId>corral-rules</artifactId>
-  <version>0.1.0-SNAPSHOT</version>
+  <version>0.1.0</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -197,16 +197,22 @@ SDK alone to do only that.
 
 ## Install
 
-Corral is heading to Maven Central. No release is published yet, so until then build it from source
-and depend on the snapshot:
+`corral-sdk` and `corral-rules` are on Maven Central:
 
-```bash
-git clone https://github.com/MilczekT1/Corral.git && cd Corral && ./mvnw -q install -DskipTests
+```xml
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-sdk</artifactId>
+  <version>0.1.0</version>
+  <scope>test</scope>
+</dependency>
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-rules</artifactId>
+  <version>0.1.0</version>
+  <scope>test</scope>
+</dependency>
 ```
-
-That puts `io.github.milczekt1:corral-rules:0.1.0-SNAPSHOT` (and `corral-sdk`) in your local
-repository, which is what the quick start's dependency resolves against. The
-[release process](docs/release-process.md) describes how versions are cut.
 
 ## Contributing
 
