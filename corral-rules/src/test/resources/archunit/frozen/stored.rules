@@ -2,6 +2,7 @@ corral.dependencies.no-javax=corral.dependencies.no-javax
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
 corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
+corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
 corral.spring.no-field-injection=corral.spring.no-field-injection
 corral.spring.no-setter-injection=corral.spring.no-setter-injection
 corral.spring.no-transactional-on-final-or-static=corral.spring.no-transactional-on-final-or-static

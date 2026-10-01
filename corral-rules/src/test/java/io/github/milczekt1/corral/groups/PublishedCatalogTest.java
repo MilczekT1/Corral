@@ -108,6 +108,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-field-injection",
                 "corral.spring.no-setter-injection",
                 "corral.spring.no-transactional-on-private-method",
-                "corral.spring.no-transactional-on-final-or-static"), ids);
+                "corral.spring.no-transactional-on-final-or-static",
+                "corral.spring.no-async-on-unproxyable-method"), ids);
     }
 }
