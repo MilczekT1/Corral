@@ -42,10 +42,9 @@ public final class NoJavaxRule implements DocumentedRule {
             .howNotToFix("""
                     Do NOT wrap the javax type in a class of your own to hide the import: the wrapper \
                     depends on javax and is flagged. Do NOT reach the type reflectively to dodge the \
-                    predicate: that hides the dependency without removing it. Three things this predicate \
-                    does NOT catch: a catch of a javax exception that calls nothing on it, because a catch \
-                    clause alone records no dependency; javax names in XML or properties files, which are \
-                    not bytecode; and source-retention annotations such as javax.annotation.Generated, \
+                    predicate: that hides the dependency without removing it. Two things this predicate \
+                    does NOT catch: javax names in XML or properties files, which are not bytecode; and \
+                    source-retention annotations such as javax.annotation.Generated, \
                     which leave nothing in the class file.""")
             .build();
 

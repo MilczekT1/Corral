@@ -2,3 +2,4 @@ Constructor <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.Data
 Field <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.DataSourceHealthCheck.dataSource> has type <javax.sql.DataSource> in (DataSourceHealthCheck.java:0)
 Field <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.HalfMigratedRepository.tenant> is annotated with <javax.validation.constraints.NotNull> in (HalfMigratedRepository.java:0)
 Method <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.DataSourceHealthCheck.isReachable()> calls method <javax.sql.DataSource.getConnection()> in (DataSourceHealthCheck.java:17)
+Method <io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.ValidationFailureSwallower.tryValidate(java.lang.Runnable)> catches type <javax.validation.ValidationException> in (ValidationFailureSwallower.java:10)

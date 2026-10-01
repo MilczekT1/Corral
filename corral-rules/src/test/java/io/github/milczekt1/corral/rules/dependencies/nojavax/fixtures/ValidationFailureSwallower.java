@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures;
 
 import javax.validation.ValidationException;
 
-/** NOT SEEN: ArchUnit records no dependency for a catch clause, and the rule's docs say so. */
+/** MUST FLAG: a catch clause alone is a dependency. */
 public class ValidationFailureSwallower {
 
     public boolean tryValidate(Runnable validation) {

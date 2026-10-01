@@ -96,6 +96,8 @@ that go with a twelve-run sample are in **[docs/evidence.md](docs/evidence.md)**
 
 ## Quick start
 
+**Prerequisites:** Java 17+, JUnit 5, ArchUnit 1.5+.
+
 **1. Depend on it.**
 
 ```xml

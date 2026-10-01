@@ -70,10 +70,9 @@ class NoJavaxPersistenceRuleTest {
     }
 
     @Test
-    void doesNotSeeACatchClauseAlone() {
-        String report = String.join("\n", violations());
-
-        assertFalse(report.contains("OptimisticLockSwallower"), report);
+    void flagsACatchClauseAlone() {
+        assertFlagged("OptimisticLockSwallower.trySave",
+                "catches type <javax.persistence.OptimisticLockException>");
     }
 
     @Test
