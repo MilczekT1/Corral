@@ -10,7 +10,7 @@ import org.junit.jupiter.api.Test;
 
 class RuleDocTest {
 
-    private static RuleDoc.Builder valid() {
+    private static RuleDoc.RuleDocBuilder valid() {
         return RuleDoc.builder()
                 .id("logging.no-system-out")
                 .why("because reasons")
@@ -35,9 +35,9 @@ class RuleDocTest {
 
     @Test
     void rejectsBlankRequiredFields() {
-        RuleDoc.Builder whitespaceOnlyWhy = valid().why("   ");
-        RuleDoc.Builder nullHowToFix = valid().howToFix(null);
-        RuleDoc.Builder emptyId = valid().id("");
+        RuleDoc.RuleDocBuilder whitespaceOnlyWhy = valid().why("   ");
+        RuleDoc.RuleDocBuilder nullHowToFix = valid().howToFix(null);
+        RuleDoc.RuleDocBuilder emptyId = valid().id("");
 
         assertThrows(IllegalArgumentException.class, whitespaceOnlyWhy::build);
         assertThrows(IllegalArgumentException.class, nullHowToFix::build);
@@ -69,9 +69,9 @@ class RuleDocTest {
     @Test
     void rejectsIdsThatWouldMakeUnstableOrUnreadableFreezeKeys() {
         // The id is the freeze-store key: no spaces, no upper case, must be dot-namespaced.
-        RuleDoc.Builder notNamespaced = valid().id("noSpringTransactional");
-        RuleDoc.Builder containsSpaces = valid().id("db.No Spring Tx");
-        RuleDoc.Builder upperCaseNamespace = valid().id("DB.no-spring-tx");
+        RuleDoc.RuleDocBuilder notNamespaced = valid().id("noSpringTransactional");
+        RuleDoc.RuleDocBuilder containsSpaces = valid().id("db.No Spring Tx");
+        RuleDoc.RuleDocBuilder upperCaseNamespace = valid().id("DB.no-spring-tx");
 
         assertThrows(IllegalArgumentException.class, notNamespaced::build);
         assertThrows(IllegalArgumentException.class, containsSpaces::build);
@@ -101,7 +101,7 @@ class RuleDocTest {
     @Test
     void rejectsAnIdWithMoreThanFourSegments() {
         // The id becomes a file name in every consumer's freeze store, so depth binds every author.
-        RuleDoc.Builder fiveSegments = valid().id("spring.data.jpa.mockito.no-repository-in-controller");
+        RuleDoc.RuleDocBuilder fiveSegments = valid().id("spring.data.jpa.mockito.no-repository-in-controller");
 
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, fiveSegments::build);
 
@@ -112,7 +112,7 @@ class RuleDocTest {
     void rejectsAnIdLongerThanSeventyTwoCharacters() {
         String tooLong = "security." + "a".repeat(70);
 
-        RuleDoc.Builder overlong = valid().id(tooLong);
+        RuleDoc.RuleDocBuilder overlong = valid().id(tooLong);
 
         IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, overlong::build);
 
