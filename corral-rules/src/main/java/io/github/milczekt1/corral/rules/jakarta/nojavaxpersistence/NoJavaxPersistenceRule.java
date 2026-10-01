@@ -43,10 +43,7 @@ public final class NoJavaxPersistenceRule implements DocumentedRule {
                     Do NOT keep both API artifacts on the classpath so the old imports still compile: two \
                     annotation namespaces in one persistence unit is the bug, not the workaround. Do NOT \
                     swap the flagged type for a different javax.persistence one: the whole package is \
-                    matched. Three things this predicate does NOT catch: a catch of a \
-                    javax.persistence exception that calls nothing on it — a catch clause alone records no \
-                    dependency, and the handler never runs because the new provider never throws that \
-                    type; mappings and javax.persistence.* property keys in orm.xml or persistence.xml, \
+                    matched. Two things this predicate does NOT catch: mappings and javax.persistence.* property keys in orm.xml or persistence.xml, \
                     which are not bytecode; and javax.transaction.Transactional, which is JTA rather than \
                     JPA, is not matched here, and is ignored by a jakarta transaction manager just the \
                     same.""")

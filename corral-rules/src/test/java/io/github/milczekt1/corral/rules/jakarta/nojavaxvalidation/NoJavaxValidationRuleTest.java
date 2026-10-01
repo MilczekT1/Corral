@@ -67,10 +67,11 @@ class NoJavaxValidationRuleTest {
     }
 
     @Test
-    void doesNotSeeACatchClauseAlone() {
+    void flagsACatchClauseAlone() {
         String report = report();
 
-        assertFalse(report.contains("ViolationSwallower"), report);
+        assertTrue(report.contains("ViolationSwallower.trySubmit")
+                && report.contains("catches type <javax.validation.ConstraintViolationException>"), report);
     }
 
     @Test

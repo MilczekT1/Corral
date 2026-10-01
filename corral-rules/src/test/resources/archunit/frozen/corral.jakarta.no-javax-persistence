@@ -6,3 +6,4 @@ Field <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.Lega
 Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> calls method <javax.persistence.EntityManager.createQuery(java.lang.String)> in (LegacyOrderLookup.java:16)
 Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> calls method <javax.persistence.Query.setParameter(java.lang.String, java.lang.Object)> in (LegacyOrderLookup.java:17)
 Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.LegacyOrderLookup.byCustomer(java.lang.String)> has return type <javax.persistence.Query> in (LegacyOrderLookup.java:0)
+Method <io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.OptimisticLockSwallower.trySave(java.lang.Runnable)> catches type <javax.persistence.OptimisticLockException> in (OptimisticLockSwallower.java:10)

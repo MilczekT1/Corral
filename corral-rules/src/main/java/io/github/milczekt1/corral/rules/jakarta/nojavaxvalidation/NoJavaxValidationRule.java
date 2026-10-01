@@ -46,11 +46,8 @@ public final class NoJavaxValidationRule implements DocumentedRule {
                     NOT add a manual null check in the service and leave the annotation on the old \
                     namespace — the annotation is then a lie about where validation happens. Do NOT swap \
                     the flagged constraint for a different javax.validation one: the whole package is \
-                    matched. Two things this predicate does NOT catch, and both are as dead at runtime \
-                    as what it does: a catch of javax.validation.ConstraintViolationException that calls \
-                    nothing on the exception — a catch clause alone records no dependency, and the \
-                    handler never runs because the new validator never throws that type — and \
-                    constraints declared in an XML mapping (META-INF/validation.xml or a constraint \
+                    matched. One thing this predicate does NOT catch, and it is as dead at runtime as \
+                    what it does: constraints declared in an XML mapping (META-INF/validation.xml or a constraint \
                     mapping file), which are not bytecode.""")
             .build();
 

@@ -42,7 +42,7 @@
   <properties>
     <maven.compiler.release>17</maven.compiler.release>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <archunit.version>1.4.2</archunit.version>
+    <archunit.version>1.5.1</archunit.version>
     <junit.version>5.11.3</junit.version>
     <junit4.version>4.13.2</junit4.version>
     <javax-validation.version>2.0.1.Final</javax-validation.version>

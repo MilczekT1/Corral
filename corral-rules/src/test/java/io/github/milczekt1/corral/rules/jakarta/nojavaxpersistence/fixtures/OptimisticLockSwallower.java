@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures;
 
 import javax.persistence.OptimisticLockException;
 
-/** NOT SEEN: ArchUnit records no dependency for a catch clause, and the rule's docs say so. */
+/** MUST FLAG: a catch clause alone is a dependency. */
 public class OptimisticLockSwallower {
 
     public boolean trySave(Runnable save) {
