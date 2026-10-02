@@ -37,4 +37,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests spring = ArchTests.in(SpringRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests security = ArchTests.in(SecurityRulesGroup.class);
 }

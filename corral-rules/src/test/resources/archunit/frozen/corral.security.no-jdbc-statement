@@ -1,0 +1,3 @@
+Method <io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.LedgerDao.entries(io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.AuditConnection, java.lang.String)> calls method <io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.AuditConnection.createStatement()> in (LedgerDao.java:11)
+Method <io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.OrderDao.byCustomer(java.sql.Connection, java.lang.String)> calls method <java.sql.Connection.createStatement()> in (OrderDao.java:16)
+Method <io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.ReportExporter.export(java.sql.Connection, java.lang.String)> calls method <java.sql.Connection.createStatement(int, int)> in (ReportExporter.java:12)
