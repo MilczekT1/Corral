@@ -1,11 +1,15 @@
 # Uploads a release to Maven Central and tags it, from the "Release Corral <version>" commit as it
-# landed on main. Runs when a release/v* PR opened by release.yml merges; dispatch it by hand with the
-# version to retry a run that failed. Every step is skipped or idempotent when already done.
+# landed on main. Runs when a release/v* PR opened by release.yml is rebase-merged, which pushes that
+# commit with the snapshot bump on top; dispatch it by hand from main with the version to retry a
+# failed run or re-upload a release dropped in the Portal. Every step is skipped or idempotent when
+# already done.
+#
+# Triggered by push, not pull_request: a pull_request run's ref is refs/pull/N/merge, which the
+# main-only maven-central environment rejects.
 name: Publish release
 
 on:
-  pull_request:
-    types: [closed]
+  push:
     branches: [main]
   workflow_dispatch:
     inputs:
@@ -20,11 +24,10 @@ jobs:
   publish:
     if: >-
       github.event_name == 'workflow_dispatch' ||
-      (github.event.pull_request.merged == true &&
-       startsWith(github.event.pull_request.head.ref, 'release/v') &&
-       github.event.pull_request.head.repo.full_name == github.repository)
+      startsWith(github.event.head_commit.message, 'Prepare next release Corral ')
     runs-on: ubuntu-latest
-    # Job-level, not workflow-level: every closed PR starts a run of this workflow, and a
+    environment: maven-central
+    # Job-level, not workflow-level: every push to main starts a run of this workflow, and a
     # workflow-level group would let those skipped runs cancel a pending publish.
     concurrency:
       group: publish-release
@@ -35,7 +38,7 @@ jobs:
       - name: Authorize triggerer
         if: github.event_name == 'workflow_dispatch'
         env:
-          # Space-separated GitHub usernames allowed to publish by hand. Keep in sync with release.yml.
+          # Space-separated GitHub usernames allowed to publish by hand. Keep in sync with release.yml and publish-java.yml.
           RELEASE_ALLOWED_ACTORS: "MilczekT1"
           TRIGGER_ACTOR: ${{ github.actor }}
         run: |
@@ -48,24 +51,33 @@ jobs:
           echo "::error::$TRIGGER_ACTOR is not authorized to publish a release. Allowed: $RELEASE_ALLOWED_ACTORS" >&2
           exit 1
 
-      - name: Resolve version
-        env:
-          INPUT_VERSION: ${{ inputs.version }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          version=${INPUT_VERSION:-${HEAD_REF#release/v}}
-          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "::error::Invalid release version: '$version'" >&2
-            exit 1
-          fi
-          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
-
       - name: Checkout main
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           ref: main
           fetch-depth: 0
           fetch-tags: true
+
+      # On push, the release commit is the parent of the pushed snapshot bump.
+      - name: Resolve version
+        env:
+          INPUT_VERSION: ${{ inputs.version }}
+        run: |
+          if [[ -n "$INPUT_VERSION" ]]; then
+            version=$INPUT_VERSION
+          else
+            subject=$(git log -1 --format=%s "$GITHUB_SHA^")
+            version=${subject#Release Corral }
+            if [[ "$version" == "$subject" ]]; then
+              echo "::error::The parent of $GITHUB_SHA is '$subject', not a 'Release Corral <version>' commit. Merge release PRs with rebase." >&2
+              exit 1
+            fi
+          fi
+          if [[ ! "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "::error::Invalid release version: '$version'" >&2
+            exit 1
+          fi
+          echo "RELEASE_VERSION=$version" >> "$GITHUB_ENV"
 
       - name: Locate release commit on main
         run: |
