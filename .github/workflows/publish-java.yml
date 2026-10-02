@@ -1,24 +1,17 @@
-# MANUAL PUBLISH to Maven Central, without bumping versions, committing, or tagging. For:
+# MANUAL PUBLISH of main's -SNAPSHOT to Central's snapshot repository, so consumers can try a
+# change before a release is cut. Snapshots may be re-deployed as often as needed. Requires
+# snapshots to be enabled for the namespace in the Central Portal.
 #
-#   1. Publishing a -SNAPSHOT to Central's snapshot repository so consumers can try a change before
-#      a release is cut. Snapshots may be re-deployed as often as needed. Requires snapshots to be
-#      enabled for the namespace in the Central Portal.
-#   2. Re-uploading an already-tagged x.y.z, e.g. after a deployment was dropped in the Portal. A
-#      version already published on Central can never be uploaded again.
-#
-# Releases go through .github/workflows/release.yml, which opens the release PR, and
-# .github/workflows/publish-release.yml, which uploads and tags once it merges. Retry a failed
-# release with "Publish release", not this workflow: only that one tags.
-# IMPORTANT: the checked-out ref — not the `version` input — determines what is published.
-# When running this workflow, select the tag v<version> as the workflow ref; the `version`
-# input is only used to assert against what's actually checked out.
+# Runs only from main: the maven-central environment holding the publishing secrets allows no
+# other ref. Releases, and re-uploads of a release dropped in the Portal, go through
+# .github/workflows/release.yml and .github/workflows/publish-release.yml.
 name: Publish artifact (manual)
 
 on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Version to publish, release or -SNAPSHOT. Must match the version committed on the checked-out ref (the workflow ref, not this input, selects what is published) — checked when non-empty.'
+        description: 'Snapshot version to publish, e.g. 0.1.1-SNAPSHOT. Must match the version committed on main — checked when non-empty.'
         required: false
 
 concurrency:
@@ -31,10 +24,26 @@ env:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: maven-central
     permissions:
       contents: read
 
     steps:
+      - name: Authorize triggerer
+        env:
+          # Space-separated GitHub usernames allowed to publish by hand. Keep in sync with release.yml and publish-release.yml.
+          RELEASE_ALLOWED_ACTORS: "MilczekT1"
+          TRIGGER_ACTOR: ${{ github.actor }}
+        run: |
+          for allowed in $RELEASE_ALLOWED_ACTORS; do
+            if [[ "$allowed" == "$TRIGGER_ACTOR" ]]; then
+              echo "$TRIGGER_ACTOR is authorized to publish."
+              exit 0
+            fi
+          done
+          echo "::error::$TRIGGER_ACTOR is not authorized to publish. Allowed: $RELEASE_ALLOWED_ACTORS" >&2
+          exit 1
+
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Set up JDK 17
         uses: actions/setup-java@de7274f081f381c8f8158605e0321c36c376e2e6 # v6.0.1
@@ -55,12 +64,12 @@ jobs:
           fi
           actual_version=$(./mvnw -q help:evaluate -Dexpression=project.version -DforceStdout)
           if [[ "$actual_version" != "$EXPECTED_VERSION" ]]; then
-            echo "::error::Checked-out project version ($actual_version) does not match the version input ($EXPECTED_VERSION). Select tag v$EXPECTED_VERSION as the workflow ref." >&2
+            echo "::error::Checked-out project version ($actual_version) does not match the version input ($EXPECTED_VERSION)." >&2
             exit 1
           fi
           echo "Checked-out project version matches input: $actual_version"
-      - name: Build with Maven
-        run: ./mvnw package --file pom.xml -DskipTests=true ${{ env.MVN_CONFIG }}
+      - name: Verify before publishing
+        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
       - name: Upload to Maven Central
         env:
           CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
