@@ -1,0 +1,4 @@
+Field <io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.OffHeapCounter.unsafe> has type <sun.misc.Unsafe> in (OffHeapCounter.java:0)
+Method <io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.ReloadSignalHandler.handle(sun.misc.Signal)> calls method <sun.misc.Signal.getName()> in (ReloadSignalHandler.java:9)
+Method <io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.ReloadSignalHandler.handle(sun.misc.Signal)> has parameter of type <sun.misc.Signal> in (ReloadSignalHandler.java:0)
+Method <io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.SerializationInstantiator.factory()> calls method <sun.reflect.ReflectionFactory.getReflectionFactory()> in (SerializationInstantiator.java:9)
