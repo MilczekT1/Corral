@@ -1,0 +1,8 @@
+Class <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.AbstractLineItem> declares no serialVersionUID in (AbstractLineItem.java:0)
+Class <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.AuditEntry> declares no serialVersionUID in (AuditEntry.java:0)
+Class <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.CancelOrder> declares no serialVersionUID in (CancelOrder.java:0)
+Class <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.ExpressPayment> declares no serialVersionUID in (ExpressPayment.java:0)
+Class <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.OrderDto> declares no serialVersionUID in (OrderDto.java:0)
+Field <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.CartDto.serialVersionUID> is not static final long in (CartDto.java:0)
+Field <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.RefundDto.serialVersionUID> is not static final long in (RefundDto.java:0)
+Field <io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.ShipmentDto.serialVersionUID> is not static final long in (ShipmentDto.java:0)
