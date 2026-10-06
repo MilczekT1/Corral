@@ -4,6 +4,7 @@ corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
 corral.java.no-internal-api=corral.java.no-internal-api
 corral.java.no-legacy-date-api=corral.java.no-legacy-date-api
+corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronized-collections
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
