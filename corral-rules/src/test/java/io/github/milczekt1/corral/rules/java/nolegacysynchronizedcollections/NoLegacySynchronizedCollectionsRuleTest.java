@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fix
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.HeaderIndex;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ModernCart;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ParserState;
+import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ReportRows;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.SettingsLoader;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.UndoStack;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
@@ -34,22 +35,19 @@ class NoLegacySynchronizedCollectionsRuleTest {
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter().importClasses(
             CartLines.class, ParserState.class, HeaderIndex.class, UndoStack.class, Editor.class,
-            ModernCart.class, SettingsLoader.class, ConfigListener.class);
+            ModernCart.class, SettingsLoader.class, ConfigListener.class, ReportRows.class);
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
-    private static List<String> violations() {
-        return NoLegacySynchronizedCollectionsRule.DEFINITION.evaluate(EXAMPLES).getFailureReport().getDetails();
-    }
+    private static final List<String> VIOLATIONS =
+            NoLegacySynchronizedCollectionsRule.DEFINITION.evaluate(EXAMPLES).getFailureReport().getDetails();
 
     private static void assertFlagged(String subject, String target) {
-        List<String> violations = violations();
-
-        assertTrue(violations.stream().anyMatch(line -> line.contains(subject) && line.contains(target)),
-                String.join("\n", violations));
+        assertTrue(VIOLATIONS.stream().anyMatch(line -> line.contains(subject) && line.contains(target)),
+                String.join("\n", VIOLATIONS));
     }
 
     private static void assertNotReported(String subject) {
-        String report = String.join("\n", violations());
+        String report = String.join("\n", VIOLATIONS);
 
         assertFalse(report.contains(subject), report);
     }
@@ -80,15 +78,23 @@ class NoLegacySynchronizedCollectionsRuleTest {
     }
 
     @Test
+    void flagsAVectorParameter() {
+        assertFlagged("ReportRows.load", "parameter of type <java.util.Vector>");
+    }
+
+    @Test
+    void flagsAVectorTypeArgument() {
+        assertFlagged("ReportRows.byRegion", "type argument depending on <java.util.Vector>");
+    }
+
+    @Test
     void flagsASubclassAtItsDeclaration() {
         assertFlagged("UndoStack", "extends class <java.util.Stack>");
     }
 
     @Test
     void reportsOnlyTheLegacyDependencies() {
-        List<String> violations = violations();
-
-        assertEquals(15, violations.size(), String.join("\n", violations));
+        assertEquals(18, VIOLATIONS.size(), String.join("\n", VIOLATIONS));
     }
 
     @Test

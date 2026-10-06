@@ -5,6 +5,7 @@ Constructor <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollectio
 Constructor <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.UndoStack.<init>()> calls constructor <java.util.Stack.<init>()> in (UndoStack.java:6)
 Field <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.CartLines.items> has type <java.util.Vector> in (CartLines.java:0)
 Field <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.CartLines.labels> has type <java.util.Hashtable> in (CartLines.java:0)
+Field <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ReportRows.byRegion> has generic type <java.util.Map<java.lang.String, java.util.Vector<java.lang.String>>> with type argument depending on <java.util.Vector> in (ReportRows.java:0)
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.CartLines.size()> calls method <java.util.Hashtable.size()> in (CartLines.java:18)
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.CartLines.size()> calls method <java.util.Vector.size()> in (CartLines.java:18)
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.HeaderIndex.headers()> calls constructor <java.util.Hashtable.<init>()> in (HeaderIndex.java:9)
@@ -13,3 +14,5 @@ Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fi
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ParserState.depth(java.lang.String)> calls constructor <java.util.Stack.<init>()> in (ParserState.java:15)
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ParserState.depth(java.lang.String)> calls method <java.util.Stack.push(java.lang.Object)> in (ParserState.java:19)
 Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ParserState.depth(java.lang.String)> calls method <java.util.Stack.size()> in (ParserState.java:25)
+Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ReportRows.load(java.lang.String, java.util.Vector)> has generic parameter type <java.util.Vector<java.lang.String>> with type argument depending on <java.util.Vector> in (ReportRows.java:0)
+Method <io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.ReportRows.load(java.lang.String, java.util.Vector)> has parameter of type <java.util.Vector> in (ReportRows.java:0)

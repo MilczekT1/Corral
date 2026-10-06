@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections;
 
+import static com.tngtech.archunit.core.domain.JavaClass.Predicates.equivalentTo;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.junit.ArchTest;
@@ -19,7 +20,8 @@ import lombok.NoArgsConstructor;
  * <p>Stands alone, in no group: wire it with
  * {@code ArchTests.in(NoLegacySynchronizedCollectionsRule.class)}. Matched by exact type, so
  * {@code Properties} is not flagged, and a subclass of one of the three is flagged where it is
- * declared, never where it is used.
+ * declared, never where it is used. A local variable is not a bytecode dependency, so a
+ * {@code Hashtable} read into one and never called, returned or stored in a field is not seen.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoLegacySynchronizedCollectionsRule implements DocumentedRule {
@@ -38,22 +40,28 @@ public final class NoLegacySynchronizedCollectionsRule implements DocumentedRule
                     popping. Hashtable throws NullPointerException on a null key or value where \
                     HashMap accepts it, and iterates in a different order.""")
             .howToFix("""
-                    Vector becomes ArrayList. Stack becomes ArrayDeque used through push/pop/peek — \
-                    check the iteration order at every call site, because that is where the silent \
-                    behaviour change lives. Hashtable becomes HashMap, or ConcurrentHashMap if the \
-                    concurrency was real; check for code relying on the NullPointerException for null \
-                    and on iteration order. Where the synchronization was genuinely load-bearing, \
-                    ConcurrentHashMap, CopyOnWriteArrayList and ConcurrentLinkedDeque provide it with \
-                    iterators that never throw ConcurrentModificationException. java.util.Properties \
-                    extends Hashtable but is a distinct class and is not matched. Where an API forces \
-                    one of the three types on you — a JNDI InitialContext environment, a Swing \
-                    JComboBox, JList or DefaultTableModel — keep that interop in one class and exclude \
-                    it with a reason naming the API.""")
+                    Vector becomes ArrayList. Stack becomes ArrayDeque used through push/pop/peek, and \
+                    four behaviours change silently at every call site: it iterates top-down where \
+                    Stack iterated bottom-up; push(null) throws NullPointerException; peek() on an \
+                    empty deque returns null where Stack threw EmptyStackException; and pop() on an \
+                    empty deque throws NoSuchElementException, so a catch (EmptyStackException e) \
+                    stops catching. Hashtable becomes HashMap; check for code relying on the \
+                    NullPointerException for null and on iteration order. Where the concurrency was \
+                    real, ConcurrentHashMap, CopyOnWriteArrayList and ConcurrentLinkedDeque iterate \
+                    without ConcurrentModificationException, but a check-then-act sequence on them is \
+                    still a race: replace containsKey-then-put with putIfAbsent or computeIfAbsent, \
+                    and contains-then-add with CopyOnWriteArrayList.addIfAbsent. Most APIs that seem \
+                    to demand one of the three do not: a JNDI InitialContext takes its environment as \
+                    a Properties, and JComboBox, JList and DefaultTableModel have array constructors. \
+                    Exclude a class, with a reason naming the API, only where a signature it must \
+                    implement names the type itself.""")
             .howNotToFix("""
                     Do NOT wrap the replacement in Collections.synchronizedList or synchronizedMap to \
                     keep the old locking: that reproduces the per-method locking that does not make \
                     compound operations atomic, adds the duty to hold the collection's monitor while \
-                    iterating, and this rule does not catch it. Do NOT hide the type behind a subclass \
+                    iterating, and this rule does not catch it. Do NOT replace a Hashtable with \
+                    java.util.Properties: it extends Hashtable and keeps its per-method locking, and \
+                    this rule does not catch it. Do NOT hide the type behind a subclass \
                     (class UndoStack extends Stack) or a factory method in a helper class: the subclass \
                     declaration and the helper are flagged, but code using them is not, so once those \
                     are frozen every new use through them is invisible. Do NOT declare the field as \
@@ -62,7 +70,10 @@ public final class NoLegacySynchronizedCollectionsRule implements DocumentedRule
             .build();
 
     static final ArchRule DEFINITION = noClasses()
-            .should().dependOnClassesThat().belongToAnyOf(Vector.class, Stack.class, Hashtable.class);
+            .should().dependOnClassesThat(equivalentTo(Vector.class)
+                    .or(equivalentTo(Stack.class))
+                    .or(equivalentTo(Hashtable.class))
+                    .as("are java.util.Vector, java.util.Stack or java.util.Hashtable"));
 
     @ArchTest
     public static final ArchRule rule = new NoLegacySynchronizedCollectionsRule().guard();
