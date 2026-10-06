@@ -5,6 +5,7 @@ import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.dependencies.nojavax.NoJavaxRule;
 import io.github.milczekt1.corral.rules.java.nointernalapi.NoInternalApiRule;
 import io.github.milczekt1.corral.rules.java.nolegacydateapi.NoLegacyDateApiRule;
+import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.NoLegacySynchronizedCollectionsRule;
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.SerializableMustDeclareSerialVersionUidRule;
 import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.NoMutableStaticStateRule;
 import lombok.experimental.UtilityClass;
@@ -36,6 +37,10 @@ public class EveryStandaloneRule {
 
     @ArchTest
     public static final ArchTests noLegacyDateApi = ArchTests.in(NoLegacyDateApiRule.class);
+
+    @ArchTest
+    public static final ArchTests noLegacySynchronizedCollections =
+            ArchTests.in(NoLegacySynchronizedCollectionsRule.class);
 
     @ArchTest
     public static final ArchTests serializableMustDeclareSerialVersionUid =
