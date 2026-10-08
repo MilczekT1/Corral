@@ -1,0 +1,4 @@
+Class <io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.AbstractBillingService> has modifier ABSTRACT in (AbstractBillingService.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.AbstractLedgerPolicy> has modifier ABSTRACT in (AbstractLedgerPolicy.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.AbstractOrderHandler> has modifier ABSTRACT in (AbstractOrderHandler.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.AbstractRefundHandler> has modifier ABSTRACT in (AbstractRefundHandler.java:0)

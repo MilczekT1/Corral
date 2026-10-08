@@ -8,6 +8,7 @@ corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronize
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
+corral.spring.no-component-on-abstract-class=corral.spring.no-component-on-abstract-class
 corral.spring.no-field-injection=corral.spring.no-field-injection
 corral.spring.no-final-component=corral.spring.no-final-component
 corral.spring.no-setter-injection=corral.spring.no-setter-injection
