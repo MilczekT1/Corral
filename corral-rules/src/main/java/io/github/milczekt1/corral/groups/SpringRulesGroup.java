@@ -3,6 +3,7 @@ package io.github.milczekt1.corral.groups;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.NoAsyncOnUnproxyableMethodRule;
+import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.NoComponentOnAbstractClassRule;
 import io.github.milczekt1.corral.rules.spring.nofieldinjection.NoFieldInjectionRule;
 import io.github.milczekt1.corral.rules.spring.nofinalcomponent.NoFinalComponentRule;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.NoSetterInjectionRule;
@@ -30,4 +31,7 @@ public class SpringRulesGroup {
 
     @ArchTest
     public static final ArchTests noFinalComponent = ArchTests.in(NoFinalComponentRule.class);
+
+    @ArchTest
+    public static final ArchTests noComponentOnAbstractClass = ArchTests.in(NoComponentOnAbstractClassRule.class);
 }
