@@ -110,6 +110,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-transactional-on-private-method",
                 "corral.spring.no-transactional-on-final-or-static",
                 "corral.spring.no-async-on-unproxyable-method",
+                "corral.spring.no-final-component",
                 "corral.security.no-jdbc-statement"), ids);
     }
 }

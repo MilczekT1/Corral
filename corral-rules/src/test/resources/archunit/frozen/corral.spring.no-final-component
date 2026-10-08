@@ -1,0 +1,7 @@
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.CheckoutController> has modifier FINAL in (CheckoutController.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.CustomerRepository> has modifier FINAL in (CustomerRepository.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.OrderService> has modifier FINAL in (OrderService.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.PaymentConfig> has modifier FINAL in (PaymentConfig.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.PricingPolicy> has modifier FINAL in (PricingPolicy.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.RefundHandler> has modifier FINAL in (RefundHandler.java:0)
+Class <io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.ShippingConfig> has modifier FINAL in (ShippingConfig.java:0)
