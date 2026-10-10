@@ -30,6 +30,12 @@ Two consequences follow, and they are the questions people actually ask:
 > resurface as new ones. That is a breaking change for consumers on the same footing as renaming an
 > id: they must re-freeze. Batch predicate changes into a release and say so in the notes.
 
+**ArchUnit never prunes the store.** An entry outlives the rule that wrote it — a rule you deleted
+or stopped wiring. On the first rule evaluated,
+Corral warns on stderr about every id-shaped `stored.rules` key that no rule registered in that run;
+delete the line and the file it names. A run of a single rule or test class registers only part of
+the catalog, so there the warning is expected and lists entries that are still in use.
+
 See also **[Configuration](configuration.md)** for the properties that control the store, and
 **[CONTRIBUTING.md § What breaks consumers](../CONTRIBUTING.md#what-breaks-consumers)** for why a
 predicate change is a breaking change.

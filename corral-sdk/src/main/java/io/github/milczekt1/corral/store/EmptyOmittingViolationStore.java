@@ -40,9 +40,10 @@ public class EmptyOmittingViolationStore implements ViolationStore {
      * The delegate's index file: {@code <rule-description>=<file-name>}, an undocumented
      * {@link TextFileBasedViolationStore} format pinned by {@code storedRulesMapsRuleDescriptionToFileName}.
      */
-    private static final String INDEX_FILE = "stored.rules";
+    static final String INDEX_FILE = "stored.rules";
 
-    private static final String DEFAULT_STORE_PATH = "archunit_store";
+    /** ArchUnit's own default for {@code freeze.store.default.path}. */
+    static final String DEFAULT_STORE_PATH = "archunit_store";
 
     private final TextFileBasedViolationStore delegate =
             new TextFileBasedViolationStore(EmptyOmittingViolationStore::fileNameFor);
