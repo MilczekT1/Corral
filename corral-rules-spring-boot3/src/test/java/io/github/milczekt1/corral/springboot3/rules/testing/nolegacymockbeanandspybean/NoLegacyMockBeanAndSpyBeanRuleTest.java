@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
 import com.tngtech.archunit.ArchConfiguration;
-import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
@@ -86,22 +85,17 @@ class NoLegacyMockBeanAndSpyBeanRuleTest {
         assertFalse(report.contains("MigratedBeanOverrideCase"), report);
     }
 
-    /** The same class file, moved: only its location changed, so only scope can explain the silence. */
+    /** A shared test-support module's main sources: Boot 4 fails to compile those too. */
     @Test
-    void ignoresAFlaggedClassOnceItSitsInProductionOutput() throws IOException {
+    void flagsAClassInProductionOutputToo() throws IOException {
         JavaClasses moved = new ClassFileImporter().importPath(
                 copyIntoProductionLayout(MockBeanFieldHolder.class));
-        JavaClass holder = moved.get(MockBeanFieldHolder.class);
 
-        assertFalse(TestScope.TEST_CLASSES.test(holder),
+        assertFalse(TestScope.TEST_CLASSES.test(moved.get(MockBeanFieldHolder.class)),
                 "premise: outside test output and declaring no test, the class is production-scoped");
-        assertTrue(holder.getDirectDependenciesFromSelf().stream()
-                        .anyMatch(d -> d.getTargetClass().getPackageName()
-                                .equals("org.springframework.boot.test.mock.mockito")),
-                "premise: the moved class must still depend on the legacy package, or this pins nothing");
 
         String report = reportFor(moved);
-        assertFalse(report.contains("MockBeanFieldHolder"), report);
+        assertTrue(report.contains("MockBeanFieldHolder.clock>"), report);
     }
 
     /**

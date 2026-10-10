@@ -28,7 +28,13 @@ sequences and cross-references them for *this* catalog, it does not restate them
    `corral.test.*` or `corral.test.mockito.*`. Ask "what is this rule actually asserting about?", not
    "what classes does the predicate mention?".
 
-2. **Create the rule class** at
+2. **Pick the module.** `corral-rules`, unless the rule only makes sense on one framework major and
+   its fixtures need that major's jars, which clash with `corral-rules`' test classpath: then
+   `corral-rules-<framework><major>` (today `corral-rules-spring-boot3`), package root
+   `io.github.milczekt1.corral.<framework><major>`, the framework in test scope only. Every path
+   below is then under that module — see *Version-bound rule* in the quick reference.
+
+   **Create the rule class** at
    `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` — a
    `final class implements DocumentedRule` with a private constructor and a name ending in `Rule`
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the

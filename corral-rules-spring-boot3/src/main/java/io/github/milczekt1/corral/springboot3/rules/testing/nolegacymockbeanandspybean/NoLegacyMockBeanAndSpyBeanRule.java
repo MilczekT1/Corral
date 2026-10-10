@@ -6,16 +6,12 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
-import io.github.milczekt1.corral.scope.TestScope;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
 /**
- * No test class may depend on Spring Boot's {@code org.springframework.boot.test.mock.mockito}
- * package, which Boot 3.4.0 deprecated for removal and Boot 4.0 removed.
- *
- * <p>Inspects <em>test</em> classes, so consumers must not set
- * {@code ImportOption.DoNotIncludeTests} — it would pass vacuously.
+ * No class may depend on Spring Boot's {@code org.springframework.boot.test.mock.mockito} package,
+ * which Boot 3.4.0 deprecated for removal and Boot 4.0 removed.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoLegacyMockBeanAndSpyBeanRule implements DocumentedRule {
@@ -58,10 +54,7 @@ public final class NoLegacyMockBeanAndSpyBeanRule implements DocumentedRule {
                     warning or adding @SuppressWarnings does not silence this rule. Do NOT hide \
                     @MockBean inside a project's own composed annotation or base test class: \
                     dependOnClassesThat is not transitive, so the classes using or extending it are \
-                    not flagged — only the declaration is, and only when it compiles into test \
-                    output. In a shared test-support module's main sources, or a Gradle testFixtures \
-                    or integrationTest source set, this rule flags nothing at all — and Boot 4 still \
-                    fails to compile any of it. Do NOT hand-edit the freeze store to admit a new \
+                    not flagged — only the declaration is. Do NOT hand-edit the freeze store to admit a new \
                     entry.""")
             .build();
 
@@ -69,7 +62,6 @@ public final class NoLegacyMockBeanAndSpyBeanRule implements DocumentedRule {
 
     /** Package-matched, so the rule loads on Boot 4, where none of these types exist. */
     static final ArchRule DEFINITION = noClasses()
-            .that(TestScope.TEST_CLASSES)
             .should().dependOnClassesThat().resideInAPackage(LEGACY_PACKAGE);
 
     @ArchTest
