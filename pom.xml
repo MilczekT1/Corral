@@ -52,6 +52,7 @@
     <javax-servlet.version>4.0.1</javax-servlet.version>
     <jakarta-servlet.version>6.1.0</jakarta-servlet.version>
     <spring.version>7.0.9</spring.version>
+    <spring-boot3.version>3.5.16</spring-boot3.version>
     <jakarta-inject.version>2.0.1</jakarta-inject.version>
     <jakarta-annotation.version>3.0.0</jakarta-annotation.version>
     <javax-inject.version>1</javax-inject.version>
@@ -157,6 +158,11 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-tx</artifactId>
         <version>${spring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-test</artifactId>
+        <version>${spring-boot3.version}</version>
       </dependency>
       <dependency>
         <groupId>jakarta.inject</groupId>

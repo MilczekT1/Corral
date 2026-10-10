@@ -31,10 +31,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 
-/**
- * Spring Boot 4 has no {@code org.springframework.boot.test.mock.mockito}, so the examples use
- * stand-ins declared under that package in this module's test sources.
- */
 class NoLegacyMockBeanAndSpyBeanRuleTest {
 
     private static final String ID = "corral.test.spring.no-legacy-mockbean-and-spybean";

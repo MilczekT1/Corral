@@ -88,6 +88,19 @@
       <artifactId>spring-tx</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- Boot 3.x is the last line with org.springframework.boot.test.mock.mockito. Transitives are
+         excluded so its Spring 6 jars never meet the Spring 7 ones above. -->
+    <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot-test</artifactId>
+      <scope>test</scope>
+      <exclusions>
+        <exclusion>
+          <groupId>*</groupId>
+          <artifactId>*</artifactId>
+        </exclusion>
+      </exclusions>
+    </dependency>
     <dependency>
       <groupId>jakarta.inject</groupId>
       <artifactId>jakarta.inject-api</artifactId>
