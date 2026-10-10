@@ -22,3 +22,4 @@ corral.test.no-junit4=corral.test.no-junit4
 corral.test.no-mocked-repository-in-integration-test=corral.test.no-mocked-repository-in-integration-test
 corral.test.no-mutable-static-state=corral.test.no-mutable-static-state
 corral.test.no-thread-sleep=corral.test.no-thread-sleep
+corral.test.spring.no-legacy-mockbean-and-spybean=corral.test.spring.no-legacy-mockbean-and-spybean

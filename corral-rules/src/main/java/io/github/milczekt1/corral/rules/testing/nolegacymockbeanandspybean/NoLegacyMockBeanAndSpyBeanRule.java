@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean;
+package io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -12,6 +12,9 @@ import lombok.NoArgsConstructor;
 /**
  * No class may depend on Spring Boot's {@code org.springframework.boot.test.mock.mockito} package,
  * which Boot 3.4.0 deprecated for removal and Boot 4.0 removed.
+ *
+ * @see <a href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.4-Release-Notes#deprecation-of-mockbean-and-spybean">Spring Boot 3.4 release notes: deprecation of MockBean and SpyBean</a>
+ * @see <a href="https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-4.0-Migration-Guide#mockbean-and-spybean-removal">Spring Boot 4.0 migration guide: MockBean and SpyBean removal</a>
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoLegacyMockBeanAndSpyBeanRule implements DocumentedRule {
