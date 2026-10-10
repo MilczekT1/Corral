@@ -38,6 +38,13 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- For the catalog tests, which walk every published group. Its main jar carries no framework. -->
+    <dependency>
+      <groupId>io.github.milczekt1</groupId>
+      <artifactId>corral-rules-spring-boot3</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>

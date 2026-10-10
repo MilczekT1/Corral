@@ -14,7 +14,7 @@ PR's commits land on `main`, uploads to **Maven Central**, and tags. Only allowl
    **auto-merge**. The PR rebase-merges once the required checks pass.
 4. The merge pushes both commits to `main`, and the push runs **Publish release**. It finds the `Release Corral <version>` commit **as it
    landed on `main`**, checks its project version, runs `./mvnw clean verify` on it, then signs and
-   uploads `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
+   uploads `corral-sdk`, `corral-rules`, every `corral-rules-<framework><major>` module and `corral-parent` — consumers need the parent pom to
    resolve the managed dependency versions — tags that commit `v<version>`, and creates the GitHub
    Release.
 5. **Press Publish.** The upload stops at *VALIDATED*. Open

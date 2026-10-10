@@ -8,13 +8,14 @@ You review an **implemented** ArchUnit rule in Corral's catalog. You report; you
 proposals are out of scope — that is `/review-rule-proposal`.
 
 The contract you review against: `CLAUDE.md`, `docs/creating-a-rule.md`,
-`CONTRIBUTING.md § Rule ids` and `§ What breaks consumers`, and
+`CONTRIBUTING.md § Rule ids`, `§ What breaks consumers` and `§ Version-bound rules`, and
 `.claude/skills/adding-a-rule/SKILL.md`, plus `RuleIdGrammarTest` (the id vocabulary) and
 `corral-sdk/.../scope/TestScope.java` (what "test scope" actually matches). Read them before you
 start; quote them in findings rather than paraphrasing from memory.
 
-Run `./mvnw -q test -pl corral-rules` once as a sanity check and report the result; a red build is
-a finding. You do not run `clean verify`.
+`<module>` below is the module the rule lives in: `corral-rules`, or a version module
+`corral-rules-<framework><major>`. Run `./mvnw -q test -pl <module>,corral-rules -am` once as a
+sanity check and report the result; a red build is a finding. You do not run `clean verify`.
 
 ## Scope
 
@@ -78,7 +79,7 @@ Check each item. Record a pass or a finding for every one — silence is not cov
    that library's own package in test sources, are allowed outside `fixtures/`. No fixture or top-level test class outside
    `fixtures/` ends in `IT`. Each example opens with a one-line Javadoc saying `MUST FLAG` or
    `MUST IGNORE` and why. Example methods have real bodies.
-5. **Committed store.** `corral-rules/src/test/resources/archunit/frozen/<id>` exists, its
+5. **Committed store.** `<module>/src/test/resources/archunit/frozen/<id>` exists, its
    `stored.rules` line exists. Every recorded line traces to a `MUST FLAG` member (one member may
    produce several lines), and no `MUST IGNORE` class or member appears. The test hands the store over with `persistIn(...)`, sets only the
    store *path* on `ArchConfiguration`, and resets it in a `finally`.
@@ -88,6 +89,14 @@ Check each item. Record a pass or a finding for every one — silence is not cov
    `EveryStandaloneRule`, in no group, and absent from `PublishedCatalogTest`. A row in the matching
    table of `docs/rules.md`. Read that row's prose column yourself — the build checks only the id
    and group columns.
+
+   **Module.** A rule whose version window (item 2) has an upper bound — it can never fire from
+   some major on — is version-bound and belongs in that major's version module, not in
+   `corral-rules`; one in `corral-rules` is a finding. In a version module, also check
+   `CONTRIBUTING.md § Version-bound rules`: package root, the id in the module's group test, the
+   row under the module's `docs/rules.md` heading, and — for a module the diff adds — every step of
+   *Adding a version module*, including `./mvnw -pl <module> dependency:tree -Dscope=runtime`
+   listing only `corral-sdk` and its transitives.
 7. **`RuleDoc` against the predicate.** Every dodge the HOW NOT TO FIX text warns about is either
    caught by the predicate or explicitly marked as not caught. WHY and HOW TO FIX describe what the
    predicate actually matches. HOW TO FIX compiles on the oldest library version the doc claims —
@@ -110,7 +119,7 @@ SCRATCH=<the scratchpad directory from your system prompt>
 git worktree add --detach "$SCRATCH/rule-mutation" HEAD
 ```
 
-Run a baseline first: `./mvnw -q test -pl corral-rules -am -Dtest=<Name>RuleTest -Dsurefire.failIfNoSpecifiedTests=false` must pass unmutated,
+Run a baseline first: `./mvnw -q test -pl <module> -am -Dtest=<Name>RuleTest -Dsurefire.failIfNoSpecifiedTests=false` must pass unmutated,
 otherwise stop and report that.
 
 Then for each clause of `DEFINITION`'s predicate — and each **entry** of any list inside it, one at
@@ -120,7 +129,7 @@ mutation. The checkout also restores `frozen/`, which a mutation that finds fewe
 prunes or deletes. A mutation no test kills is a finding: name the clause and the input that would
 slip through.
 
-Finish with one unmutated `./mvnw test -pl corral-rules -am` (whole module — `ArchConfiguration` is
+Finish with one unmutated `./mvnw test -pl <module>,corral-rules -am` (whole module — `ArchConfiguration` is
 process-wide, so a test that passes alone can fail in a full run), then
 `git worktree remove --force "$SCRATCH/rule-mutation"`. Remove the worktree even on failure.
 

@@ -87,6 +87,12 @@ does not use the library are otherwise indistinguishable — the rule matches no
 green, and nothing is enforced, permanently. A real-typed fixture turns a typo into a failing test.
 `corral-rules` carries `junit:junit`, `spring-test` and `mockito-core` on exactly these terms.
 
+**A rule bound to one framework major gets a module of its own,** `corral-rules-<framework><major>`,
+because one `groupId:artifactId` sits on a classpath at one version only, and fixtures need that
+major's real jars. Everything here applies unchanged inside it; the naming, the new-module checklist
+and the extra catalog wiring are in
+[CONTRIBUTING.md § Version-bound rules](../CONTRIBUTING.md#version-bound-rules).
+
 If even a test-scope dependency is unwanted, the fixture only has to be as faithful as the matching
 is strong: against a package or name check, a stub declared under the real package is byte-identical
 evidence (`javax.*` and `jakarta.*` are legal to declare; only `java.*` is sealed by the

@@ -28,7 +28,14 @@ sequences and cross-references them for *this* catalog, it does not restate them
    `corral.test.*` or `corral.test.mockito.*`. Ask "what is this rule actually asserting about?", not
    "what classes does the predicate mention?".
 
-2. **Create the rule class** at
+2. **Pick the module.** `corral-rules`, unless the rule is *version-bound* — it only makes sense on
+   one framework major (nothing to migrate to below it, nothing left to match above it). Then it
+   goes in `corral-rules-<framework><major>`: read `CONTRIBUTING.md § Version-bound rules` now. If
+   the module exists (root POM `<modules>`), every path below sits under it, with package root
+   `io.github.milczekt1.corral.<framework><major>` and `-pl <module>` in every Maven command. If
+   it does not, do that section's *Adding a version module* checklist first.
+
+   **Create the rule class** at
    `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` — a
    `final class implements DocumentedRule` with a private constructor and a name ending in `Rule`
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
@@ -172,9 +179,10 @@ defect in the last rule added here — none was caught by the build.
 - [ ] **No example's name is a substring of another's.** Assertions match on report text, so a
       contained name makes one case pass on another's violations, and a mutation that should have
       killed it survives.
-- [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
-      process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
-      full run, twice, for two different reasons.
+- [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`** — for a version-bound
+      rule, `./mvnw test -pl <module>,corral-rules -am`, since the catalog tests stay in
+      `corral-rules`. `ArchConfiguration` is process-wide and Surefire reuses the JVM; the
+      freeze-store wiring passed alone and failed in a full run, twice, for two different reasons.
 - [ ] **Test names re-read against their assertions.** Rename any that claim more.
 - [ ] **`RuleDoc` re-read against the predicate.** It renders into the failure output, so a dodge it
       warns about but the predicate misses is a claim someone will act on.
@@ -194,6 +202,7 @@ defect in the last rule added here — none was caught by the build.
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
+| Version-bound rule | all of the above under `corral-rules-<framework><major>`, plus the id in that module's group test; a new module also needs `CONTRIBUTING.md § Version-bound rules` › *Adding a version module* |
 
 `NoJUnit4Rule` is the worked example. The three rules that predate this layout still sit flat
 under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no committed

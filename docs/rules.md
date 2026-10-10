@@ -33,6 +33,39 @@ This table is written by hand and checked by the build: `RulesCatalogDocTest` in
 fails when an id here is not published, a published id is missing here, or a row names the wrong
 group. The prose in the third column is not checked.
 
+## Spring Boot 3 rules (`corral-rules-spring-boot3`)
+
+These ship in their own artifact, `corral-rules-spring-boot3`, because they only make sense on Spring
+Boot 3.4 to 3.x: on 3.3 and earlier a violation has nothing to migrate to, and on Boot 4 the APIs
+they ban are gone, so the rules can never fire and report green while enforcing nothing. The
+artifact id carries the version so the POM you edit during a Boot upgrade says what to remove; copy
+the comment with it.
+
+```xml
+<!-- Spring Boot 3.4–3.x only. On the Boot 4 upgrade: remove this dependency, the group field
+     wiring it, and the archunit/frozen entries for its rule ids. -->
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-rules-spring-boot3</artifactId>
+  <version>${corral.version}</version>
+  <scope>test</scope>
+</dependency>
+```
+
+```java
+import io.github.milczekt1.corral.springboot3.groups.SpringBoot3DeprecationsRulesGroup;
+
+@ArchTest
+static final ArchTests springBoot3Deprecations = ArchTests.in(SpringBoot3DeprecationsRulesGroup.class);
+```
+
+| Rule id | Group | What it enforces |
+|---|---|---|
+| `corral.test.spring.no-legacy-mockbean-and-spybean` | `SpringBoot3DeprecationsRulesGroup` | No class may depend on anything in Spring Boot's `org.springframework.boot.test.mock.mockito..` — `@MockBean`, `@SpyBean`, their `@MockBeans` and `@SpyBeans` containers, `MockReset` and its test-execution listeners — deprecated in Boot 3.4.0 and removed in Boot 4.0. One bytecode dependency check, so field and class-level annotations, the repeatable containers and plain references to the support types all count, one violation per dependency. The replacements, `@MockitoBean` and `@MockitoSpyBean` from Spring Framework 6.2's bean-override support, and plain Mockito `@Mock` are untouched. Production and test classes alike, so a shared test-support module's main sources and Gradle `testFixtures` count too. Matched by package string, so it loads on Boot 4, where it can never fire. Not seen: classes using a project's own composed annotation, or extending a base class, that carries `@MockBean` — only the declaration is flagged. |
+
+Checked by the same test as the table above, which also requires each row to sit under the heading
+of the artifact that ships it.
+
 ## Standalone rules
 
 These ship in the artifact but belong to no group, because a group is adopted whole: everything in

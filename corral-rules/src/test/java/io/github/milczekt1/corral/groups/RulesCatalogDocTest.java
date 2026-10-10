@@ -42,11 +42,19 @@ class RulesCatalogDocTest {
 
     private static final String GROUPED_SECTION = "";
 
+    /**
+     * A version module's heading names its artifact in backticks; the artifact's suffix, hyphens
+     * dropped, is the package segment its groups live under.
+     */
+    private static final Pattern VERSION_MODULE_HEADING = Pattern.compile("^## .*`corral-rules-([a-z0-9-]+)`");
+
+    private static final String CORRAL_ROOT = "io.github.milczekt1.corral.";
+
     @Test
     void catalogTableListsExactlyTheIdsPublishedFromGroups() throws IOException {
         Set<String> published = PublishedRules.idsOf(EveryPublishedGroup.class);
 
-        assertEquals(published, rowsUnder(GROUPED_SECTION).keySet(),
+        assertEquals(published, groupedRows().keySet(),
                 "docs/rules.md disagrees with the published groups. Every published id needs a row in"
                         + " the catalog table, and every row needs a published id — add the missing"
                         + " row, or remove the stale one.");
@@ -54,7 +62,7 @@ class RulesCatalogDocTest {
 
     @Test
     void catalogTableNamesTheGroupEachRuleShipsIn() throws IOException {
-        Map<String, String> documented = rowsUnder(GROUPED_SECTION);
+        Map<String, String> documented = groupedRows();
 
         for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryPublishedGroup.class)) {
             Class<?> group = member.getDefinitionLocation();
@@ -62,6 +70,21 @@ class RulesCatalogDocTest {
                 assertEquals(group.getSimpleName(), documented.get(id),
                         () -> "docs/rules.md lists " + id + " under group '" + documented.get(id)
                                 + "' but it is published from " + group.getSimpleName());
+            }
+        }
+    }
+
+    /** The heading is what tells a consumer which artifact to add, and which one to drop on an upgrade. */
+    @Test
+    void versionModuleRulesSitUnderTheirModulesHeading() throws IOException {
+        for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryPublishedGroup.class)) {
+            Class<?> group = member.getDefinitionLocation();
+            String section = sectionOf(group);
+            Set<String> documented = rowsUnder(section).keySet();
+            for (String id : PublishedRules.idsOf(group)) {
+                assertTrue(documented.contains(id),
+                        () -> "docs/rules.md must list " + id + " under '" + section + "', the section of"
+                                + " the module that ships " + group.getSimpleName());
             }
         }
     }
@@ -91,17 +114,54 @@ class RulesCatalogDocTest {
         }
     }
 
-    /**
-     * The rows of one table, keyed by id. Sections are delimited by {@code ##} headings, and the
-     * grouped table sits above the first of them.
-     */
-    private static Map<String, String> rowsUnder(String heading) throws IOException {
-        Path rulesDoc = CANDIDATE_LOCATIONS.stream()
+    private static String sectionOf(Class<?> group) throws IOException {
+        if (group.getPackageName().equals(CORRAL_ROOT + "groups")) {
+            return GROUPED_SECTION;
+        }
+        return versionModuleSections().entrySet().stream()
+                .filter(section -> group.getName().startsWith(section.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElseThrow(() -> new AssertionError(group.getName() + " ships from a version module,"
+                        + " but no docs/rules.md heading names its artifact as `corral-rules-<suffix>`"));
+    }
+
+    /** Version-module headings in docs/rules.md, mapped to the package root their groups live in. */
+    private static Map<String, String> versionModuleSections() throws IOException {
+        Map<String, String> sections = new LinkedHashMap<>();
+        for (String line : Files.readAllLines(rulesDoc())) {
+            Matcher heading = VERSION_MODULE_HEADING.matcher(line);
+            if (heading.find()) {
+                sections.put(line.strip(), CORRAL_ROOT + heading.group(1).replace("-", "") + ".");
+            }
+        }
+        return sections;
+    }
+
+    /** Rows of the main grouped table and of every version module's table. */
+    private static Map<String, String> groupedRows() throws IOException {
+        Map<String, String> rows = new LinkedHashMap<>(rowsUnder(GROUPED_SECTION));
+        for (String heading : versionModuleSections().keySet()) {
+            rows.putAll(rowsUnder(heading));
+        }
+        return rows;
+    }
+
+    private static Path rulesDoc() {
+        return CANDIDATE_LOCATIONS.stream()
                 .filter(Files::exists)
                 .findFirst()
                 .orElseThrow(() -> new AssertionError(
                         "docs/rules.md not found at " + CANDIDATE_LOCATIONS
                                 + "; run this test from the corral-rules module or the reactor root"));
+    }
+
+    /**
+     * The rows of one table, keyed by id. Sections are delimited by {@code ##} headings, and the
+     * grouped table sits above the first of them.
+     */
+    private static Map<String, String> rowsUnder(String heading) throws IOException {
+        Path rulesDoc = rulesDoc();
 
         Map<String, String> rows = new LinkedHashMap<>();
         Set<String> everyId = new HashSet<>();
