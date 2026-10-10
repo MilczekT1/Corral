@@ -180,6 +180,8 @@ defect in the last rule added here — none was caught by the build.
       warns about but the predicate misses is a claim someone will act on.
 - [ ] **`./mvnw clean verify` green**, with the committed store either untouched or reseeded and
       committed on purpose.
+- [ ] **`rule-reviewer` agent run on the branch, with mutation mode**, and every finding fixed or
+      answered. It can do the clause-by-clause mutation step above for you.
 
 ## Quick reference
 
