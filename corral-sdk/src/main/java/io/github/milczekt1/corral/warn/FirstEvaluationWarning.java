@@ -25,7 +25,7 @@ import lombok.RequiredArgsConstructor;
 public final class FirstEvaluationWarning implements ArchRule {
 
     /** Shared by every rule wrapped through {@link #wrap(ArchRule, List)}: once per run, not per rule. */
-    private static final AtomicBoolean WARNED = new AtomicBoolean(false);
+    private static final AtomicBoolean WARNED_THIS_RUN = new AtomicBoolean(false);
 
     private static final String PREFIX = "WARNING: Corral — ";
 
@@ -36,7 +36,7 @@ public final class FirstEvaluationWarning implements ArchRule {
 
     /** @param messages each returns its warning, or {@code null} when it has nothing to say */
     public static ArchRule wrap(ArchRule rule, List<Supplier<String>> messages) {
-        return wrap(rule, WARNED, messages, FirstEvaluationWarning::printWarning);
+        return wrap(rule, WARNED_THIS_RUN, messages, FirstEvaluationWarning::printWarning);
     }
 
     static ArchRule wrap(
