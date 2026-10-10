@@ -12,9 +12,10 @@ Four modules, arrows pointing one way (enforced by the module boundary, not conv
   without adopting Corral's rules. It has no dependency on `corral-rules`.
 - **`corral-rules`** — the catalog: concrete rules under `rules/<topic>/`, composed by `@UtilityClass`
   groups under `groups/`.
-- **`corral-rules-<framework><major>`** (today `corral-rules-spring-boot3`) — rules that only make
-  sense on one framework major, tested against that major's real jars in test scope. Compile scope is
-  `corral-sdk` alone; package root `io.github.milczekt1.corral.<framework><major>`.
+- **`corral-rules-<framework><major>`** (e.g. `corral-rules-spring-boot3`; the root POM's `<modules>`
+  lists them) — version-bound rules: ones that only make sense on one framework major, tested
+  against that major's real jars in test scope. Compile scope is `corral-sdk` alone. Naming, the
+  new-module checklist and the catalog-test wiring are in `CONTRIBUTING.md § Version-bound rules`.
 - **`corral-example`** — a working consumer with a committed freeze store, deliberate violations, a
   consumer-authored rule (`acme.no-stdout-in-services`) and an exclusion. It is the end-to-end test
   of the wiring; breaking it breaks the build. `sonar.skip=true` and coverage thresholds zeroed,
@@ -110,7 +111,8 @@ otherwise `alwaysTrue()` would pass too.
 ## Adding a rule
 
 Use the **`adding-a-rule` skill** (`.claude/skills/adding-a-rule/SKILL.md`) — it sequences the 7+
-files and the traps. The contract is `docs/creating-a-rule.md`. In short:
+files and the traps. A version-bound rule goes in its framework major's module instead of
+`corral-rules`; the paths below then sit under that module. The contract is `docs/creating-a-rule.md`. In short:
 
 | Artifact | Path |
 |---|---|

@@ -15,10 +15,10 @@ Build:
 ```
 
 The reactor is `corral-sdk` (the framework), `corral-rules` (the rule catalog), one
-`corral-rules-<framework><major>` module per framework major a rule is bound to (today
-`corral-rules-spring-boot3`) and `corral-example` (a working consumer with a committed freeze store,
-which doubles as an end-to-end test of the wiring). A rule that only makes sense on one framework
-major goes in that major's module, under its own package root, with the framework in test scope only.
+`corral-rules-<framework><major>` module per framework major that has rules bound to it (see
+[Version-bound rules](#version-bound-rules); the root POM's `<modules>` lists them) and
+`corral-example` (a working consumer with a committed freeze store, which doubles as an end-to-end
+test of the wiring).
 
 **Java baseline.** The root POM's `maven.compiler.release` is the baseline for the whole project. It
 is the minimum JVM that can load the published classes, so raising it is a breaking change for
@@ -109,6 +109,80 @@ On top of the rule steps:
    catalog test's reachability check fails until you add it.
 3. Add it to the [rules catalog](docs/rules.md) so consumers know it exists. Nothing delivers a new
    group automatically: it reaches a build when someone wires it, which is the point.
+
+## Version-bound rules
+
+A rule is **version-bound** when it only makes sense on one major of a framework: below some
+version a violation has nothing to migrate to, or from the next major on the API it bans is gone and
+the rule can never fire. A rule about a deprecated API is the usual case. Such a rule ships in a
+module for that major, never in `corral-rules`, for two reasons:
+
+- **Testing.** One `groupId:artifactId` sits on a classpath at one version only, so fixtures built
+  from one major's real jars cannot share `corral-rules`' test classpath with another major's.
+- **Dropping it.** The version is in the artifact id, so on the next major the consumer edits a POM
+  that names what to remove. The version scope is marked, not enforced: nothing checks the
+  consumer's framework version at run time.
+
+A rule that holds on every version of a framework is not version-bound and stays in `corral-rules`,
+whatever it matches.
+
+### Names
+
+| | Shape | Example |
+|---|---|---|
+| Artifact id | `corral-rules-<framework><major>`, framework name hyphenated as its own artifacts spell it | `corral-rules-spring-boot3`, `corral-rules-jackson2` |
+| Package root and `Automatic-Module-Name` | `io.github.milczekt1.corral.<framework><major>`, no hyphens | `io.github.milczekt1.corral.springboot3` |
+| Group | `<Framework><major><Topic>RulesGroup` in `<root>.groups`, so the consumer's wiring line carries the version | `SpringBoot3DeprecationsRulesGroup` |
+| Rules | `<root>.rules.<topic>.<rule>`, as in `corral-rules` | |
+| `docs/rules.md` heading | `## <Framework> <major> rules` | `## Spring Boot 3 rules` |
+
+Never reuse `io.github.milczekt1.corral.groups` or `.rules` in a version module: a package split
+across two jars breaks JPMS automatic modules. Rule ids follow the ordinary grammar and carry no
+version; they are never renamed, in a version module as anywhere else.
+
+### Adding a rule to an existing version module
+
+The ordinary rule steps ([Creating a rule](docs/creating-a-rule.md)), with every path under the
+module instead of `corral-rules`, the store seeded with `-pl <module>`, and the id added to both the
+module's own group test and `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups`.
+
+### Adding a version module
+
+`corral-rules-spring-boot3` is the worked example; copy its shape.
+
+1. **POM.** Copy `corral-rules-spring-boot3/pom.xml`. Set the artifact id, the `<name>`, and a
+   `<description>` stating the version window and that the dependency goes on the next major's
+   upgrade — IDEs and Maven Central show it. Set the `Automatic-Module-Name`. Keep the Surefire
+   `**/fixtures/**` exclude.
+2. **Dependencies.** Compile scope is `corral-sdk` alone, Lombok `provided`. The framework's real
+   jars go in **test** scope with their transitives intact — rules match by name, so main code never
+   needs them. Where a version the root POM manages (such as `spring.version`) would override the
+   framework's own transitives, override that property in the module POM. Check both:
+   `./mvnw -pl <module> dependency:tree -Dscope=runtime` lists only `corral-sdk` and its
+   transitives, and the full `dependency:tree` holds no jar from another major.
+3. **Reactor.** Add the module to the root POM's `<modules>`. Publishing needs nothing more: the
+   release workflow finds every module from its POM.
+4. **Group.** One group per module to start, named as above. Its Javadoc states the version window
+   and the three things to remove on the next major: the dependency, the field wiring the group,
+   and the `archunit/frozen` entries for its rule ids.
+5. **Group test.** A test in the module asserting the exact ids the group publishes. Without it
+   the coverage gate (`missed classes = 0`) fails, because nothing else in the module loads the
+   group.
+6. **Catalog tests in `corral-rules`.** They walk every published group, version modules included:
+   - a **test-scope** dependency from `corral-rules` on the module — its main jar carries no
+     framework, so nothing clashes;
+   - an `@ArchTest ArchTests` field for the group on `EveryPublishedGroup`;
+   - the module's groups package on `PublishedCatalogTest.GROUPS_PACKAGES`, or the reachability
+     check never sees the group;
+   - the `docs/rules.md` heading and package root on `RulesCatalogDocTest.VERSION_MODULE_SECTIONS`,
+     or the module's rows read as missing.
+7. **Catalog page.** A `docs/rules.md` section under the heading above, before *Standalone rules*:
+   the version window in prose, a dependency snippet whose XML comment says what to remove on the
+   next major (consumers copy the comment into their POM with it), the wiring line, and the table.
+   `## Spring Boot 3 rules` is the template.
+
+When a framework's next major gets version-bound rules of its own, they go in a new module
+(`corral-rules-spring-boot4`), never into the previous major's.
 
 ## Is a rule catalog-worthy?
 
