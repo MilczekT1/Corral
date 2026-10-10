@@ -30,6 +30,9 @@ public class EveryPublishedGroup {
     public static final ArchTests testingMockito = ArchTests.in(TestingMockitoRulesGroup.class);
 
     @ArchTest
+    public static final ArchTests testingSpring = ArchTests.in(TestingSpringRulesGroup.class);
+
+    @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 
     @ArchTest

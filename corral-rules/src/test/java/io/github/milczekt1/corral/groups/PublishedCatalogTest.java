@@ -98,6 +98,7 @@ class PublishedCatalogTest {
                 "corral.test.mockito.no-construction-mocking",
                 "corral.test.mockito.no-static-mocking",
                 "corral.test.no-junit4",
+                "corral.test.no-legacy-mockbean-and-spybean",
                 "corral.test.no-mocked-repository-in-integration-test",
                 "corral.test.no-thread-sleep",
                 "corral.logging.no-system-out",

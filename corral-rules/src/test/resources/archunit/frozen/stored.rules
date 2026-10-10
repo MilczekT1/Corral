@@ -19,6 +19,7 @@ corral.test.junit.no-disabled-without-reason=corral.test.junit.no-disabled-witho
 corral.test.mockito.no-construction-mocking=corral.test.mockito.no-construction-mocking
 corral.test.mockito.no-static-mocking=corral.test.mockito.no-static-mocking
 corral.test.no-junit4=corral.test.no-junit4
+corral.test.no-legacy-mockbean-and-spybean=corral.test.no-legacy-mockbean-and-spybean
 corral.test.no-mocked-repository-in-integration-test=corral.test.no-mocked-repository-in-integration-test
 corral.test.no-mutable-static-state=corral.test.no-mutable-static-state
 corral.test.no-thread-sleep=corral.test.no-thread-sleep
