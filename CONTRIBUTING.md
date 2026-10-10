@@ -14,9 +14,11 @@ Build:
 ./mvnw verify
 ```
 
-The reactor is `corral-sdk` (the framework), `corral-rules` (the rule catalog) and `corral-example`
-(a working consumer with a committed freeze store, which doubles as an end-to-end test of the
-wiring).
+The reactor is `corral-sdk` (the framework), `corral-rules` (the rule catalog), one
+`corral-rules-<framework><major>` module per framework major a rule is bound to (today
+`corral-rules-spring-boot3`) and `corral-example` (a working consumer with a committed freeze store,
+which doubles as an end-to-end test of the wiring). A rule that only makes sense on one framework
+major goes in that major's module, under its own package root, with the framework in test scope only.
 
 **Java baseline.** The root POM's `maven.compiler.release` is the baseline for the whole project. It
 is the minimum JVM that can load the published classes, so raising it is a breaking change for

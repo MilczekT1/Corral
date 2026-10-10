@@ -34,7 +34,9 @@ You wire one field per group you want; a group you leave out never runs.
 
 The two jars split by role: `corral-sdk` is the framework for authoring rules, `corral-rules`
 is the catalog of rules built on it. Depending on the catalog pulls the framework in transitively;
-depend on the SDK alone to write your own rules without adopting these.
+depend on the SDK alone to write your own rules without adopting these. Rules bound to one framework
+major ship separately, in `corral-rules-<framework><major>` (today `corral-rules-spring-boot3`), so
+the dependency to drop on that framework's next major is named in your POM.
 
 See also **[CONTRIBUTING.md § The shape](../CONTRIBUTING.md#the-shape)** for the authoring-side view:
 one rule one class, how membership is declared, and why the module boundary enforces the direction.

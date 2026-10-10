@@ -5,13 +5,16 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Corral publishes ArchUnit rules as a versioned Maven dependency instead of a copy-pasted test class.
-Three modules, arrows pointing one way (enforced by the module boundary, not convention):
+Four modules, arrows pointing one way (enforced by the module boundary, not convention):
 
 - **`corral-sdk`** — the framework for authoring rules: `DocumentedRule`, `RuleDoc`/`RuleRegistry`,
   the failure formatter, exclusions, `TestScope`. Published so consumers can build their own catalog
   without adopting Corral's rules. It has no dependency on `corral-rules`.
 - **`corral-rules`** — the catalog: concrete rules under `rules/<topic>/`, composed by `@UtilityClass`
   groups under `groups/`.
+- **`corral-rules-<framework><major>`** (today `corral-rules-spring-boot3`) — rules that only make
+  sense on one framework major, tested against that major's real jars in test scope. Compile scope is
+  `corral-sdk` alone; package root `io.github.milczekt1.corral.<framework><major>`.
 - **`corral-example`** — a working consumer with a committed freeze store, deliberate violations, a
   consumer-authored rule (`acme.no-stdout-in-services`) and an exclusion. It is the end-to-end test
   of the wiring; breaking it breaks the build. `sonar.skip=true` and coverage thresholds zeroed,

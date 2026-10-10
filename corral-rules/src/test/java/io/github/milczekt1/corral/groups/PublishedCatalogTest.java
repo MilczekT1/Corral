@@ -10,6 +10,7 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -22,7 +23,10 @@ import org.junit.jupiter.api.Test;
  */
 class PublishedCatalogTest {
 
-    private static final String GROUPS_PACKAGE = "io.github.milczekt1.corral.groups";
+    /** One per published module; a version module's groups sit under its own package root. */
+    private static final List<String> GROUPS_PACKAGES = List.of(
+            "io.github.milczekt1.corral.groups",
+            "io.github.milczekt1.corral.springboot3.groups");
 
     /**
      * {@code ArchTests.getDefinitionLocation()} is {@code @Internal}, and the only way to ask a field
@@ -70,20 +74,22 @@ class PublishedCatalogTest {
                 .map(Class::getName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        Set<String> published = new ClassFileImporter()
-                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                .importPackages(GROUPS_PACKAGE).stream()
-                .map(JavaClass::getName)
-                .collect(Collectors.toCollection(LinkedHashSet::new));
+        for (String groupsPackage : GROUPS_PACKAGES) {
+            Set<String> published = new ClassFileImporter()
+                    .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                    .importPackages(groupsPackage).stream()
+                    .map(JavaClass::getName)
+                    .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        assertFalse(published.isEmpty(),
-                GROUPS_PACKAGE + " imported no class at all, so this check would pass vacuously");
+            assertFalse(published.isEmpty(),
+                    groupsPackage + " imported no class at all, so this check would pass vacuously");
 
-        for (String group : published) {
-            assertTrue(listed.contains(group),
-                    group + " is published from " + GROUPS_PACKAGE + " but is not reachable from "
-                            + EveryPublishedGroup.class.getSimpleName() + ", so nothing here checks"
-                            + " its rules. Add an @ArchTest ArchTests field for it.");
+            for (String group : published) {
+                assertTrue(listed.contains(group),
+                        group + " is published from " + groupsPackage + " but is not reachable from "
+                                + EveryPublishedGroup.class.getSimpleName() + ", so nothing here checks"
+                                + " its rules. Add an @ArchTest ArchTests field for it.");
+            }
         }
     }
 

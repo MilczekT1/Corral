@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean;
+package io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 

@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean;
+package io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
@@ -12,12 +12,12 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.ClassLevelMockBeanCase;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.MigratedBeanOverrideCase;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.MockBeanFieldHolder;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.RepeatedSpyBeanCase;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.ResetPolicyHelper;
-import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.SpyBeanFieldHolder;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.ClassLevelMockBeanCase;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.MigratedBeanOverrideCase;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.MockBeanFieldHolder;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.RepeatedSpyBeanCase;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.ResetPolicyHelper;
+import io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures.SpyBeanFieldHolder;
 import io.github.milczekt1.corral.scope.TestScope;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;

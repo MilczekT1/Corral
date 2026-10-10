@@ -192,6 +192,7 @@ defect in the last rule added here — none was caught by the build.
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
+| Version-bound rule | all of the above in `corral-rules-<framework><major>`, package root `io.github.milczekt1.corral.<framework><major>`; its group also goes on `PublishedCatalogTest.GROUPS_PACKAGES` and its `docs/rules.md` heading on `RulesCatalogDocTest.VERSION_MODULE_SECTIONS` |
 
 `NoJUnit4Rule` is the worked example. The three rules that predate this layout still sit flat
 under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no committed

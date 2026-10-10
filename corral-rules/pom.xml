@@ -38,6 +38,13 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
+    <!-- For the catalog tests, which walk every published group. Its main jar carries no framework. -->
+    <dependency>
+      <groupId>io.github.milczekt1</groupId>
+      <artifactId>corral-rules-spring-boot3</artifactId>
+      <version>${project.version}</version>
+      <scope>test</scope>
+    </dependency>
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
@@ -87,19 +94,6 @@
       <groupId>org.springframework</groupId>
       <artifactId>spring-tx</artifactId>
       <scope>test</scope>
-    </dependency>
-    <!-- Boot 3.x is the last line with org.springframework.boot.test.mock.mockito. Transitives are
-         excluded so its Spring 6 jars never meet the Spring 7 ones above. -->
-    <dependency>
-      <groupId>org.springframework.boot</groupId>
-      <artifactId>spring-boot-test</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>*</groupId>
-          <artifactId>*</artifactId>
-        </exclusion>
-      </exclusions>
     </dependency>
     <dependency>
       <groupId>jakarta.inject</groupId>

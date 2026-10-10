@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures;
+package io.github.milczekt1.corral.springboot3.rules.testing.nolegacymockbeanandspybean.fixtures;
 
 import java.time.Clock;
 import org.springframework.boot.test.mock.mockito.MockBean;

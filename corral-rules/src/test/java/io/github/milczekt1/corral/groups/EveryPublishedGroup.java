@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.springboot3.groups.SpringBoot3DeprecationsRulesGroup;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -30,9 +31,6 @@ public class EveryPublishedGroup {
     public static final ArchTests testingMockito = ArchTests.in(TestingMockitoRulesGroup.class);
 
     @ArchTest
-    public static final ArchTests testingSpring = ArchTests.in(TestingSpringRulesGroup.class);
-
-    @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
 
     @ArchTest
@@ -43,4 +41,8 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests security = ArchTests.in(SecurityRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests springBoot3Deprecations =
+            ArchTests.in(SpringBoot3DeprecationsRulesGroup.class);
 }

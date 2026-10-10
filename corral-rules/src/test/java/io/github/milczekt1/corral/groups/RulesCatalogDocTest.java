@@ -42,11 +42,15 @@ class RulesCatalogDocTest {
 
     private static final String GROUPED_SECTION = "";
 
+    /** Each version module's grouped table, by heading, mapped to the package root its groups live in. */
+    private static final Map<String, String> VERSION_MODULE_SECTIONS = Map.of(
+            "## Spring Boot 3 rules", "io.github.milczekt1.corral.springboot3.");
+
     @Test
     void catalogTableListsExactlyTheIdsPublishedFromGroups() throws IOException {
         Set<String> published = PublishedRules.idsOf(EveryPublishedGroup.class);
 
-        assertEquals(published, rowsUnder(GROUPED_SECTION).keySet(),
+        assertEquals(published, groupedRows().keySet(),
                 "docs/rules.md disagrees with the published groups. Every published id needs a row in"
                         + " the catalog table, and every row needs a published id — add the missing"
                         + " row, or remove the stale one.");
@@ -54,7 +58,7 @@ class RulesCatalogDocTest {
 
     @Test
     void catalogTableNamesTheGroupEachRuleShipsIn() throws IOException {
-        Map<String, String> documented = rowsUnder(GROUPED_SECTION);
+        Map<String, String> documented = groupedRows();
 
         for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryPublishedGroup.class)) {
             Class<?> group = member.getDefinitionLocation();
@@ -62,6 +66,21 @@ class RulesCatalogDocTest {
                 assertEquals(group.getSimpleName(), documented.get(id),
                         () -> "docs/rules.md lists " + id + " under group '" + documented.get(id)
                                 + "' but it is published from " + group.getSimpleName());
+            }
+        }
+    }
+
+    /** The heading is what tells a consumer which artifact to add, and which one to drop on an upgrade. */
+    @Test
+    void versionModuleRulesSitUnderTheirModulesHeading() throws IOException {
+        for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryPublishedGroup.class)) {
+            Class<?> group = member.getDefinitionLocation();
+            String section = sectionOf(group);
+            Set<String> documented = rowsUnder(section).keySet();
+            for (String id : PublishedRules.idsOf(group)) {
+                assertTrue(documented.contains(id),
+                        () -> "docs/rules.md must list " + id + " under '" + section + "', the section of"
+                                + " the module that ships " + group.getSimpleName());
             }
         }
     }
@@ -89,6 +108,23 @@ class RulesCatalogDocTest {
                                 + ruleClass.getSimpleName());
             }
         }
+    }
+
+    private static String sectionOf(Class<?> group) {
+        return VERSION_MODULE_SECTIONS.entrySet().stream()
+                .filter(section -> group.getName().startsWith(section.getValue()))
+                .map(Map.Entry::getKey)
+                .findFirst()
+                .orElse(GROUPED_SECTION);
+    }
+
+    /** Rows of the main grouped table and of every version module's table. */
+    private static Map<String, String> groupedRows() throws IOException {
+        Map<String, String> rows = new LinkedHashMap<>(rowsUnder(GROUPED_SECTION));
+        for (String heading : VERSION_MODULE_SECTIONS.keySet()) {
+            rows.putAll(rowsUnder(heading));
+        }
+        return rows;
     }
 
     /**
