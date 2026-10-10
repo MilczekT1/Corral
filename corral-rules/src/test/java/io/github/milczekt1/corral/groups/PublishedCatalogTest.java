@@ -10,7 +10,6 @@ import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.LinkedHashSet;
-import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
@@ -23,10 +22,10 @@ import org.junit.jupiter.api.Test;
  */
 class PublishedCatalogTest {
 
-    /** One per published module; a version module's groups sit under its own package root. */
-    private static final List<String> GROUPS_PACKAGES = List.of(
-            "io.github.milczekt1.corral.groups",
-            "io.github.milczekt1.corral.springboot3.groups");
+    private static final String CORRAL_ROOT = "io.github.milczekt1.corral";
+
+    /** {@code corral-rules}' groups package; each version module has its own, under its package root. */
+    private static final String GROUPS_PACKAGE = CORRAL_ROOT + ".groups";
 
     /**
      * {@code ArchTests.getDefinitionLocation()} is {@code @Internal}, and the only way to ask a field
@@ -67,6 +66,8 @@ class PublishedCatalogTest {
      *
      * <p>Imported rather than reflected over because a package cannot be listed from the JDK.
      * {@code DO_NOT_INCLUDE_TESTS} keeps {@link EveryPublishedGroup} itself out of the expectation.
+     * Sees only modules on this module's test classpath, so a version module also needs a
+     * test-scope dependency here.
      */
     @Test
     void everyPublishedGroupIsReachableFromHere() {
@@ -74,22 +75,21 @@ class PublishedCatalogTest {
                 .map(Class::getName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        for (String groupsPackage : GROUPS_PACKAGES) {
-            Set<String> published = new ClassFileImporter()
-                    .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                    .importPackages(groupsPackage).stream()
-                    .map(JavaClass::getName)
-                    .collect(Collectors.toCollection(LinkedHashSet::new));
+        Set<String> published = new ClassFileImporter()
+                .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
+                .importPackages(CORRAL_ROOT).stream()
+                .filter(type -> type.getPackageName().endsWith(".groups"))
+                .map(JavaClass::getName)
+                .collect(Collectors.toCollection(LinkedHashSet::new));
 
-            assertFalse(published.isEmpty(),
-                    groupsPackage + " imported no class at all, so this check would pass vacuously");
+        assertTrue(published.stream().anyMatch(group -> group.startsWith(GROUPS_PACKAGE + ".")),
+                GROUPS_PACKAGE + " imported no class at all, so this check would pass vacuously");
 
-            for (String group : published) {
-                assertTrue(listed.contains(group),
-                        group + " is published from " + groupsPackage + " but is not reachable from "
-                                + EveryPublishedGroup.class.getSimpleName() + ", so nothing here checks"
-                                + " its rules. Add an @ArchTest ArchTests field for it.");
-            }
+        for (String group : published) {
+            assertTrue(listed.contains(group),
+                    group + " is a published group but is not reachable from "
+                            + EveryPublishedGroup.class.getSimpleName() + ", so nothing here checks"
+                            + " its rules. Add an @ArchTest ArchTests field for it.");
         }
     }
 

@@ -33,7 +33,7 @@ This table is written by hand and checked by the build: `RulesCatalogDocTest` in
 fails when an id here is not published, a published id is missing here, or a row names the wrong
 group. The prose in the third column is not checked.
 
-## Spring Boot 3 rules
+## Spring Boot 3 rules (`corral-rules-spring-boot3`)
 
 These ship in their own artifact, `corral-rules-spring-boot3`, because they only make sense on Spring
 Boot 3.4 to 3.x: on 3.3 and earlier a violation has nothing to migrate to, and on Boot 4 the APIs

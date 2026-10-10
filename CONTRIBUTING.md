@@ -134,7 +134,7 @@ whatever it matches.
 | Package root and `Automatic-Module-Name` | `io.github.milczekt1.corral.<framework><major>`, no hyphens | `io.github.milczekt1.corral.springboot3` |
 | Group | `<Framework><major><Topic>RulesGroup` in `<root>.groups`, so the consumer's wiring line carries the version | `SpringBoot3DeprecationsRulesGroup` |
 | Rules | `<root>.rules.<topic>.<rule>`, as in `corral-rules` | |
-| `docs/rules.md` heading | `## <Framework> <major> rules` | `## Spring Boot 3 rules` |
+| `docs/rules.md` heading | `## <Framework> <major> rules`, then the artifact id in backticks inside parentheses — `RulesCatalogDocTest` finds the section by it | ## Spring Boot 3 rules (`corral-rules-spring-boot3`) |
 
 Never reuse `io.github.milczekt1.corral.groups` or `.rules` in a version module: a package split
 across two jars breaks JPMS automatic modules. Rule ids follow the ordinary grammar and carry no
@@ -168,18 +168,16 @@ module's own group test and `PublishedCatalogTest.ruleDiscoveryDescendsThroughNe
 5. **Group test.** A test in the module asserting the exact ids the group publishes. Without it
    the coverage gate (`missed classes = 0`) fails, because nothing else in the module loads the
    group.
-6. **Catalog tests in `corral-rules`.** They walk every published group, version modules included:
+6. **Catalog tests in `corral-rules`.** They walk every published group, version modules included,
+   and find each module's groups and its `docs/rules.md` section by convention — no list of modules
+   to extend. They need two things:
    - a **test-scope** dependency from `corral-rules` on the module — its main jar carries no
-     framework, so nothing clashes;
-   - an `@ArchTest ArchTests` field for the group on `EveryPublishedGroup`;
-   - the module's groups package on `PublishedCatalogTest.GROUPS_PACKAGES`, or the reachability
-     check never sees the group;
-   - the `docs/rules.md` heading and package root on `RulesCatalogDocTest.VERSION_MODULE_SECTIONS`,
-     or the module's rows read as missing.
+     framework, so nothing clashes. Without it the module is invisible to every catalog check;
+   - an `@ArchTest ArchTests` field for the group on `EveryPublishedGroup`.
 7. **Catalog page.** A `docs/rules.md` section under the heading above, before *Standalone rules*:
    the version window in prose, a dependency snippet whose XML comment says what to remove on the
    next major (consumers copy the comment into their POM with it), the wiring line, and the table.
-   `## Spring Boot 3 rules` is the template.
+   The Spring Boot 3 section is the template.
 
 When a framework's next major gets version-bound rules of its own, they go in a new module
 (`corral-rules-spring-boot4`), never into the previous major's.

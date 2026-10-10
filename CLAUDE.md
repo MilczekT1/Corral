@@ -5,7 +5,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Corral publishes ArchUnit rules as a versioned Maven dependency instead of a copy-pasted test class.
-Four modules, arrows pointing one way (enforced by the module boundary, not convention):
+The modules below, arrows pointing one way (enforced by the module boundary, not convention):
 
 - **`corral-sdk`** — the framework for authoring rules: `DocumentedRule`, `RuleDoc`/`RuleRegistry`,
   the failure formatter, exclusions, `TestScope`. Published so consumers can build their own catalog
