@@ -37,7 +37,7 @@ import org.junit.jupiter.params.provider.MethodSource;
  */
 class NoLegacyMockBeanAndSpyBeanRuleTest {
 
-    private static final String ID = "corral.test.no-legacy-mockbean-and-spybean";
+    private static final String ID = "corral.test.spring.no-legacy-mockbean-and-spybean";
 
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";

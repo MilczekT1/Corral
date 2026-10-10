@@ -37,7 +37,7 @@ class RuleIdGrammarTest {
     private static final Pattern JAVA_VERSION = Pattern.compile("^java[0-9]++$");
 
     /** Segment-3 values allowed to precede the slug: a library qualifier. */
-    private static final Set<String> QUALIFIERS = Set.of("mockito", "powermock", "junit");
+    private static final Set<String> QUALIFIERS = Set.of("mockito", "powermock", "junit", "spring");
 
     private static Set<String> shippedIds() {
         Set<String> ids = new LinkedHashSet<>(PublishedRules.idsOf(EveryPublishedGroup.class));
