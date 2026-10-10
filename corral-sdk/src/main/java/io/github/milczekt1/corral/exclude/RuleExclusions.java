@@ -7,6 +7,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
@@ -17,9 +18,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
-import java.util.function.Supplier;
 import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
@@ -43,9 +41,6 @@ public class RuleExclusions {
 
     /** Excluded ids that matched a rule this run, filled in by {@link #applyTo}. */
     private static final Set<String> MATCHED = ConcurrentHashMap.newKeySet();
-
-    /** Flips at the first rule evaluated this run, shared by every {@link UnmatchedExclusionsWarning}. */
-    private static final AtomicBoolean WARNED = new AtomicBoolean(false);
 
     /**
      * The exclusions in effect, or the reason there are none to be trusted. Exactly one is populated.
@@ -117,34 +112,23 @@ public class RuleExclusions {
 
     /**
      * Wraps {@code rule} so the first rule evaluated this run warns about every excluded id that
-     * matched no rule. Fires once per run via {@link #WARNED}.
+     * matched no rule. {@code rule} unchanged when the file names no exclusion at all.
      *
-     * <p>Assumes one JVM and one discovery pass — under {@code forkCount > 1} or a sharded CI a
-     * correct exclusion can be reported unmatched.
-     *
-     * <p>{@code rule} unchanged when the file names no exclusion at all.
+     * <p>{@link io.github.milczekt1.corral.DocumentedRule#guard()} already warns; do not wrap a
+     * guarded rule again.
      */
     public static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(ArchRule rule) {
         if (STATE.entries().isEmpty()) {
             return rule;
         }
-        return warnUnmatchedExclusionsOnFirstEvaluation(
-                rule, WARNED, RuleExclusions::unmatchedWarning, RuleExclusions::printWarning);
+        return FirstEvaluationWarning.wrap(rule, List.of(RuleExclusions::unmatchedWarning));
     }
 
-    static ArchRule warnUnmatchedExclusionsOnFirstEvaluation(
-            ArchRule rule, AtomicBoolean warned, Supplier<String> messageSupplier, Consumer<String> sink) {
-        return new UnmatchedExclusionsWarning(rule, warned, messageSupplier, sink);
-    }
-
-    /** {@link System#err}, not SLF4J: a consumer with no logging provider would never see this. */
-    @SuppressWarnings("java:S106")
-    static void printWarning(String message) {
-        System.err.println(message);
-    }
-
-    /** Live at call time: {@link #MATCHED} is still filling in while rules initialise. */
-    private static String unmatchedWarning() {
+    /**
+     * The excluded ids that matched no rule this run, or {@code null} when there are none. Live at
+     * call time: {@link #MATCHED} is still filling in while rules initialise.
+     */
+    public static String unmatchedWarning() {
         return unmatchedWarning(STATE, MATCHED);
     }
 
@@ -312,64 +296,6 @@ public class RuleExclusions {
         @Override
         public ArchRule allowEmptyShould(boolean allowEmptyShould) {
             return this;
-        }
-    }
-
-    /**
-     * Logs {@link #messageSupplier} once across every rule sharing {@link #warned}, then delegates.
-     *
-     * <p>Every method delegates — unlike {@link Excluded} and {@link Failing}, this rides along with
-     * the rule it wraps rather than standing in for it.
-     */
-    @RequiredArgsConstructor
-    private static final class UnmatchedExclusionsWarning implements ArchRule {
-
-        private final ArchRule delegate;
-        private final AtomicBoolean warned;
-        private final Supplier<String> messageSupplier;
-        private final Consumer<String> sink;
-
-        @Override
-        public void check(JavaClasses classes) {
-            warnOnce();
-            delegate.check(classes);
-        }
-
-        @Override
-        public EvaluationResult evaluate(JavaClasses classes) {
-            warnOnce();
-            return delegate.evaluate(classes);
-        }
-
-        private void warnOnce() {
-            if (!warned.compareAndSet(false, true)) {
-                return;
-            }
-            String message = messageSupplier.get();
-            if (message != null) {
-                sink.accept(message);
-            }
-        }
-
-        @Override
-        public String getDescription() {
-            return delegate.getDescription();
-        }
-
-        @Override
-        public ArchRule as(String newDescription) {
-            return new UnmatchedExclusionsWarning(delegate.as(newDescription), warned, messageSupplier, sink);
-        }
-
-        @Override
-        public ArchRule because(String reason) {
-            return new UnmatchedExclusionsWarning(delegate.because(reason), warned, messageSupplier, sink);
-        }
-
-        @Override
-        public ArchRule allowEmptyShould(boolean allowEmptyShould) {
-            return new UnmatchedExclusionsWarning(
-                    delegate.allowEmptyShould(allowEmptyShould), warned, messageSupplier, sink);
         }
     }
 

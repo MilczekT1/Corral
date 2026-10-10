@@ -19,6 +19,8 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
+import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
@@ -115,19 +117,27 @@ class DocumentedRuleTest {
                 "guard() must apply exclusions — it is the one place every rule passes through");
     }
 
-    /** The wiring, not the mechanism — {@code RuleExclusionsWarningTest} owns that. Bytecode, as above. */
+    /** The wiring, not the mechanism — {@code FirstEvaluationWarningTest} owns that. Bytecode, as above. */
     @Test
-    void guardWarnsOnUnmatchedExclusionsOnEveryRule() {
+    void guardWarnsOnceOnUnmatchedExclusionsAndUnclaimedStoreEntries() {
         JavaMethod guard = new ClassFileImporter()
                 .importClasses(DocumentedRule.class)
                 .get(DocumentedRule.class)
                 .getMethod("guard");
 
         assertTrue(guard.getMethodCallsFromSelf().stream()
-                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(RuleExclusions.class)
-                                && call.getName().equals("warnUnmatchedExclusionsOnFirstEvaluation")),
-                "guard() must warn on an unmatched exclusion — it is the one place every rule passes"
-                        + " through, so it is the one place that needs no wired root");
+                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(FirstEvaluationWarning.class)
+                                && call.getName().equals("wrap")),
+                "guard() must wrap every rule — it is the one place every rule passes through, so it is"
+                        + " the one place that needs no wired root");
+        assertTrue(guard.getMethodReferencesFromSelf().stream()
+                        .anyMatch(reference -> reference.getTargetOwner().isEquivalentTo(RuleExclusions.class)
+                                && reference.getName().equals("unmatchedWarning")),
+                "guard() must warn on an unmatched exclusion");
+        assertTrue(guard.getMethodReferencesFromSelf().stream()
+                        .anyMatch(reference -> reference.getTargetOwner().isEquivalentTo(UnclaimedStoreEntries.class)
+                                && reference.getName().equals("warning")),
+                "guard() must warn on a store entry no rule claims");
     }
 
     /** The exclusion wrapper must sit outside the freeze, or an excluded rule reaches the store. */

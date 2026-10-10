@@ -36,7 +36,6 @@
   <modules>
     <module>corral-sdk</module>
     <module>corral-rules</module>
-    <module>corral-rules-spring-boot3</module>
     <module>corral-example</module>
   </modules>
 

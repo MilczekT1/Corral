@@ -5,17 +5,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 ## What this is
 
 Corral publishes ArchUnit rules as a versioned Maven dependency instead of a copy-pasted test class.
-The modules below, arrows pointing one way (enforced by the module boundary, not convention):
+Three modules, arrows pointing one way (enforced by the module boundary, not convention):
 
 - **`corral-sdk`** — the framework for authoring rules: `DocumentedRule`, `RuleDoc`/`RuleRegistry`,
   the failure formatter, exclusions, `TestScope`. Published so consumers can build their own catalog
   without adopting Corral's rules. It has no dependency on `corral-rules`.
 - **`corral-rules`** — the catalog: concrete rules under `rules/<topic>/`, composed by `@UtilityClass`
   groups under `groups/`.
-- **`corral-rules-<framework><major>`** (e.g. `corral-rules-spring-boot3`; the root POM's `<modules>`
-  lists them) — version-bound rules: ones that only make sense on one framework major, tested
-  against that major's real jars in test scope. Compile scope is `corral-sdk` alone. Naming, the
-  new-module checklist and the catalog-test wiring are in `CONTRIBUTING.md § Version-bound rules`.
 - **`corral-example`** — a working consumer with a committed freeze store, deliberate violations, a
   consumer-authored rule (`acme.no-stdout-in-services`) and an exclusion. It is the end-to-end test
   of the wiring; breaking it breaks the build. `sonar.skip=true` and coverage thresholds zeroed,
@@ -111,8 +107,10 @@ otherwise `alwaysTrue()` would pass too.
 ## Adding a rule
 
 Use the **`adding-a-rule` skill** (`.claude/skills/adding-a-rule/SKILL.md`) — it sequences the 7+
-files and the traps. A version-bound rule goes in its framework major's module instead of
-`corral-rules`; the paths below then sit under that module. The contract is `docs/creating-a-rule.md`. In short:
+files and the traps. A rule bound to one framework major still goes in `corral-rules`; when its
+fixtures need a major the test classpath does not carry, hand-written stand-ins marked `WORKAROUND`
+replace the real jar (`CONTRIBUTING.md § Version-bound rules`). The contract is
+`docs/creating-a-rule.md`. In short:
 
 | Artifact | Path |
 |---|---|

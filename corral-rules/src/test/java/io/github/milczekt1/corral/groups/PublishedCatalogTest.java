@@ -22,10 +22,7 @@ import org.junit.jupiter.api.Test;
  */
 class PublishedCatalogTest {
 
-    private static final String CORRAL_ROOT = "io.github.milczekt1.corral";
-
-    /** {@code corral-rules}' groups package; each version module has its own, under its package root. */
-    private static final String GROUPS_PACKAGE = CORRAL_ROOT + ".groups";
+    private static final String GROUPS_PACKAGE = "io.github.milczekt1.corral.groups";
 
     /**
      * {@code ArchTests.getDefinitionLocation()} is {@code @Internal}, and the only way to ask a field
@@ -66,8 +63,6 @@ class PublishedCatalogTest {
      *
      * <p>Imported rather than reflected over because a package cannot be listed from the JDK.
      * {@code DO_NOT_INCLUDE_TESTS} keeps {@link EveryPublishedGroup} itself out of the expectation.
-     * Sees only modules on this module's test classpath, so a version module also needs a
-     * test-scope dependency here.
      */
     @Test
     void everyPublishedGroupIsReachableFromHere() {
@@ -77,17 +72,16 @@ class PublishedCatalogTest {
 
         Set<String> published = new ClassFileImporter()
                 .withImportOption(ImportOption.Predefined.DO_NOT_INCLUDE_TESTS)
-                .importPackages(CORRAL_ROOT).stream()
-                .filter(type -> type.getPackageName().endsWith(".groups"))
+                .importPackages(GROUPS_PACKAGE).stream()
                 .map(JavaClass::getName)
                 .collect(Collectors.toCollection(LinkedHashSet::new));
 
-        assertTrue(published.stream().anyMatch(group -> group.startsWith(GROUPS_PACKAGE + ".")),
+        assertFalse(published.isEmpty(),
                 GROUPS_PACKAGE + " imported no class at all, so this check would pass vacuously");
 
         for (String group : published) {
             assertTrue(listed.contains(group),
-                    group + " is a published group but is not reachable from "
+                    group + " is published from " + GROUPS_PACKAGE + " but is not reachable from "
                             + EveryPublishedGroup.class.getSimpleName() + ", so nothing here checks"
                             + " its rules. Add an @ArchTest ArchTests field for it.");
         }
@@ -106,7 +100,6 @@ class PublishedCatalogTest {
                 "corral.test.no-junit4",
                 "corral.test.no-mocked-repository-in-integration-test",
                 "corral.test.no-thread-sleep",
-                "corral.test.spring.no-legacy-mockbean-and-spybean",
                 "corral.logging.no-system-out",
                 "corral.logging.no-system-err",
                 "corral.jakarta.no-javax-validation",

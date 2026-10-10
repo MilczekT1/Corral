@@ -33,39 +33,6 @@ This table is written by hand and checked by the build: `RulesCatalogDocTest` in
 fails when an id here is not published, a published id is missing here, or a row names the wrong
 group. The prose in the third column is not checked.
 
-## Spring Boot 3 rules (`corral-rules-spring-boot3`)
-
-These ship in their own artifact, `corral-rules-spring-boot3`, because they only make sense on Spring
-Boot 3.4 to 3.x: on 3.3 and earlier a violation has nothing to migrate to, and on Boot 4 the APIs
-they ban are gone, so the rules can never fire and report green while enforcing nothing. The
-artifact id carries the version so the POM you edit during a Boot upgrade says what to remove; copy
-the comment with it.
-
-```xml
-<!-- Spring Boot 3.4–3.x only. On the Boot 4 upgrade: remove this dependency, the group field
-     wiring it, and the archunit/frozen entries for its rule ids. -->
-<dependency>
-  <groupId>io.github.milczekt1</groupId>
-  <artifactId>corral-rules-spring-boot3</artifactId>
-  <version>${corral.version}</version>
-  <scope>test</scope>
-</dependency>
-```
-
-```java
-import io.github.milczekt1.corral.springboot3.groups.SpringBoot3DeprecationsRulesGroup;
-
-@ArchTest
-static final ArchTests springBoot3Deprecations = ArchTests.in(SpringBoot3DeprecationsRulesGroup.class);
-```
-
-| Rule id | Group | What it enforces |
-|---|---|---|
-| `corral.test.spring.no-legacy-mockbean-and-spybean` | `SpringBoot3DeprecationsRulesGroup` | No class may depend on anything in Spring Boot's `org.springframework.boot.test.mock.mockito..` — `@MockBean`, `@SpyBean`, their `@MockBeans` and `@SpyBeans` containers, `MockReset` and its test-execution listeners — deprecated in Boot 3.4.0 and removed in Boot 4.0. One bytecode dependency check, so field and class-level annotations, the repeatable containers and plain references to the support types all count, one violation per dependency. The replacements, `@MockitoBean` and `@MockitoSpyBean` from Spring Framework 6.2's bean-override support, and plain Mockito `@Mock` are untouched. Production and test classes alike, so a shared test-support module's main sources and Gradle `testFixtures` count too. Matched by package string, so it loads on Boot 4, where it can never fire. Not seen: classes using a project's own composed annotation, or extending a base class, that carries `@MockBean` — only the declaration is flagged. |
-
-Checked by the same test as the table above, which also requires each row to sit under the heading
-of the artifact that ships it.
-
 ## Standalone rules
 
 These ship in the artifact but belong to no group, because a group is adopted whole: everything in
@@ -88,6 +55,7 @@ static final ArchTests noMutableStaticState = ArchTests.in(NoMutableStaticStateR
 | `corral.java.no-legacy-date-api` | `ArchTests.in(NoLegacyDateApiRule.class)` | No class may depend on a type assignable to `java.util.Date`, `java.util.Calendar`, `java.text.DateFormat` or `java.util.TimeZone` — so `java.sql.Timestamp`, `java.sql.Date`, `GregorianCalendar`, `SimpleDateFormat` and a project's own subclass count without being named. All four are mutable and none is thread-safe: a `Date` returned from a getter can be rewound by its caller, a shared `SimpleDateFormat` corrupts concurrent output, `Calendar.MONTH` is zero-based, and `Date` prints in the JVM's default zone, so one instant reads as two different days on a laptop and a UTC container. `java.time` replaces each; the database column does not change, only the Java type reading it. One bytecode dependency check, so fields, parameters, return types and calls all count, one violation per dependency; production and test classes alike. Matched by type, not name, so `java.text.DateFormatSymbols` and `java.util.concurrent.TimeUnit` are untouched. Not seen: a legacy value held only in a local variable — `Timestamp t = rs.getTimestamp(…)` passed straight on, with no call on it. Adapters at an API edge that must name the legacy type — a Jackson serializer, a JPA `AttributeConverter` for a legacy column, a third-party signature — are legitimate and freeze as debt; a codebase on a pre-4.2 JDBC driver should not wire it. |
 | `corral.java.no-legacy-synchronized-collections` | `ArchTests.in(NoLegacySynchronizedCollectionsRule.class)` | No class may depend on `java.util.Vector`, `java.util.Stack` or `java.util.Hashtable` — the JDK 1.0 collections that synchronize every method. Locking each call does not make a check-then-act sequence atomic, and iterating while another thread writes still throws `ConcurrentModificationException`, so the synchronization reads as a thread-safety guarantee it does not give; `Stack` also iterates bottom-up, the opposite of pop order. `ArrayList`, `ArrayDeque` and `HashMap` replace them, or `ConcurrentHashMap`, `CopyOnWriteArrayList` and `ConcurrentLinkedDeque` where the concurrency is real — still with `putIfAbsent` or `computeIfAbsent` in place of check-then-act. One bytecode dependency check, so fields, parameters, return types, generic type arguments, constructor calls and supertypes all count, one violation per dependency; production and test classes alike. Matched by exact type: `java.util.Properties` extends `Hashtable` but is not flagged, so a `Hashtable` swapped for one passes unseen; `java.util.Dictionary` is deliberately out of scope; and a project's own subclass is flagged where it `extends`, never where it is used. `Collections.synchronizedList` and `synchronizedMap` are not seen. Not seen either: a legacy value held only in a local variable — `Hashtable<?, ?> env = ctx.getEnvironment()` passed straight on, with no call on it. Most APIs that seem to force these types do not: JNDI's `InitialContext` takes a `Properties` environment, and Swing's `JComboBox`, `JList` and `DefaultTableModel` have array constructors. Exclude an adapter class with a reason only where a signature it must implement names the type. |
 | `corral.java.serializable-must-declare-serial-version-uid` | `ArchTests.in(SerializableMustDeclareSerialVersionUidRule.class)` | A class that itself declares an interface assignable to `Serializable` — `Serializable`, `Externalizable`, or a project interface such as `DomainEvent extends Serializable` — must declare a `static final long serialVersionUID`. Without one the JVM hashes the class's shape into a uid, so adding a field or a compiler emitting a synthetic member makes the class unreadable from its own earlier serialized form — replicated sessions during a rolling deploy, distributed-cache entries, queued messages. A field that is not `static final long` is flagged: the JVM ignores one that is not `static` and `final`, or is a boxed `Long`, and widens an `int` one against the specification; access level is not checked. One violation per class. Enums, records and interfaces are excluded, and only interfaces a class declares itself are read, so a custom exception serializable through `Throwable` is not flagged — nor is a concrete class whose base class declares `Serializable`, which is where this rule's sight ends. Production and test classes alike. Removing `implements Serializable` from a class that is never serialized is usually the better fix than adding the field; for a class with instances already stored, the field must carry the uid `serialver` prints, not `1L`. |
+| `corral.test.spring.no-legacy-mockbean-and-spybean` | `ArchTests.in(NoLegacyMockBeanAndSpyBeanRule.class)` | No class may depend on anything in Spring Boot's `org.springframework.boot.test.mock.mockito..` — `@MockBean`, `@SpyBean`, their `@MockBeans` and `@SpyBeans` containers, `MockReset` and its test-execution listeners — deprecated in Boot 3.4.0 and removed in Boot 4.0. Standalone because on Boot 3.3 and earlier a violation has nothing to migrate to: wire it from Boot 3.4 on. On Boot 4 it can never fire, and can stay wired. One bytecode dependency check, so field and class-level annotations, the repeatable containers and plain references to the support types all count, one violation per dependency. The replacements, `@MockitoBean` and `@MockitoSpyBean` from Spring Framework 6.2's bean-override support, and plain Mockito `@Mock` are untouched. Production and test classes alike, so a shared test-support module's main sources and Gradle `testFixtures` count too. Matched by package string, so it loads on Boot 4. Not seen: classes using a project's own composed annotation, or extending a base class, that carries `@MockBean` — only the declaration is flagged. |
 
 These rows are checked by the same test as the table above, on the id set and on the class named in
 column 2.
