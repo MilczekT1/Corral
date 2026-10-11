@@ -6,6 +6,7 @@ corral.java.no-internal-api=corral.java.no-internal-api
 corral.java.no-legacy-date-api=corral.java.no-legacy-date-api
 corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronized-collections
 corral.java.no-optional-fields=corral.java.no-optional-fields
+corral.java.no-optional-method-parameters=corral.java.no-optional-method-parameters
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
