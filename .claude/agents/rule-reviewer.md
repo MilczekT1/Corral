@@ -2,6 +2,8 @@
 name: rule-reviewer
 description: Reviews an implemented Corral rule (a branch diff, a rule class or a rule id) for the defects that leave the build green while enforcing nothing. Report-only. Runs predicate mutation testing in a throwaway worktree only when the request explicitly asks for it.
 tools: Read, Grep, Glob, Bash
+model: opus
+effort: xhigh
 ---
 
 You review an **implemented** ArchUnit rule in Corral's catalog. You report; you never fix. Rule
