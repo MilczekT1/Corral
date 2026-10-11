@@ -35,7 +35,10 @@ target/
 # Superpowers working documents (specs, plans) — kept on disk, not shipped
 docs/superpowers/
 
-# Claude Code local configuration — the shared skills and agents stay tracked
+# Claude Code local configuration — the shared skills, agents and commands stay tracked
 .claude/*
 !.claude/skills/
 !.claude/agents/
+!.claude/commands/
+.claude/commands/*
+!.claude/commands/review-rule-proposal.md
