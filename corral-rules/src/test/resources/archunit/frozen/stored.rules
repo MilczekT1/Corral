@@ -1,4 +1,5 @@
 corral.concurrency.no-future-get-without-timeout=corral.concurrency.no-future-get-without-timeout
+corral.concurrency.no-manual-thread-creation=corral.concurrency.no-manual-thread-creation
 corral.concurrency.no-object-monitor-methods=corral.concurrency.no-object-monitor-methods
 corral.dependencies.no-javax=corral.dependencies.no-javax
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
