@@ -29,6 +29,8 @@ import lombok.NoArgsConstructor;
  * off, {@code CompletableFuture}, {@code FutureTask}, {@code ForkJoinTask} and other JDK or library
  * subtypes are stubs, and only a call on {@code Future} itself or on a project's own implementation is
  * reported.
+ *
+ * <p>Stands alone, in no group: wire it with {@code ArchTests.in(NoFutureGetWithoutTimeoutRule.class)}.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoFutureGetWithoutTimeoutRule implements DocumentedRule {
@@ -63,8 +65,7 @@ public final class NoFutureGetWithoutTimeoutRule implements DocumentedRule {
                     completion — pass the limit you would actually tolerate, from configuration: the \
                     readiness timeout, the shutdown grace period, a job timeout of hours. A named limit \
                     still turns a hung task into an error at a line that says what it waited on; \
-                    Long.MAX_VALUE never does. A codebase that is wholly batch processing can exclude \
-                    the rule instead. A Future implementation's own get() may delegate to a wrapped \
+                    Long.MAX_VALUE never does. A Future implementation's own get() may delegate to a wrapped \
                     future's get(): that call is not flagged. A method reference such as future::get \
                     counts as a call. Only Future.get() is checked: \
                     invokeAll and invokeAny without a timeout, CountDownLatch.await(), \
