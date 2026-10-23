@@ -10,6 +10,7 @@ import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.NoL
 import io.github.milczekt1.corral.rules.java.nooptionalfields.NoOptionalFieldsRule;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.NoOptionalMethodParametersRule;
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.SerializableMustDeclareSerialVersionUidRule;
+import io.github.milczekt1.corral.rules.naming.lowercasepackages.LowercasePackagesRule;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.NoRepositoryInControllerRule;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.NoTransactionalInControllerRule;
 import io.github.milczekt1.corral.rules.spring.novalueonfield.NoValueOnFieldRule;
@@ -77,4 +78,7 @@ public class EveryStandaloneRule {
     @ArchTest
     public static final ArchTests noFutureGetWithoutTimeout =
             ArchTests.in(NoFutureGetWithoutTimeoutRule.class);
+
+    @ArchTest
+    public static final ArchTests lowercasePackages = ArchTests.in(LowercasePackagesRule.class);
 }

@@ -11,6 +11,7 @@ corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronize
 corral.java.no-optional-fields=corral.java.no-optional-fields
 corral.java.no-optional-method-parameters=corral.java.no-optional-method-parameters
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
+corral.naming.packages-must-be-lowercase=corral.naming.packages-must-be-lowercase
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
 corral.spring.no-application-context-injection=corral.spring.no-application-context-injection
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
