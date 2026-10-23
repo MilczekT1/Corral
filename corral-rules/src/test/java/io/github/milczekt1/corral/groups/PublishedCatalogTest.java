@@ -102,6 +102,7 @@ class PublishedCatalogTest {
                 "corral.test.no-thread-sleep",
                 "corral.logging.no-system-out",
                 "corral.logging.no-system-err",
+                "corral.logging.no-print-stack-trace",
                 "corral.jakarta.no-javax-validation",
                 "corral.jakarta.no-javax-persistence",
                 "corral.jakarta.no-javax-servlet",

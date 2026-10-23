@@ -1,0 +1,6 @@
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.BatchRunner.runAll(java.util.List)> calls method <java.lang.RuntimeException.printStackTrace()> in (BatchRunner.java:13)
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.ConsoleDumper.dump(java.lang.IllegalStateException)> calls method <java.lang.IllegalStateException.printStackTrace(java.io.PrintStream)> in (ConsoleDumper.java:7)
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.FailureListener.onFailures(java.util.List)> references method <java.lang.Throwable.printStackTrace()> in (FailureListener.java:15)
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.OrderSubmitter.submit(java.nio.file.Path)> calls method <java.io.IOException.printStackTrace()> in (OrderSubmitter.java:17)
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.ReportWriter.render(java.lang.Exception)> calls method <java.lang.Exception.printStackTrace(java.io.PrintWriter)> in (ReportWriter.java:11)
+Method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.SettlementJob.settle(java.lang.String)> calls method <io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.SettlementException.printStackTrace()> in (SettlementJob.java:13)

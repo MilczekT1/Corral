@@ -1,5 +1,6 @@
 acme.no-legacy-date-api=acme.no-legacy-date-api
 acme.no-stdout-in-services=acme.no-stdout-in-services
+corral.logging.no-print-stack-trace=corral.logging.no-print-stack-trace
 corral.logging.no-system-err=corral.logging.no-system-err
 corral.logging.no-system-out=corral.logging.no-system-out
 corral.test.class-names-must-end-with-test-or-it=corral.test.class-names-must-end-with-test-or-it
