@@ -156,8 +156,12 @@ Two things to know, both learned the hard way:
   during class initialisation — at whichever test touches the rule first. Setting `freeze.store` in
   a test body races class loading: green alone, stock store in a full run. Only the *path* belongs
   on the process-wide `ArchConfiguration`, reset in a `finally`.
-- **Line numbers do not matter.** ArchUnit's default `ViolationLineMatcher` compares stored
-  violations ignoring their source line, so moving code around does not churn the store.
+- **Only line numbers in `(File.java:N)` do not matter.** ArchUnit's default `ViolationLineMatcher`
+  compares stored lines verbatim except for digits between `:` and `)` and digits right after a `$`
+  (`Outer$1`, `lambda$run$0`). Print locations through `getSourceCodeLocation()`; `at line N` or
+  `File.java:N` is compared as text, so moving code rewords the line. For the same reason a
+  violation's text holds one fixed shape and only what identifies it — no optional clause, count,
+  sibling member or hash-ordered list — so editing the file around it does not resurface it.
 
 ## 5. Wire it into a group
 

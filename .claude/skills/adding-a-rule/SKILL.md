@@ -108,6 +108,10 @@ sequences and cross-references them for *this* catalog, it does not restate them
    Nothing in the build sets `allowStoreCreation`, so a missing store fails loudly rather than
    re-seeding itself green.
 
+   Before seeding, make each line survive edits to the violating file — see
+   [Keep the frozen line stable](#keep-the-frozen-line-stable). Once a consumer has recorded it,
+   rewording it is a breaking change.
+
 6. **Register it in a group** as an `@ArchTest ArchTests` field (see `TestingRulesGroup`). A rule
    class nobody points at is imported and compiled but never evaluated by any consumer.
 
@@ -124,6 +128,30 @@ sequences and cross-references them for *this* catalog, it does not restate them
 8. **Add a row to the [rules catalog](../../../docs/rules.md).** `RulesCatalogDocTest` fails the
    build if you skip it: it checks the id set against the published groups *and* the group named in
    column 2. Only those two columns — a dangling rule id in the prose column passes.
+
+## Keep the frozen line stable
+
+Each violation line is a key in a consumer's committed store. Edit the violating file without
+touching the violation — add a method, move code down, drop a redundant modifier — and the line must
+still match; otherwise the recorded debt resurfaces as a new failure on code nobody broke. ArchUnit's
+default `FuzzyViolationLineMatcher` compares lines verbatim except for two runs of digits: those
+between `:` and `)`, which is how `getSourceCodeLocation()` prints `(File.java:N)`, and those
+directly after a `$` (`Outer$1`, `lambda$run$0`). Every other character is the key. So when the rule
+writes its own text (`SimpleConditionEvent`, a custom `describe(...)`):
+
+- **Print a location only as `getSourceCodeLocation()`.** `at line N`, `File.java:N` without the
+  parentheses, or a line range is compared verbatim, so moving the code rewords it.
+- **One fixed shape per line.** A clause is always there or never there — keep `in (File.java:0)`
+  for abstract methods and `-g:none` builds rather than dropping it. Optional text appearing or
+  vanishing changes the whole line.
+- **One event per violation, never one per class listing them.** A line naming three offending
+  members is a new line once one is fixed or a fourth added, and the still-unfixed two resurface
+  with it.
+- **Only what identifies the violation**: owner, member, offending target, reason. No counts,
+  sibling members, literal values, annotation attributes or modifiers that are not the reason.
+- **Several applicable reasons → one, by fixed precedence, pinned by a test**
+  (`NoAsyncOnUnproxyableMethodRuleTest.reportsAFinalMethodInAFinalClassAsFinal`). Never join a
+  hash-ordered collection into the text.
 
 ## Three silent failure modes
 
@@ -175,6 +203,11 @@ defect in the last rule added here — none was caught by the build.
 - [ ] **Run whole: `./mvnw test -pl corral-rules`, not `-Dtest=<OneTest>`.** `ArchConfiguration` is
       process-wide and Surefire reuses the JVM; the freeze-store wiring passed alone and failed in a
       full run, twice, for two different reasons.
+- [ ] **The committed store survives an edit to an example.** The only numbers in the `<id>` file an
+      edit can move are inside `(File.java:N)` or after a `$`. Then, with the store backed up as
+      above, add a line above a flagged member and an unrelated method to its class, and re-run the
+      step-5 store test: it must pass without reseeding; revert the example after. A failure names text that would resurface in a consumer's build —
+      see [Keep the frozen line stable](#keep-the-frozen-line-stable).
 - [ ] **Test names re-read against their assertions.** Rename any that claim more.
 - [ ] **`RuleDoc` re-read against the predicate.** It renders into the failure output, so a dodge it
       warns about but the predicate misses is a claim someone will act on.
