@@ -115,6 +115,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-application-context-injection",
                 "corral.security.no-jdbc-statement",
                 "corral.java.no-bigdecimal-double-constructor",
-                "corral.concurrency.no-object-monitor-methods"), ids);
+                "corral.concurrency.no-object-monitor-methods",
+                "corral.concurrency.no-manual-thread-creation"), ids);
     }
 }
