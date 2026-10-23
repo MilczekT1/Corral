@@ -106,6 +106,12 @@ class NoAsyncOnUnproxyableMethodRuleTest {
         assertFlagged("MailerService.compressDigest", "is private");
     }
 
+    /** The reason is frozen text: removing a redundant {@code final} must not reword the line. */
+    @Test
+    void reportsAFinalMethodInAFinalClassAsFinal() {
+        assertFlagged("MailerService.archiveDigest", "is final");
+    }
+
     @Test
     void flagsAPrivateMethodCarryingAComposedAsyncAnnotation() {
         assertFlagged("AuditService.recordAudit", "is private");
@@ -121,7 +127,7 @@ class NoAsyncOnUnproxyableMethodRuleTest {
 
     @Test
     void reportsOneViolationPerUnproxyableAsyncMethod() {
-        assertEquals(12, violations().size(), String.join("\n", violations()));
+        assertEquals(13, violations().size(), String.join("\n", violations()));
     }
 
     @Test
@@ -198,6 +204,7 @@ class NoAsyncOnUnproxyableMethodRuleTest {
             assertTrue(debt.contains("CourierDispatcher.dispatchCourier("), debt);
             assertTrue(debt.contains("MailerService.sendDigest("), debt);
             assertTrue(debt.contains("MailerService.compressDigest("), debt);
+            assertTrue(debt.contains("MailerService.archiveDigest("), debt);
             assertTrue(debt.contains("AuditService.recordAudit("), debt);
             assertTrue(debt.contains("ExportService.apply("), debt);
         } finally {

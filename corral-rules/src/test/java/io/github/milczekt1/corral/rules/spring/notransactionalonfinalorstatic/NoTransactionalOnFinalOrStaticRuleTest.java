@@ -88,6 +88,12 @@ class NoTransactionalOnFinalOrStaticRuleTest {
         assertFlagged("LedgerService.postJournal", "its class is final");
     }
 
+    /** The reason is frozen text: removing a redundant {@code final} must not reword the line. */
+    @Test
+    void reportsAFinalMethodInAFinalClassAsFinal() {
+        assertFlagged("LedgerService.closePeriod", "is final");
+    }
+
     @Test
     void flagsASpringTransactionalStaticMethod() {
         assertFlagged("PaymentService.exchangeRate", "is static");
@@ -108,7 +114,7 @@ class NoTransactionalOnFinalOrStaticRuleTest {
 
     @Test
     void reportsOneViolationPerUnproxyableTransactionalMethod() {
-        assertEquals(9, violations().size(), String.join("\n", violations()));
+        assertEquals(10, violations().size(), String.join("\n", violations()));
     }
 
     @Test
@@ -179,6 +185,7 @@ class NoTransactionalOnFinalOrStaticRuleTest {
             assertTrue(debt.contains("PaymentService.exchangeRate("), debt);
             assertTrue(debt.contains("RefundService.refund("), debt);
             assertTrue(debt.contains("LedgerService.postJournal("), debt);
+            assertTrue(debt.contains("LedgerService.closePeriod("), debt);
             assertTrue(debt.contains("InventoryService.reserveStock("), debt);
             assertTrue(debt.contains("LegacyBillingService.chargeCard("), debt);
             assertTrue(debt.contains("ReportService.loadTotals("), debt);

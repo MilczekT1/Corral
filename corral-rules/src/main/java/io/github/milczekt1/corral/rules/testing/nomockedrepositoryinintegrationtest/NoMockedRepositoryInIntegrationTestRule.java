@@ -89,7 +89,10 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
         };
     }
 
-    /** Names the inheriting {@code *IT}; empty for a field the test class declares itself. */
+    /**
+     * Names the inheriting {@code *IT}; empty for a field the test class declares itself. Do not switch
+     * to the fully qualified name: that rewords every frozen inherited line in consumers' stores.
+     */
     private static String inheritedBy(JavaClass testClass, JavaField field) {
         return field.getOwner().equals(testClass) ? "" : ", inherited by " + testClass.getSimpleName();
     }

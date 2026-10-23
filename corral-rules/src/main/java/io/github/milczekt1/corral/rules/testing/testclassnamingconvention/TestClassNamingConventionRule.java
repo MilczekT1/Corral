@@ -54,8 +54,6 @@ public final class TestClassNamingConventionRule implements DocumentedRule {
     /**
      * {@link TestScope#isJUnitTestMethod}, not {@code TestScope.TEST_CLASSES} — the class-level
      * predicate also holds for fixtures and helpers that declare no test.
-     *
-     * <p>The description text must stay byte-identical: it renders into the freeze-store key.
      */
     static final ArchRule DEFINITION = classes()
             .that().containAnyMethodsThat(describe("annotated with a JUnit 5 test annotation",
