@@ -6,6 +6,10 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.AccessTarget.CodeUnitAccessTarget;
 import com.tngtech.archunit.core.domain.JavaAccess;
+import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.properties.HasName;
+import com.tngtech.archunit.core.domain.properties.HasOwner;
+import com.tngtech.archunit.core.domain.properties.HasParameterTypes;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
@@ -17,7 +21,8 @@ import lombok.NoArgsConstructor;
 
 /**
  * No production class may call or reference the no-argument {@code get()} of a type assignable to
- * {@code Future}.
+ * {@code Future}, except a {@code Future} implementation's own no-argument {@code get()} delegating to
+ * another.
  *
  * <p>{@code join()}, library helpers that call {@code get()} for you, and other unbounded waits pass
  * this rule. It needs ArchUnit's default {@code resolveMissingDependenciesFromClassPath=true}: with it
@@ -53,10 +58,15 @@ public final class NoFutureGetWithoutTimeoutRule implements DocumentedRule {
                     thenApply or thenCompose and returning the future, bounded with orTimeout or \
                     completeOnTimeout (Java 9+) so no thread waits. orTimeout(...).get() is still \
                     flagged: the rule cannot see a bound set upstream. Where the value must be read on \
-                    this thread, call get(timeout, unit) itself. A Future implementation whose get() \
-                    delegates to a wrapped future's get() cannot take a deadline without breaking \
-                    Future's contract: leave that line frozen; its callers are still flagged. A method \
-                    reference such as future::get counts as a call. Only Future.get() is checked: \
+                    this thread, call get(timeout, unit) itself. If the wait is meant to last as long \
+                    as the work does — a startup readiness check, a shutdown drain, a batch job run to \
+                    completion — pass the limit you would actually tolerate, from configuration: the \
+                    readiness timeout, the shutdown grace period, a job timeout of hours. A named limit \
+                    still turns a hung task into an error at a line that says what it waited on; \
+                    Long.MAX_VALUE never does. A codebase that is wholly batch processing can exclude \
+                    the rule instead. A Future implementation's own get() may delegate to a wrapped \
+                    future's get(): that call is not flagged. A method reference such as future::get \
+                    counts as a call. Only Future.get() is checked: \
                     invokeAll and invokeAny without a timeout, CountDownLatch.await(), \
                     BlockingQueue.take() and other waits are not.""")
             .howNotToFix("""
@@ -66,18 +76,19 @@ public final class NoFutureGetWithoutTimeoutRule implements DocumentedRule {
                     FutureUtils.await(future): the helper's own get() is flagged once, freezing that \
                     line silences every caller, and every caller still hangs. A library helper such as \
                     Guava's Uninterruptibles.getUninterruptibly(future) or Futures.getUnchecked(future) \
-                    is not flagged at all, and hangs the same way. Do NOT try to move the class out of \
+                    is not flagged at all, and hangs the same way. Do NOT wrap the future in a Future \
+                    of your own to move the call into its get(): that delegation is not flagged, and \
+                    every call to the wrapper's get() is. Do NOT try to move the class out of \
                     scope by naming it like a test: scope is decided by output location and declared \
                     test methods. Do NOT add a JUnit test method to a production class: a class \
                     declaring one counts as a test class, so this is not caught.""")
             .build();
 
     private static final DescribedPredicate<JavaAccess<?>> UNBOUNDED_GET = describe(
-            "target is Future.get() with no timeout",
+            "target is Future.get() with no timeout, outside a Future's own get()",
             access -> access.getTarget() instanceof CodeUnitAccessTarget target
-                    && target.getName().equals("get")
-                    && target.getRawParameterTypes().isEmpty()
-                    && target.getOwner().isAssignableTo(Future.class));
+                    && isNoArgumentFutureGet(target)
+                    && !isNoArgumentFutureGet(access.getOrigin()));
 
     /** Do not switch to {@code callMethodWhere}: it misses a {@code future::get} reference. */
     static final ArchRule DEFINITION = noClasses()
@@ -86,6 +97,13 @@ public final class NoFutureGetWithoutTimeoutRule implements DocumentedRule {
 
     @ArchTest
     public static final ArchRule rule = new NoFutureGetWithoutTimeoutRule().guard();
+
+    private static <T extends HasName & HasParameterTypes & HasOwner<JavaClass>> boolean isNoArgumentFutureGet(
+            T codeUnit) {
+        return codeUnit.getName().equals("get")
+                && codeUnit.getRawParameterTypes().isEmpty()
+                && codeUnit.getOwner().isAssignableTo(Future.class);
+    }
 
     @Override
     public ArchRule definition() {

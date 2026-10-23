@@ -14,11 +14,13 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.AsyncAssertions;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.DeadlineClient;
+import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.PendingQuote;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.QuoteAggregator;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.ReportRenderer;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.ThrowingSupplier;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.TileSum;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.TracedFuture;
+import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.UntimedFuture;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
 import java.io.InputStream;
@@ -49,7 +51,7 @@ class NoFutureGetWithoutTimeoutRuleTest {
 
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             ReportRenderer.class, QuoteAggregator.class, TracedFuture.class, DeadlineClient.class,
-            ThrowingSupplier.class, TileSum.class);
+            ThrowingSupplier.class, TileSum.class, UntimedFuture.class, PendingQuote.class);
 
     @TempDir
     static Path outputRoot;
@@ -117,13 +119,23 @@ class NoFutureGetWithoutTimeoutRuleTest {
     }
 
     @Test
-    void flagsTheDelegationInsideAProjectsOwnFuture() {
-        assertFlagged("TracedFuture.get", "calls method " + FUTURE_GET);
+    void flagsGetOnTheDelegateOutsideAGetOverride() {
+        assertFlagged("TracedFuture.result", "calls method " + FUTURE_GET);
     }
 
     @Test
-    void reportsExactlySevenAccesses() {
-        assertEquals(7, violationsIn(examples).size(), String.join("\n", violationsIn(examples)));
+    void flagsATimedGetOverrideWaitingOnTheUntimedGet() {
+        assertFlagged("UntimedFuture.get", "calls method <" + UntimedFuture.class.getName() + ".get()>");
+    }
+
+    @Test
+    void flagsGetInsideAGetOverrideOfANonFuture() {
+        assertFlagged("PendingQuote.get", "calls method " + FUTURE_GET);
+    }
+
+    @Test
+    void reportsExactlyNineAccesses() {
+        assertEquals(9, violationsIn(examples).size(), String.join("\n", violationsIn(examples)));
     }
 
     @Test
@@ -133,7 +145,8 @@ class NoFutureGetWithoutTimeoutRuleTest {
     }
 
     @Test
-    void ignoresTheOtherDelegationsOfAProjectsOwnFuture() {
+    void ignoresEveryDelegationOfAProjectsOwnFuture() {
+        assertNotReported("TracedFuture.get()> calls");
         assertNotReported("TracedFuture.get(long");
         assertNotReported("TracedFuture.isDone(");
         assertNotReported("TracedFuture.isCancelled(");
@@ -196,7 +209,9 @@ class NoFutureGetWithoutTimeoutRuleTest {
             assertTrue(debt.contains("QuoteAggregator.deferred("), debt);
             assertTrue(debt.contains("QuoteAggregator.wrapped("), debt);
             assertTrue(debt.contains("QuoteAggregator.traced("), debt);
-            assertTrue(debt.contains("TracedFuture.get()> calls method " + FUTURE_GET), debt);
+            assertTrue(debt.contains("TracedFuture.result("), debt);
+            assertTrue(debt.contains("UntimedFuture.get(long"), debt);
+            assertTrue(debt.contains("PendingQuote.get("), debt);
         } finally {
             ArchConfiguration.get().reset();
         }

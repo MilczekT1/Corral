@@ -6,9 +6,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 /**
- * MUST FLAG {@code get()}: a delegating {@code Future} cannot pick a deadline, so its delegation is
- * frozen as debt. MUST IGNORE the timed {@code get}, {@code cancel}, {@code isCancelled} and
- * {@code isDone} delegations, so a predicate dropping the name or parameter check fails here.
+ * MUST FLAG {@code result()}: it waits on the delegate outside a {@code get()} override, so a predicate
+ * exempting every method of a {@code Future} fails here. MUST IGNORE every delegation, {@code get()}
+ * included: a delegating {@code Future} cannot pick a deadline, and its callers are flagged instead.
  */
 public class TracedFuture<T> implements Future<T> {
 
@@ -35,6 +35,10 @@ public class TracedFuture<T> implements Future<T> {
 
     @Override
     public T get() throws InterruptedException, ExecutionException {
+        return delegate.get();
+    }
+
+    public T result() throws InterruptedException, ExecutionException {
         return delegate.get();
     }
 
