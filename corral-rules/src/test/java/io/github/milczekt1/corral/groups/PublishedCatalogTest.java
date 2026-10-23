@@ -112,6 +112,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-async-on-unproxyable-method",
                 "corral.spring.no-final-component",
                 "corral.spring.no-component-on-abstract-class",
+                "corral.spring.no-application-context-injection",
                 "corral.security.no-jdbc-statement"), ids);
     }
 }
