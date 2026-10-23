@@ -114,6 +114,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-component-on-abstract-class",
                 "corral.spring.no-application-context-injection",
                 "corral.security.no-jdbc-statement",
-                "corral.java.no-bigdecimal-double-constructor"), ids);
+                "corral.java.no-bigdecimal-double-constructor",
+                "corral.concurrency.no-future-get-without-timeout"), ids);
     }
 }
