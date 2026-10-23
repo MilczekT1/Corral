@@ -54,6 +54,7 @@
     <spring.version>7.0.9</spring.version>
     <spring-data.version>4.0.8</spring-data.version>
     <spring-security.version>7.0.8</spring-security.version>
+    <spring-boot.version>4.0.8</spring-boot.version>
     <jakarta-inject.version>2.0.1</jakarta-inject.version>
     <jakarta-annotation.version>3.0.0</jakarta-annotation.version>
     <javax-inject.version>1</javax-inject.version>
@@ -164,6 +165,11 @@
         <groupId>org.springframework</groupId>
         <artifactId>spring-web</artifactId>
         <version>${spring.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot</artifactId>
+        <version>${spring-boot.version}</version>
       </dependency>
       <dependency>
         <groupId>org.springframework.data</groupId>

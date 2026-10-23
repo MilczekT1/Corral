@@ -9,6 +9,7 @@ corral.java.no-optional-fields=corral.java.no-optional-fields
 corral.java.no-optional-method-parameters=corral.java.no-optional-method-parameters
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
+corral.spring.no-application-context-injection=corral.spring.no-application-context-injection
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
 corral.spring.no-component-on-abstract-class=corral.spring.no-component-on-abstract-class
 corral.spring.no-field-injection=corral.spring.no-field-injection
