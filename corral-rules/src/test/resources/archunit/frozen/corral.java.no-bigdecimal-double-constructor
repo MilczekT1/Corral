@@ -1,0 +1,6 @@
+Method <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RatePricing.fromField()> calls constructor <java.math.BigDecimal.<init>(double)> in (RatePricing.java:21)
+Method <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RatePricing.fromFloat()> calls constructor <java.math.BigDecimal.<init>(double)> in (RatePricing.java:25)
+Method <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RatePricing.withContext(double)> calls constructor <java.math.BigDecimal.<init>(double, java.math.MathContext)> in (RatePricing.java:29)
+Method <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RateStreams.referenced([D)> references constructor <java.math.BigDecimal.<init>(double)> in (RateStreams.java:15)
+Method <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RateStreams.wrapped([D)> calls constructor <java.math.BigDecimal.<init>(double)> in (RateStreams.java:19)
+Static Initializer <io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RatePricing.<clinit>()> calls constructor <java.math.BigDecimal.<init>(double)> in (RatePricing.java:12)

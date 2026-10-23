@@ -2,6 +2,7 @@ corral.dependencies.no-javax=corral.dependencies.no-javax
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
 corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
+corral.java.no-bigdecimal-double-constructor=corral.java.no-bigdecimal-double-constructor
 corral.java.no-internal-api=corral.java.no-internal-api
 corral.java.no-legacy-date-api=corral.java.no-legacy-date-api
 corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronized-collections

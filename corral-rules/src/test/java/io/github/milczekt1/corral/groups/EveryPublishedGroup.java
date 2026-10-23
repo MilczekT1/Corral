@@ -40,4 +40,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests security = ArchTests.in(SecurityRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests javaCorrectness = ArchTests.in(JavaCorrectnessRulesGroup.class);
 }
