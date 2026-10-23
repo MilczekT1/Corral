@@ -1,0 +1,8 @@
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.JobBacklog.enqueue(java.lang.String)> calls method <java.lang.Object.notifyAll()> in (JobBacklog.java:13)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.RetryPacer.pause()> calls method <java.lang.Object.wait(long)> in (RetryPacer.java:9)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.RetryPacer.pauseBriefly()> calls method <java.lang.Object.wait(long, int)> in (RetryPacer.java:13)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.RetryPacer.release()> calls method <java.lang.Object.notify()> in (RetryPacer.java:18)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.ShutdownSignal.awaitStop()> calls method <java.util.concurrent.TimeUnit.timedWait(java.lang.Object, long)> in (ShutdownSignal.java:18)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.WakeupRelay.wakeAll()> references method <java.lang.Object.notifyAll()> in (WakeupRelay.java:15)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.WorkQueue.awaitWork()> calls method <java.lang.Object.wait()> in (WorkQueue.java:18)
+Method <io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.WorkQueue.submit(java.lang.Runnable)> calls method <java.lang.Object.notifyAll()> in (WorkQueue.java:27)

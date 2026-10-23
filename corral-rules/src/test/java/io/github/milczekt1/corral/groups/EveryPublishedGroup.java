@@ -43,4 +43,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests javaCorrectness = ArchTests.in(JavaCorrectnessRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests concurrency = ArchTests.in(ConcurrencyRulesGroup.class);
 }
