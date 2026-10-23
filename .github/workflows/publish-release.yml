@@ -11,6 +11,8 @@ name: Publish release
 on:
   push:
     branches: [main]
+    # A release merge always changes the POM versions; other pushes would only produce skipped runs.
+    paths: ['**/pom.xml']
   workflow_dispatch:
     inputs:
       version:
@@ -27,8 +29,8 @@ jobs:
       startsWith(github.event.head_commit.message, 'Prepare next release Corral ')
     runs-on: ubuntu-latest
     environment: maven-central
-    # Job-level, not workflow-level: every push to main starts a run of this workflow, and a
-    # workflow-level group would let those skipped runs cancel a pending publish.
+    # Job-level, not workflow-level: any push to main touching a POM starts a run of this workflow,
+    # and a workflow-level group would let those skipped runs cancel a pending publish.
     concurrency:
       group: publish-release
       cancel-in-progress: false
