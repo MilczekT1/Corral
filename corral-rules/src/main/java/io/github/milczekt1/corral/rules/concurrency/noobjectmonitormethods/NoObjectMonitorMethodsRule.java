@@ -1,19 +1,17 @@
 package io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods;
 
 import static com.tngtech.archunit.base.DescribedPredicate.describe;
-import static com.tngtech.archunit.core.domain.JavaClass.Predicates.type;
-import static com.tngtech.archunit.core.domain.properties.HasName.Predicates.name;
-import static com.tngtech.archunit.core.domain.properties.HasOwner.Predicates.With.owner;
-import static com.tngtech.archunit.core.domain.properties.HasParameterTypes.Predicates.rawParameterTypes;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.AccessTarget.CodeUnitAccessTarget;
 import com.tngtech.archunit.core.domain.JavaAccess;
+import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -66,21 +64,28 @@ public final class NoObjectMonitorMethodsRule implements DocumentedRule {
                     same way, and a signal with no waiter is lost the same way.""")
             .build();
 
-    private static final DescribedPredicate<CodeUnitAccessTarget> MONITOR_METHOD = DescribedPredicate.or(
-            method("wait"), method("wait", long.class), method("wait", long.class, int.class),
-            method("notify"), method("notifyAll"),
-            DescribedPredicate.and(owner(type(TimeUnit.class)), name("timedWait")));
+    private static final DescribedPredicate<JavaAccess<?>> MONITOR_ACCESS = describe(
+            "target is Object.wait, notify, notifyAll or TimeUnit.timedWait",
+            access -> access.getTarget() instanceof CodeUnitAccessTarget target
+                    && (isObjectMonitorMethod(target) || isTimeUnitTimedWait(target)));
 
-    static final ArchRule DEFINITION = noClasses().should().accessTargetWhere(
-            describe("target is Object.wait, notify, notifyAll or TimeUnit.timedWait",
-                    (JavaAccess<?> access) -> access.getTarget() instanceof CodeUnitAccessTarget target
-                            && MONITOR_METHOD.test(target)));
+    /** Do not switch to {@code callMethodWhere}: it misses a {@code lock::notifyAll} reference. */
+    static final ArchRule DEFINITION = noClasses().should().accessTargetWhere(MONITOR_ACCESS);
 
     @ArchTest
     public static final ArchRule rule = new NoObjectMonitorMethodsRule().guard();
 
-    private static DescribedPredicate<CodeUnitAccessTarget> method(String methodName, Class<?>... parameterTypes) {
-        return DescribedPredicate.and(name(methodName), rawParameterTypes(parameterTypes));
+    private static boolean isObjectMonitorMethod(CodeUnitAccessTarget target) {
+        List<String> parameters = target.getRawParameterTypes().stream().map(JavaClass::getName).toList();
+        return switch (target.getName()) {
+            case "wait" -> List.of(List.of(), List.of("long"), List.of("long", "int")).contains(parameters);
+            case "notify", "notifyAll" -> parameters.isEmpty();
+            default -> false;
+        };
+    }
+
+    private static boolean isTimeUnitTimedWait(CodeUnitAccessTarget target) {
+        return target.getName().equals("timedWait") && target.getOwner().isEquivalentTo(TimeUnit.class);
     }
 
     @Override
