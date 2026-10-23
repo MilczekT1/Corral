@@ -9,6 +9,7 @@ import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.NoL
 import io.github.milczekt1.corral.rules.java.nooptionalfields.NoOptionalFieldsRule;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.NoOptionalMethodParametersRule;
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.SerializableMustDeclareSerialVersionUidRule;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.NoRepositoryInControllerRule;
 import io.github.milczekt1.corral.rules.spring.novalueonfield.NoValueOnFieldRule;
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.NoLegacyMockBeanAndSpyBeanRule;
 import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.NoMutableStaticStateRule;
@@ -63,4 +64,7 @@ public class EveryStandaloneRule {
 
     @ArchTest
     public static final ArchTests noValueOnField = ArchTests.in(NoValueOnFieldRule.class);
+
+    @ArchTest
+    public static final ArchTests noRepositoryInController = ArchTests.in(NoRepositoryInControllerRule.class);
 }
