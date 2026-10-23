@@ -136,8 +136,7 @@ confidence in each arm. It cannot distinguish the arms from each other.
 
 **Hygiene rules.** Nobody needed help replacing `System.out`. Whether HOW TO FIX changes outcomes on
 a rule whose fix is genuinely non-obvious — a layering rule, a dependency-injection rule — is the
-open question, and the reason the catalog's [criteria](../CONTRIBUTING.md#is-a-rule-catalog-worthy)
-now ask for it.
+open question.
 
 ## Reproducing
 

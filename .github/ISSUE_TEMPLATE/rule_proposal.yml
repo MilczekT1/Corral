@@ -20,14 +20,14 @@ body:
         [Rule ids](https://github.com/MilczekT1/Corral/blob/main/CONTRIBUTING.md#rule-ids). An id is
         a freeze-store key in every consumer's repo and is never renamed, so it is worth getting
         right here.
-      placeholder: "corral.spring.no-field-injection"
+      placeholder: "corral.<concern>.<slug>"
     validations:
       required: true
   - type: textarea
     id: why
     attributes:
       label: Why this matters
-      description: What goes wrong in a real codebase when this is violated?
+      description: What goes wrong in a real codebase when this is violated, and how often does it turn up in ordinary code?
     validations:
       required: true
   - type: textarea
@@ -85,4 +85,3 @@ body:
         - label: Broadly applicable — true for most JVM projects, not a house style
         - label: Objectively checkable — no judgement call about intent
         - label: Stable — the predicate is unlikely to need rewording, which would break consumers
-        - label: Non-obvious to fix — the HOW TO FIX says something the reader would not have done unprompted

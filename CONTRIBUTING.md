@@ -132,10 +132,6 @@ Not every good rule belongs here. A rule earns a place in the central catalog wh
 - **Objectively checkable** — no judgement call about intent.
 - **Stable** — the predicate is unlikely to need rewording, because rewording it is a breaking
   change for every consumer.
-- **Non-obvious to fix** — the HOW TO FIX says something the reader would not have done unprompted.
-  Twelve agent runs against `no-system-out` and `no-thread-sleep` fixed both correctly with or
-  without the guidance ([evidence](docs/evidence.md)); a rule earns its failure message where that
-  is not true.
 
 A rule that encodes one team's preference is better off in that team's own rule namespace. The SDK
 exists so you can author those without forking anything.
