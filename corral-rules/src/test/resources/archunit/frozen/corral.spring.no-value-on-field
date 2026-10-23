@@ -1,0 +1,6 @@
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.CacheSettings.MAX_ENTRIES> is meta-annotated with @Value in (CacheSettings.java:0)
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.CacheSettings.region> is meta-annotated with @Value in (CacheSettings.java:0)
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.OrderService.timeout> is meta-annotated with @Value in (OrderService.java:0)
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.PortSmokeTest.port> is meta-annotated with @Value in (PortSmokeTest.java:0)
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.ReminderScheduler.interval> is meta-annotated with @Value in (ReminderScheduler.java:0)
+Field <io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.ShippingService.timeout> is meta-annotated with @Value in (ShippingService.java:0)
