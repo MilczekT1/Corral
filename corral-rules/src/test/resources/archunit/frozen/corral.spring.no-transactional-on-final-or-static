@@ -1,5 +1,6 @@
 Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.ArchiveService.apply(java.lang.String)> is transactional but its class is final in (ArchiveService.java:15)
 Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.InventoryService.reserveStock()> is transactional but is final in (InventoryService.java:12)
+Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.LedgerService.closePeriod()> is transactional but is final in (LedgerService.java:30)
 Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.LedgerService.postJournal()> is transactional but its class is final in (LedgerService.java:15)
 Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.LegacyBillingService.chargeCard()> is transactional but is static in (LegacyBillingService.java:12)
 Method <io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.fixtures.PaymentService.exchangeRate()> is transactional but is static in (PaymentService.java:29)

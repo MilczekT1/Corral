@@ -100,7 +100,7 @@ class NoDisabledWithoutReasonRuleTest {
 
     /**
      * Every class this module compiles lands in test output, so no example can be production-scoped:
-     * the scope is asserted through the description, which is also the freeze-store key's wording.
+     * the scope is asserted through the description.
      */
     @Test
     void scopesItselfToTestClasses() {

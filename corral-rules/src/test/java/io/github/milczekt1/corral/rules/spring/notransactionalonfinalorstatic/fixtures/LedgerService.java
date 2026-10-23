@@ -3,8 +3,8 @@ package io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.f
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * MUST FLAG {@code postJournal} only: the class is final, so it cannot be proxied. {@code balance}
- * is not transactional and {@code verifyTotals} is private.
+ * MUST FLAG {@code postJournal} because the class is final, and {@code closePeriod} as final, not as
+ * final-class. {@code balance} is not transactional and {@code verifyTotals} is private.
  */
 public final class LedgerService {
 
@@ -23,5 +23,10 @@ public final class LedgerService {
     @Transactional
     private void verifyTotals() {
         entries += 0;
+    }
+
+    @Transactional
+    public final void closePeriod() {
+        entries = 0;
     }
 }

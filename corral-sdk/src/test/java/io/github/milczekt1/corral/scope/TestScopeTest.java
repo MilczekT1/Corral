@@ -106,10 +106,6 @@ class TestScopeTest {
         }
     }
 
-    /**
-     * These descriptions render into every rule built on them, and a rule description is a
-     * freeze-store key.
-     */
     @Test
     void pinsThePredicateDescriptions() {
         assertEquals("test classes", TestScope.TEST_CLASSES.getDescription());

@@ -44,8 +44,8 @@ public class TestScope {
     /**
      * Classes in a recognised test output directory, or declaring a JUnit 5 test method.
      *
-     * <p>The description text renders into every rule built on it, which is that rule's freeze-store
-     * key — rewording it re-seeds every consumer's store.
+     * <p>Rewording the description changes no freeze-store key: {@code guard()} replaces a rule's
+     * description with its id, and a {@code that(...)} clause never reaches a violation line.
      */
     public static final DescribedPredicate<JavaClass> TEST_CLASSES =
             describe("test classes", TestScope::isTestClass);

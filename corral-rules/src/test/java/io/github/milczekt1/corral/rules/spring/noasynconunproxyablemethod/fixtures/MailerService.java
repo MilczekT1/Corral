@@ -3,8 +3,8 @@ package io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.fixtu
 import org.springframework.scheduling.annotation.Async;
 
 /**
- * MUST FLAG {@code sendDigest} because the class is final, and {@code compressDigest} as private,
- * not as final-class. {@code preview} is not async.
+ * MUST FLAG {@code sendDigest} because the class is final, {@code compressDigest} as private and
+ * {@code archiveDigest} as final, neither as final-class. {@code preview} is not async.
  */
 public final class MailerService {
 
@@ -22,5 +22,10 @@ public final class MailerService {
     @Async
     private int compressDigest() {
         return 1;
+    }
+
+    @Async
+    public final void archiveDigest() {
+        sent = 0;
     }
 }
