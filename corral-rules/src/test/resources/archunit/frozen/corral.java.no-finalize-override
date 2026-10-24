@@ -1,0 +1,4 @@
+Method <io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.FinalizeContract.finalize()> has name 'finalize' in (FinalizeContract.java:0)
+Method <io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.HardenedBase.finalize()> has name 'finalize' in (HardenedBase.java:10)
+Method <io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.LeakyConnection.finalize()> has name 'finalize' in (LeakyConnection.java:16)
+Method <io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.PublicFinalizer.finalize()> has name 'finalize' in (PublicFinalizer.java:11)
