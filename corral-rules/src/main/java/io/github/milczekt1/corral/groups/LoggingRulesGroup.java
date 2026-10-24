@@ -4,6 +4,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.logging.NoSystemErrRule;
 import io.github.milczekt1.corral.rules.logging.NoSystemOutRule;
+import io.github.milczekt1.corral.rules.logging.noprintstacktrace.NoPrintStackTraceRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -14,4 +15,7 @@ public class LoggingRulesGroup {
 
     @ArchTest
     public static final ArchTests noSystemErr = ArchTests.in(NoSystemErrRule.class);
+
+    @ArchTest
+    public static final ArchTests noPrintStackTrace = ArchTests.in(NoPrintStackTraceRule.class);
 }
