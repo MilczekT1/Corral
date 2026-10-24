@@ -49,4 +49,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests exception = ArchTests.in(ExceptionRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests jackson = ArchTests.in(JacksonRulesGroup.class);
 }

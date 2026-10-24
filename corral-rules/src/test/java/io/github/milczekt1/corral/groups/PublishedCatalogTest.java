@@ -120,6 +120,7 @@ class PublishedCatalogTest {
                 "corral.java.no-public-static-array-fields",
                 "corral.concurrency.no-object-monitor-methods",
                 "corral.concurrency.no-manual-thread-creation",
-                "corral.exception.no-generic-exception-thrown"), ids);
+                "corral.exception.no-generic-exception-thrown",
+                "corral.jackson.static-object-mapper-must-be-final"), ids);
     }
 }

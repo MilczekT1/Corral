@@ -1,0 +1,5 @@
+Field <io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.AuditLog.auditMapper> does not have modifier FINAL in (AuditLog.java:0)
+Field <io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.EventCodec.codecMapper> does not have modifier FINAL in (EventCodec.java:0)
+Field <io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.JsonUtils.mapper> does not have modifier FINAL in (JsonUtils.java:0)
+Field <io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.LegacyJsonConfig.MAPPER> does not have modifier FINAL in (LegacyJsonConfig.java:0)
+Field <io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.ReportExporter.jsonMapper> does not have modifier FINAL in (ReportExporter.java:0)

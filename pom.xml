@@ -61,6 +61,8 @@
     <javax-annotation.version>1.3.2</javax-annotation.version>
     <jakarta-transaction.version>2.0.1</jakarta-transaction.version>
     <javax-transaction.version>1.3</javax-transaction.version>
+    <jackson2.version>2.22.4</jackson2.version>
+    <jackson3.version>3.2.4</jackson3.version>
     <mockito.version>5.24.0</mockito.version>
     <slf4j.version>2.0.20</slf4j.version>
     <lombok.version>1.18.48</lombok.version>
@@ -210,6 +212,16 @@
         <groupId>javax.transaction</groupId>
         <artifactId>javax.transaction-api</artifactId>
         <version>${javax-transaction.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>com.fasterxml.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson2.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>tools.jackson.core</groupId>
+        <artifactId>jackson-databind</artifactId>
+        <version>${jackson3.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
