@@ -4,6 +4,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.NoFutureGetWithoutTimeoutRule;
 import io.github.milczekt1.corral.rules.dependencies.nojavax.NoJavaxRule;
+import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.NoAnnotationsOnEntityRule;
 import io.github.milczekt1.corral.rules.java.nointernalapi.NoInternalApiRule;
 import io.github.milczekt1.corral.rules.java.nolegacydateapi.NoLegacyDateApiRule;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.NoLegacySynchronizedCollectionsRule;
@@ -81,4 +82,7 @@ public class EveryStandaloneRule {
 
     @ArchTest
     public static final ArchTests lowercasePackages = ArchTests.in(LowercasePackagesRule.class);
+
+    @ArchTest
+    public static final ArchTests noJacksonAnnotationsOnEntity = ArchTests.in(NoAnnotationsOnEntityRule.class);
 }

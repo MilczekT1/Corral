@@ -3,6 +3,7 @@ corral.concurrency.no-manual-thread-creation=corral.concurrency.no-manual-thread
 corral.concurrency.no-object-monitor-methods=corral.concurrency.no-object-monitor-methods
 corral.dependencies.no-javax=corral.dependencies.no-javax
 corral.exception.no-generic-exception-thrown=corral.exception.no-generic-exception-thrown
+corral.jackson.no-annotations-on-entity=corral.jackson.no-annotations-on-entity
 corral.jackson.static-object-mapper-must-be-final=corral.jackson.static-object-mapper-must-be-final
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
 corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
