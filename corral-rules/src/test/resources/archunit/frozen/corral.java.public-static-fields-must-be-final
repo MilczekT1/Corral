@@ -1,0 +1,4 @@
+Field <io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.InternalCounters.hits> does not have modifier FINAL in (InternalCounters.java:0)
+Field <io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.MetricsRegistry.lastSnapshot> does not have modifier FINAL in (MetricsRegistry.java:0)
+Field <io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.RuntimeSettings$Limits.ceiling> does not have modifier FINAL in (RuntimeSettings.java:0)
+Field <io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.RuntimeSettings.endpoint> does not have modifier FINAL in (RuntimeSettings.java:0)
