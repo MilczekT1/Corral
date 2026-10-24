@@ -1,0 +1,4 @@
+Field <io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.fixtures.CurrencySymbols.SYMBOLS> has raw type an array in (CurrencySymbols.java:0)
+Field <io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.fixtures.RegionCodes.EMPTY> has raw type an array in (RegionCodes.java:0)
+Field <io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.fixtures.RegionCodes.ISO_CODES> has raw type an array in (RegionCodes.java:0)
+Field <io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.fixtures.RetryCounters.attempts> has raw type an array in (RetryCounters.java:0)
