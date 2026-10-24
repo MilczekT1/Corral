@@ -7,7 +7,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** A project's own composed annotation; MUST IGNORE its declaration, which is not an entity. */
+/** MUST IGNORE: a composed annotation's declaration is not an entity. */
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ElementType.FIELD, ElementType.METHOD})
 @JacksonAnnotationsInside

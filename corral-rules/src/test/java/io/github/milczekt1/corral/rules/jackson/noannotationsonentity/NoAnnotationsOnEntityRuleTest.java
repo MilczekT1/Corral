@@ -45,7 +45,9 @@ class NoAnnotationsOnEntityRuleTest {
 
     private static final String ANNOTATED_WITH = "> is annotated with <";
 
-    private static final int FIXTURE_CLASS_FILES = 14;
+    private static final String MEMBER_OF_TYPE = "> has annotation member of type <";
+
+    private static final int FIXTURE_CLASS_FILES = 16;
 
     @TempDir
     static Path outputRoot;
@@ -73,6 +75,13 @@ class NoAnnotationsOnEntityRuleTest {
         List<String> violations = violationsIn(examples);
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("." + element + ANNOTATED_WITH + annotation + ">")),
+                String.join("\n", violations));
+    }
+
+    private static void assertMemberFlagged(String owner, String annotation) {
+        List<String> violations = violationsIn(examples);
+
+        assertTrue(violations.stream().anyMatch(line -> line.contains("." + owner + MEMBER_OF_TYPE + annotation + ">")),
                 String.join("\n", violations));
     }
 
@@ -131,12 +140,24 @@ class NoAnnotationsOnEntityRuleTest {
                 String.join("\n", violations));
     }
 
-    /** Annotation members of enum or class type are dependencies too; each annotated element counts once. */
     @Test
-    void reportsOneViolationPerAnnotationUse() {
+    void flagsJsonTypeInfoAgainThroughItsDefaultImpl() {
+        assertFlagged("Vehicle", "com.fasterxml.jackson.annotation.JsonTypeInfo");
+        assertMemberFlagged("Vehicle", "com.fasterxml.jackson.annotation.JsonTypeInfo");
+    }
+
+    @Test
+    void flagsANestedSubtypeAnnotationAsWellAsItsContainer() {
+        assertFlagged("Vehicle", "com.fasterxml.jackson.annotation.JsonSubTypes");
+        assertMemberFlagged("Vehicle", "com.fasterxml.jackson.annotation.JsonSubTypes$Type");
+    }
+
+    /** Enum- and class-typed annotation members, default values included, add no violation. */
+    @Test
+    void addsNoViolationForEnumOrClassTypedMembers() {
         List<String> violations = violationsIn(examples);
 
-        assertEquals(9, violations.size(), String.join("\n", violations));
+        assertEquals(13, violations.size(), String.join("\n", violations));
     }
 
     @Test
@@ -171,6 +192,11 @@ class NoAnnotationsOnEntityRuleTest {
     @Test
     void ignoresTheComposedAnnotationsDeclaration() {
         assertNotReported("WireName" + ANNOTATED_WITH);
+    }
+
+    @Test
+    void ignoresASubclassEntityAndTheSubtypeClassLiteral() {
+        assertNotReported("Truck");
     }
 
     @Test
@@ -215,6 +241,7 @@ class NoAnnotationsOnEntityRuleTest {
             assertTrue(debt.contains(".PurchaseOrder.customer" + ANNOTATED_WITH), debt);
             assertTrue(debt.contains(".Shipment.trackingNumber" + ANNOTATED_WITH), debt);
             assertTrue(debt.contains(".Coupon.code" + ANNOTATED_WITH), debt);
+            assertTrue(debt.contains(".Vehicle" + MEMBER_OF_TYPE), debt);
         } finally {
             ArchConfiguration.get().reset();
         }

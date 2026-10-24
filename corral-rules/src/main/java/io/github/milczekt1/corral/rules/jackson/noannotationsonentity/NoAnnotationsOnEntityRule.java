@@ -18,15 +18,21 @@ import lombok.NoArgsConstructor;
 
 /**
  * No production class annotated {@code @Entity} or {@code @MappedSuperclass}, Jakarta or
- * {@code javax} Persistence, may depend on a Jackson annotation — on the class, a field, a method
- * or a constructor parameter. {@code @Embeddable} is not checked.
+ * {@code javax} Persistence, may depend on a Jackson annotation: on the class, a field, a method, or
+ * a method or constructor parameter, or through any other reference such as
+ * {@code JsonProperty.class}. {@code @Embeddable} is not checked.
  *
  * <p>Stands alone, in no group: wire it with {@code ArchTests.in(NoAnnotationsOnEntityRule.class)}.
- * Matched by name, so it loads without Jackson or a Persistence API. It needs ArchUnit's default
- * {@code resolveMissingDependenciesFromClassPath=true}: with it off, Jackson's annotation types are
- * not recognised as annotations, and only a project's own composed annotation is reported. One
- * violation per annotation use; a Jackson annotation nested in another's member, such as
- * {@code @JsonSubTypes.Type}, is one more.
+ * Matched by name, so it loads without Jackson or a Persistence API. It enforces only while ArchUnit
+ * can resolve Jackson's annotation types: with Jackson absent from the classpath the test runs on,
+ * or {@code resolveMissingDependenciesFromClassPath=false}, they are not recognised as annotations,
+ * and only a project's own composed annotation declared among the imported classes is reported.
+ *
+ * <p>One violation per Jackson annotation type on each annotated element, except:
+ * {@code @JsonTypeInfo} reports two, because its {@code defaultImpl} defaults to
+ * {@code JsonTypeInfo.class}; a Jackson annotation nested in another's member, such as
+ * {@code @JsonSubTypes.Type}, adds one; and parameters of one type on one method or constructor
+ * share a line.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class NoAnnotationsOnEntityRule implements DocumentedRule {
@@ -41,7 +47,9 @@ public final class NoAnnotationsOnEntityRule implements DocumentedRule {
     /**
      * {@code ANNOTATIONS} keeps out the enum and class types of annotation members, which are
      * dependencies too: without it one {@code @JsonFormat} reports several lines, and a Jackson
-     * release adding an enum-typed member surfaces new violations in frozen code.
+     * release adding an enum-typed member surfaces new violations in frozen code. A class-typed
+     * member whose value is an annotation still counts: {@code @JsonTypeInfo}'s {@code defaultImpl}
+     * defaults to {@code JsonTypeInfo.class}.
      */
     private static final DescribedPredicate<JavaClass> JACKSON_ANNOTATIONS = ANNOTATIONS.and(
                     resideInAnyPackage("com.fasterxml.jackson..", "tools.jackson..")
@@ -69,17 +77,24 @@ public final class NoAnnotationsOnEntityRule implements DocumentedRule {
                     load; fetch exactly what it needs with an @EntityGraph or a constructor \
                     projection. Inbound, bind to a request record holding only the fields a client \
                     may set and copy them onto the entity by hand. Move every Jackson annotation onto \
-                    those records. An internal tool with a single consumer, or JPA classes a \
-                    generator annotates, may keep one type: freeze those entities as debt, and the \
-                    rule still stops the next entity acquiring a wire contract. Only classes \
-                    annotated @Entity or @MappedSuperclass are checked; an @Embeddable is not. Test \
+                    those records. Entities recorded in the freeze store when the rule was adopted \
+                    stay there as debt; a new violation is fixed in code. A codebase that exposes its \
+                    entities on purpose — an internal tool with one consumer, or JPA classes a \
+                    generator annotates, where every entity it generates is a new violation — should \
+                    not wire this rule, or should list it in corral-exclusions.txt with that reason. \
+                    Only classes annotated @Entity or @MappedSuperclass are checked; an @Embeddable is \
+                    not, though the entity embedding it is serialised with it. Test \
                     classes — by output location or a declared test method, never by name — are out \
                     of scope; a shared test-support module's main sources and Gradle testFixtures are \
                     production output and are checked.""")
             .howNotToFix("""
                     Do NOT just delete the Jackson annotations while the entity is still serialised: \
-                    the rule stops firing, the failure an annotation was suppressing comes back, and \
-                    this rule cannot see an entity serialised without annotations. Do NOT add \
+                    a deleted @JsonIgnore puts that field — a password hash, an internal flag — into \
+                    every response, a deleted @JsonProperty renames that property for every client, a \
+                    deleted @JsonBackReference brings back the infinite recursion, and no test need \
+                    fail for the first two. This rule cannot see an entity serialised without \
+                    annotations. Do NOT replace @JsonIgnore on a getter with java.beans.Transient: \
+                    Jackson honours it as an ignore marker, and this rule does not see it. Do NOT add \
                     @JsonIgnore to the association that failed: the next lazy association fails the \
                     same way. Do NOT add @JsonIgnoreProperties({"hibernateLazyInitializer", \
                     "handler"}): it exists only because a Hibernate proxy is being serialised. Do NOT \
@@ -91,7 +106,9 @@ public final class NoAnnotationsOnEntityRule implements DocumentedRule {
                     into a mixin registered on the mapper: the wire format is still the schema, and \
                     this rule does not see mixins. Do NOT move them onto an interface or a non-entity \
                     superclass of the entity: Jackson still applies them, and this rule does not see \
-                    them. Do NOT wrap them in your own annotation meta-annotated \
+                    them. Do NOT move them into an @Embeddable the entity embeds: Jackson serialises \
+                    it as part of the entity, and this rule does not check embeddables. Do NOT wrap \
+                    them in your own annotation meta-annotated \
                     @JacksonAnnotationsInside: it is matched too, as long as ArchUnit can resolve \
                     that annotation type. Do NOT edit the freeze store.""")
             .build();

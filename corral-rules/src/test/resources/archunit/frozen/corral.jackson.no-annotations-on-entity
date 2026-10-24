@@ -1,4 +1,8 @@
 Class <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.PurchaseOrder> is annotated with <com.fasterxml.jackson.annotation.JsonIgnoreProperties> in (PurchaseOrder.java:0)
+Class <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.Vehicle> has annotation member of type <com.fasterxml.jackson.annotation.JsonSubTypes$Type> in (Vehicle.java:0)
+Class <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.Vehicle> has annotation member of type <com.fasterxml.jackson.annotation.JsonTypeInfo> in (Vehicle.java:0)
+Class <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.Vehicle> is annotated with <com.fasterxml.jackson.annotation.JsonSubTypes> in (Vehicle.java:0)
+Class <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.Vehicle> is annotated with <com.fasterxml.jackson.annotation.JsonTypeInfo> in (Vehicle.java:0)
 Field <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.AuditedBase.createdAt> is annotated with <com.fasterxml.jackson.annotation.JsonProperty> in (AuditedBase.java:0)
 Field <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.Coupon.code> is annotated with <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.WireName> in (Coupon.java:0)
 Field <io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.LegacyInvoice.issuedOn> is annotated with <com.fasterxml.jackson.annotation.JsonFormat> in (LegacyInvoice.java:0)
