@@ -118,6 +118,7 @@ class PublishedCatalogTest {
                 "corral.java.no-bigdecimal-double-constructor",
                 "corral.java.public-static-fields-must-be-final",
                 "corral.java.no-public-static-array-fields",
+                "corral.java.no-class-new-instance",
                 "corral.concurrency.no-object-monitor-methods",
                 "corral.concurrency.no-manual-thread-creation",
                 "corral.exception.no-generic-exception-thrown",
