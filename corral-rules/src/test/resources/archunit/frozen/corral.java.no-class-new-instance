@@ -1,0 +1,4 @@
+Method <io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.ReflectiveFactory.callableOf(java.lang.Class)> references method <java.lang.Class.newInstance()> in (ReflectiveFactory.java:23)
+Method <io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.ReflectiveFactory.fromName(java.lang.String)> calls method <java.lang.Class.newInstance()> in (ReflectiveFactory.java:19)
+Method <io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.ReflectiveFactory.fromType(java.lang.Class)> calls method <java.lang.Class.newInstance()> in (ReflectiveFactory.java:15)
+Method <io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.ReflectiveFactory.lambdaOf(java.lang.Class)> calls method <java.lang.Class.newInstance()> in (ReflectiveFactory.java:27)
