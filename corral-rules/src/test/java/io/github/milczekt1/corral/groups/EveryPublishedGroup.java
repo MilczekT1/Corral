@@ -46,4 +46,7 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests concurrency = ArchTests.in(ConcurrencyRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests exception = ArchTests.in(ExceptionRulesGroup.class);
 }

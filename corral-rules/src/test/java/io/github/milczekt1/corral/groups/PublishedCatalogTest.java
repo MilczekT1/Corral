@@ -117,6 +117,7 @@ class PublishedCatalogTest {
                 "corral.security.no-jdbc-statement",
                 "corral.java.no-bigdecimal-double-constructor",
                 "corral.concurrency.no-object-monitor-methods",
-                "corral.concurrency.no-manual-thread-creation"), ids);
+                "corral.concurrency.no-manual-thread-creation",
+                "corral.exception.no-generic-exception-thrown"), ids);
     }
 }
