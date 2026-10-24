@@ -11,6 +11,7 @@ import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.NoL
 import io.github.milczekt1.corral.rules.java.nooptionalfields.NoOptionalFieldsRule;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.NoOptionalMethodParametersRule;
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.SerializableMustDeclareSerialVersionUidRule;
+import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.NoTestLibrariesInProductionRule;
 import io.github.milczekt1.corral.rules.naming.lowercasepackages.LowercasePackagesRule;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.NoRepositoryInControllerRule;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.NoTransactionalInControllerRule;
@@ -85,4 +86,8 @@ public class EveryStandaloneRule {
 
     @ArchTest
     public static final ArchTests noJacksonAnnotationsOnEntity = ArchTests.in(NoAnnotationsOnEntityRule.class);
+
+    @ArchTest
+    public static final ArchTests noTestLibrariesInProduction =
+            ArchTests.in(NoTestLibrariesInProductionRule.class);
 }

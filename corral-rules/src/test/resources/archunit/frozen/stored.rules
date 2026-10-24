@@ -19,6 +19,7 @@ corral.java.no-optional-method-parameters=corral.java.no-optional-method-paramet
 corral.java.no-public-static-array-fields=corral.java.no-public-static-array-fields
 corral.java.public-static-fields-must-be-final=corral.java.public-static-fields-must-be-final
 corral.java.serializable-must-declare-serial-version-uid=corral.java.serializable-must-declare-serial-version-uid
+corral.layering.no-test-libraries-in-production=corral.layering.no-test-libraries-in-production
 corral.logging.no-print-stack-trace=corral.logging.no-print-stack-trace
 corral.naming.packages-must-be-lowercase=corral.naming.packages-must-be-lowercase
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
