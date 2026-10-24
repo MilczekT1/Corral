@@ -10,6 +10,7 @@ corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
 corral.java.no-bigdecimal-double-constructor=corral.java.no-bigdecimal-double-constructor
 corral.java.no-class-new-instance=corral.java.no-class-new-instance
+corral.java.no-finalize-override=corral.java.no-finalize-override
 corral.java.no-internal-api=corral.java.no-internal-api
 corral.java.no-legacy-date-api=corral.java.no-legacy-date-api
 corral.java.no-legacy-synchronized-collections=corral.java.no-legacy-synchronized-collections
