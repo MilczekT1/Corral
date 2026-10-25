@@ -8,6 +8,7 @@ corral.jackson.static-object-mapper-must-be-final=corral.jackson.static-object-m
 corral.jakarta.no-javax-persistence=corral.jakarta.no-javax-persistence
 corral.jakarta.no-javax-servlet=corral.jakarta.no-javax-servlet
 corral.jakarta.no-javax-validation=corral.jakarta.no-javax-validation
+corral.jakarta.persistent-class-must-have-no-arg-constructor=corral.jakarta.persistent-class-must-have-no-arg-constructor
 corral.java.no-bigdecimal-double-constructor=corral.java.no-bigdecimal-double-constructor
 corral.java.no-class-new-instance=corral.java.no-class-new-instance
 corral.java.no-finalize-override=corral.java.no-finalize-override
