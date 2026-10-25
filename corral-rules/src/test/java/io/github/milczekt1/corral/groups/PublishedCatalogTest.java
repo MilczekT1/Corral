@@ -115,6 +115,7 @@ class PublishedCatalogTest {
                 "corral.spring.no-final-component",
                 "corral.spring.no-component-on-abstract-class",
                 "corral.spring.no-application-context-injection",
+                "corral.spring.constrained-configuration-properties-must-be-validated",
                 "corral.security.no-jdbc-statement",
                 "corral.java.no-bigdecimal-double-constructor",
                 "corral.java.public-static-fields-must-be-final",

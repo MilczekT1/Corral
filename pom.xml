@@ -65,6 +65,7 @@
     <jackson3.version>3.2.4</jackson3.version>
     <jackson-annotations.version>2.22</jackson-annotations.version>
     <hibernate.version>7.4.14.Final</hibernate.version>
+    <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
     <mockito.version>5.24.0</mockito.version>
     <assertj.version>3.27.7</assertj.version>
     <testcontainers.version>2.0.5</testcontainers.version>
@@ -252,6 +253,11 @@
         <groupId>org.hibernate.orm</groupId>
         <artifactId>hibernate-core</artifactId>
         <version>${hibernate.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.hibernate.validator</groupId>
+        <artifactId>hibernate-validator</artifactId>
+        <version>${hibernate-validator.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
