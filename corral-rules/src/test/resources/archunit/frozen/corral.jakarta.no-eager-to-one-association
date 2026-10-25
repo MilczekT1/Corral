@@ -1,0 +1,8 @@
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.LegacyInvoice.customer> is a to-one association that may be fetched eagerly in (LegacyInvoice.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.LegacyInvoice.payer> is a to-one association that may be fetched eagerly in (LegacyInvoice.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder.approver> is a to-one association that may be fetched eagerly in (PurchaseOrder.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder.billingAddress> is a to-one association that may be fetched eagerly in (PurchaseOrder.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder.customer> is a to-one association that may be fetched eagerly in (PurchaseOrder.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder.reseller> is a to-one association that may be fetched eagerly in (PurchaseOrder.java:0)
+Field <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder.warehouse> is a to-one association that may be fetched eagerly in (PurchaseOrder.java:0)
+Method <io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.Subscription.getCustomer()> is a to-one association that may be fetched eagerly in (Subscription.java:34)
