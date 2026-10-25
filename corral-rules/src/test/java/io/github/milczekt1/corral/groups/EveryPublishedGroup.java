@@ -36,6 +36,9 @@ public class EveryPublishedGroup {
     public static final ArchTests jakartaMigration = ArchTests.in(JakartaMigrationRulesGroup.class);
 
     @ArchTest
+    public static final ArchTests jakartaPersistence = ArchTests.in(JakartaPersistenceRulesGroup.class);
+
+    @ArchTest
     public static final ArchTests spring = ArchTests.in(SpringRulesGroup.class);
 
     @ArchTest
