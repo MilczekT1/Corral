@@ -1,5 +1,7 @@
 package io.github.milczekt1.corral.settings;
 
+import io.github.milczekt1.corral.doc.RuleDoc;
+import java.util.function.Supplier;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -26,6 +28,33 @@ public class CorralSettings {
     /** {@link SettingsFile#classPathWarning()} of {@link #current()}. */
     public static String classPathWarning() {
         return current().classPathWarning();
+    }
+
+    /**
+     * The value of {@code key}, looked up on every {@code get()} — so read it while the rule is
+     * evaluated, never while its class initialises. Never put the value in a description or a
+     * violation message: those are freeze-store matching keys, and changing the setting would
+     * resurface every frozen violation.
+     *
+     * @throws IllegalArgumentException when {@code doc} does not declare {@code key} with
+     *                                  {@code requiredSetting}; the supplier throws
+     *                                  {@code IllegalStateException} when the value is absent
+     */
+    public static Supplier<String> setting(RuleDoc doc, String key) {
+        return setting(doc, key, CorralSettings::current);
+    }
+
+    static Supplier<String> setting(RuleDoc doc, String key, Supplier<SettingsFile> source) {
+        if (!doc.requiredSettings().contains(key)) {
+            throw new IllegalArgumentException("rule '" + doc.id() + "' reads setting '" + key
+                    + "' without declaring it: add .requiredSetting(\"" + key + "\") to its RuleDoc, or a"
+                    + " missing value passes unnoticed whenever the rule matches nothing");
+        }
+        return () -> source.get().value(key).orElseThrow(() -> new IllegalStateException(missing(key)));
+    }
+
+    static String missing(String key) {
+        return key + " is not set. Add it to src/test/resources/" + FILE + ".";
     }
 
     /** Mirrors {@code ClassLoaders.getCurrentClassLoader}, how ArchUnit resolves its own files. */

@@ -1,7 +1,10 @@
 package io.github.milczekt1.corral.doc;
 
+import java.util.HashSet;
+import java.util.List;
 import java.util.regex.Pattern;
 import lombok.Builder;
+import lombok.Singular;
 
 /**
  * Structured, agent-facing documentation for a single architecture rule.
@@ -16,9 +19,12 @@ import lombok.Builder;
  *
  * @param howNotToFix rule-specific anti-fix guidance, or {@code null} when the rule adds none;
  *                    blank text is normalised to {@code null}
+ * @param requiredSettings {@code corral.properties} keys this rule cannot run without; a missing one
+ *                         fails the rule even when it would never read the value
  */
 @Builder
-public record RuleDoc(String id, String why, String howToFix, String howNotToFix) {
+public record RuleDoc(
+        String id, String why, String howToFix, String howNotToFix, @Singular List<String> requiredSettings) {
 
     /**
      * Lower-case, dot-namespaced, kebab-cased segments — e.g. {@code acme.no-stdout-in-services}.
@@ -38,6 +44,8 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
         requireText(howToFix, "howToFix");
         throwOnInvalidId(id);
         howNotToFix = trimmedOrNull(howNotToFix);
+        requiredSettings = requiredSettings == null ? List.of() : List.copyOf(requiredSettings);
+        throwOnInvalidSettings(id, requiredSettings);
     }
 
     public boolean hasHowNotToFix() {
@@ -81,6 +89,19 @@ public record RuleDoc(String id, String why, String howToFix, String howNotToFix
                     + " segments; the cap is " + MAX_ID_SEGMENTS + ". The id becomes a file name in"
                     + " every consumer's freeze store — a deep hierarchy belongs in a group, which can"
                     + " be reorganised, not in the id, which cannot.");
+        }
+    }
+
+    private static void throwOnInvalidSettings(String id, List<String> requiredSettings) {
+        var seen = new HashSet<String>();
+        for (String key : requiredSettings) {
+            if (!isId(key)) {
+                throw new IllegalArgumentException("rule '" + id + "' requires setting '" + key
+                        + "', which is not a lower-case, dot-namespaced, kebab-cased key");
+            }
+            if (!seen.add(key)) {
+                throw new IllegalArgumentException("rule '" + id + "' requires setting '" + key + "' twice");
+            }
         }
     }
 
