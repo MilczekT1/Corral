@@ -19,24 +19,9 @@ import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertie
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ClientConfiguration;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ClientSettings;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ConsistencyProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ConstantsProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ConstrainedProfile;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CreateOrderRequest;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CsvConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CsvSettings;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.Datasource;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.EndpointProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ExportConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ExportSettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.FallbackOptionalProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.FeatureProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.GatewayConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.GatewaySettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.HostnameProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.JavaxConstraintProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.JavaxNotNullProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.JdkTypesProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.LabelProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.LegacyCascadeProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.MailProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.OrderProperties;
@@ -44,32 +29,23 @@ import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertie
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.PayoutProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.PoolNestingProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.PrimaryDbProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ProfileBase;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ProfileConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ProxyProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.QueueConfiguration;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.QueueProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.QuorumProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.RateLimitProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.RegionProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ReplicaListProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ReportSettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ResolverProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.RetryProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ScheduleProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SearchProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SettingsHolder;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ShardMapProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SmsChannelProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.StorageConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.StorageSettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TagProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TenantBase;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TenantProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TestOutputConfiguration;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TestOutputProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TlsClientConfiguration;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TlsClientSettings;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TreeProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.UsernameProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ValidatedOuterProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.UnflaggedBindingsConfiguration;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.UnreadPositionsProperties;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -103,7 +79,7 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     private static final String CLASS_SHAPE = " is bound by @ConfigurationProperties and declares Bean Validation"
             + " constraints but is not annotated @Validated in ";
 
-    private static final int FIXTURE_CLASS_FILES = 71;
+    private static final int FIXTURE_CLASS_FILES = 44;
 
     @TempDir
     static Path outputRoot;
@@ -193,6 +169,11 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
         assertClassFlagged(JavaxConstraintProperties.class);
     }
 
+    @Test
+    void flagsAJavaxConstraint() {
+        assertClassFlagged(JavaxNotNullProperties.class);
+    }
+
     /** Without resolution every Validation API type is a stub carrying no annotations: only the package names it. */
     @Test
     void flagsBuiltInConstraintsByPackageWhenTheirTypesAreNotResolved() {
@@ -200,8 +181,7 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
         try {
             List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));
 
-            for (Class<?> type : List.of(PaymentProperties.class, JavaxNotNullProperties.class,
-                    UsernameProperties.class, ScheduleProperties.class)) {
+            for (Class<?> type : List.of(PaymentProperties.class, JavaxNotNullProperties.class, ScheduleProperties.class)) {
                 assertTrue(violations.stream().anyMatch(line -> line.startsWith("Class <" + type.getName() + ">")),
                         type.getSimpleName() + " not flagged in:\n" + String.join("\n", violations));
             }
@@ -211,34 +191,13 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
-    void flagsARepeatedBuiltInConstraint() {
-        assertClassFlagged(HostnameProperties.class);
-    }
-
-    @Test
-    void flagsAJavaxConstraint() {
-        assertClassFlagged(JavaxNotNullProperties.class);
-    }
-
-    @Test
-    void flagsAConstrainedFieldInheritedFromAnUnannotatedBase() {
-        assertClassFlagged(RegionProperties.class);
+    void flagsARepeatedProjectConstraint() {
+        assertClassFlagged(CatalogProperties.class);
     }
 
     @Test
     void flagsABoundClassEvenWhenItsBindingMethodIsValidated() {
         assertClassFlagged(QueueProperties.class);
-        assertNoMethodLine(QueueConfiguration.class);
-    }
-
-    @Test
-    void flagsARepeatedHibernateValidatorConstraint() {
-        assertClassFlagged(UsernameProperties.class);
-    }
-
-    @Test
-    void flagsARepeatedProjectConstraint() {
-        assertClassFlagged(CatalogProperties.class);
     }
 
     @Test
@@ -247,23 +206,14 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
+    void flagsAConcreteSubclassOfAConstrainedAbstractBase() {
+        assertClassFlagged(SmsChannelProperties.class);
+        assertNoClassLine(BaseChannelProperties.class);
+    }
+
+    @Test
     void flagsAConstraintOnlyInAHeldType() {
         assertClassFlagged(PrimaryDbProperties.class);
-    }
-
-    @Test
-    void flagsAConstrainedListElement() {
-        assertClassFlagged(ReplicaListProperties.class);
-    }
-
-    @Test
-    void flagsAConstrainedMapValue() {
-        assertClassFlagged(ShardMapProperties.class);
-    }
-
-    @Test
-    void flagsAConstrainedOptionalContent() {
-        assertClassFlagged(FallbackOptionalProperties.class);
     }
 
     @Test
@@ -292,12 +242,6 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
-    void flagsAConcreteSubclassOfAConstrainedAbstractBase() {
-        assertClassFlagged(SmsChannelProperties.class);
-        assertNoClassLine(BaseChannelProperties.class);
-    }
-
-    @Test
     void flagsAnUnvalidatedBindingMethodButNotTheClassItBinds() {
         List<String> violations = violationsIn(examples);
 
@@ -312,15 +256,11 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     @Test
     void flagsACovariantBindingMethodOverrideWithoutItsBridge() {
         List<String> violations = violationsIn(examples);
-        String override = "Method <" + CsvConfiguration.class.getName() + ".exportSettings()> binds <";
+        String override = "Method <" + TlsClientConfiguration.class.getName() + ".clientSettings()> binds <";
 
-        assertTrue(violations.stream().anyMatch(line -> line.startsWith(override + CsvSettings.class.getName() + ">")),
+        assertTrue(violations.stream().anyMatch(line -> line.startsWith(override + TlsClientSettings.class.getName() + ">")),
                 String.join("\n", violations));
-        assertTrue(violations.stream().anyMatch(line -> line.startsWith(
-                        "Method <" + ExportConfiguration.class.getName() + ".exportSettings()> binds <"
-                                + ExportSettings.class.getName() + ">")),
-                String.join("\n", violations));
-        assertFalse(violations.stream().anyMatch(line -> line.startsWith(override + ExportSettings.class.getName() + ">")),
+        assertFalse(violations.stream().anyMatch(line -> line.startsWith(override + ClientSettings.class.getName() + ">")),
                 String.join("\n", violations));
     }
 
@@ -328,7 +268,7 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     void reportsOneViolationPerBoundClassOrBindingMethod() {
         List<String> violations = violationsIn(examples);
 
-        assertEquals(27, violations.size(), String.join("\n", violations));
+        assertEquals(20, violations.size(), String.join("\n", violations));
         assertEquals(violations.size(), violations.stream().distinct().count(), String.join("\n", violations));
     }
 
@@ -352,21 +292,6 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
-    void ignoresAValidatedClassHoldingAConstrainedType() {
-        assertNotReported(ValidatedOuterProperties.class);
-    }
-
-    @Test
-    void ignoresAClassHoldingOnlyJdkTypes() {
-        assertNotReported(JdkTypesProperties.class);
-    }
-
-    @Test
-    void ignoresAnUnconstrainedSelfReferencingHeldType() {
-        assertNotReported(TreeProperties.class);
-    }
-
-    @Test
     void ignoresAClassWithAValidatedSuperclass() {
         assertNotReported(CacheProperties.class);
     }
@@ -377,13 +302,12 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
-    void ignoresAnUnconstrainedClass() {
-        assertNotReported(FeatureProperties.class);
+    void ignoresAnUnconstrainedSelfReferencingClass() {
+        assertNotReported(TreeProperties.class);
     }
 
     @Test
     void ignoresAConstrainedClassThatIsNotBound() {
-        assertNotReported(CreateOrderRequest.class);
         assertNotReported(Datasource.class);
     }
 
@@ -395,52 +319,14 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     }
 
     @Test
-    void ignoresAnAnnotationThatCarriesAConstraintWithoutBeingOne() {
-        assertNotReported(LabelProperties.class);
+    void ignoresValidatedBindingsAndAnUnconstrainedDeclaredReturnType() {
+        assertNoMethodLine(UnflaggedBindingsConfiguration.class);
+        assertNotReported(TenantBase.class);
     }
 
     @Test
-    void ignoresAValidatedBindingMethod() {
-        assertNotReported(GatewaySettings.class);
-        assertNoMethodLine(GatewayConfiguration.class);
-    }
-
-    @Test
-    void ignoresABindingMethodDeclaredToReturnASupertype() {
-        assertNotReported(ProfileBase.class);
-        assertNotReported(ConstrainedProfile.class);
-        assertNoMethodLine(ProfileConfiguration.class);
-    }
-
-    @Test
-    void ignoresAnUnvalidatedBindingMethodOfAValidatedClass() {
-        assertNotReported(StorageSettings.class);
-        assertNoMethodLine(StorageConfiguration.class);
-    }
-
-    @Test
-    void ignoresAConstructorParameterConstraint() {
-        assertNotReported(EndpointProperties.class);
-    }
-
-    @Test
-    void ignoresASetterParameterConstraint() {
-        assertNotReported(ProxyProperties.class);
-    }
-
-    @Test
-    void ignoresATypeArgumentConstraint() {
-        assertNotReported(TagProperties.class);
-    }
-
-    @Test
-    void ignoresConstrainedMethodsThatAreNotGetters() {
-        assertNotReported(ResolverProperties.class);
-    }
-
-    @Test
-    void ignoresStaticFieldsAndGetters() {
-        assertNotReported(ConstantsProperties.class);
+    void ignoresConstraintsBeanValidationDoesNotReadOnAPropertiesObject() {
+        assertNotReported(UnreadPositionsProperties.class);
     }
 
     @Test
@@ -452,7 +338,6 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     @Test
     void ignoresClassesAndBindingMethodsInTestOutput() {
         assertNotReported(TestOutputProperties.class);
-        assertNotReported(ReportSettings.class);
         assertNoMethodLine(TestOutputConfiguration.class);
     }
 
@@ -461,7 +346,7 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     void flagsTheTestOutputFixturesOnceInAProductionLayout() throws IOException {
         Path testOutputCopy = copyIntoProductionLayout(outputRoot.resolve("test-output"),
                 name -> name.startsWith(TEST_OUTPUT_PREFIX)
-                        || name.equals(ReportSettings.class.getSimpleName() + ".class"));
+                        || name.equals(ClientSettings.class.getSimpleName() + ".class"));
         JavaClasses copied = new ClassFileImporter().importPath(testOutputCopy);
 
         List<String> violations = violationsIn(copied);

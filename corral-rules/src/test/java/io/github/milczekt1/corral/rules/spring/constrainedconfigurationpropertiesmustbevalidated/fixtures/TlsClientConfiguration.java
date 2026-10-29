@@ -4,12 +4,13 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** MUST IGNORE {@code profile()}: only the declared return type is read, and it is unconstrained. */
+/** MUST FLAG {@code clientSettings()} once; its synthetic bridge returning {@link ClientSettings} MUST NOT. */
 @Configuration
-public class ProfileConfiguration {
+public class TlsClientConfiguration extends ClientConfiguration {
+    @Override
     @Bean
-    @ConfigurationProperties("profile")
-    public ProfileBase profile() {
-        return new ConstrainedProfile();
+    @ConfigurationProperties("client")
+    public TlsClientSettings clientSettings() {
+        return new TlsClientSettings();
     }
 }

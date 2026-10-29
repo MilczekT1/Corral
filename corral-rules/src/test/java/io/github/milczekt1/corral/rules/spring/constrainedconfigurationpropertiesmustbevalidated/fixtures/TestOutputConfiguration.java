@@ -9,7 +9,7 @@ import org.springframework.context.annotation.Configuration;
 public class TestOutputConfiguration {
     @Bean
     @ConfigurationProperties("report")
-    public ReportSettings reportSettings() {
-        return new ReportSettings();
+    public ClientSettings reportSettings() {
+        return new ClientSettings();
     }
 }

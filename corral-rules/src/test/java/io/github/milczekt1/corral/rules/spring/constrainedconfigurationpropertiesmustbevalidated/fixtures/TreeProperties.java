@@ -2,8 +2,8 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST IGNORE: the self-referencing {@link TreeNode} carries no constraint. */
+/** MUST IGNORE: holds itself, with no constraints, so the descent must terminate. */
 @ConfigurationProperties("tree")
 public class TreeProperties {
-    private TreeNode root = new TreeNode();
+    private TreeProperties child;
 }
