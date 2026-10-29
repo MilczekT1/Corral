@@ -122,6 +122,7 @@ class PublishedCatalogTest {
                 "corral.java.no-public-static-array-fields",
                 "corral.java.no-class-new-instance",
                 "corral.java.no-finalize-override",
+                "corral.java.no-equals-without-hashcode",
                 "corral.concurrency.no-object-monitor-methods",
                 "corral.concurrency.no-manual-thread-creation",
                 "corral.exception.no-generic-exception-thrown",

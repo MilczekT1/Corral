@@ -1,0 +1,6 @@
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.Barcode> overrides equals(Object) without hashCode() in (Barcode.java:19)
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.IdentityToken> overrides equals(Object) without hashCode() in (IdentityToken.java:8)
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.Money> overrides equals(Object) without hashCode() in (Money.java:14)
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.ProductCode> overrides equals(Object) without hashCode() in (ProductCode.java:14)
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.RouteList> overrides equals(Object) without hashCode() in (RouteList.java:10)
+Class <io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.ValidationFailure> overrides equals(Object) without hashCode() in (ValidationFailure.java:15)
