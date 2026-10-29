@@ -6,6 +6,7 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.settings.BasePackage;
 import io.github.milczekt1.corral.settings.CorralSettings;
 import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
@@ -48,7 +49,8 @@ public interface DocumentedRule {
      * <p>The one place every rule class reaches, so {@link IgnorePatternsGuard},
      * {@link RuleExclusions} and the run-wide {@link FirstEvaluationWarning}s hook in here.
      *
-     * <p>Order matters. The run-wide warnings sit inside the freeze, so the result stays a
+     * <p>Order matters. A base package that matches no imported class fails inside the freeze, before
+     * the store can record the rule's debt as resolved. The run-wide warnings sit inside the freeze, so the result stays a
      * {@link FreezingArchRule} that a test can hand a store with {@code persistIn}. A missing required
      * setting fails the frozen rule without reaching the store. The exclusion wraps that, keeping an
      * excluded rule out of the freeze store and needing no settings; the ignore-patterns check is
@@ -56,8 +58,10 @@ public interface DocumentedRule {
      */
     default ArchRule guard() {
         RuleRegistry.register(doc());
+        ArchRule covered = BasePackage.requireMatchingClasses(
+                definition().as(doc().id()).allowEmptyShould(true), doc());
         ArchRule warnedOnce = FirstEvaluationWarning.wrap(
-                definition().as(doc().id()).allowEmptyShould(true),
+                covered,
                 List.of(RuleExclusions::unmatchedWarning, UnclaimedStoreEntries::warning,
                         CorralSettings::classPathWarning, RequiredSettings::undeclaredKeysWarning));
         ArchRule frozen = FreezingArchRule.freeze(warnedOnce);

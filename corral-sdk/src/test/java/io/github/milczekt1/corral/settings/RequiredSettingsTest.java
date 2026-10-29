@@ -69,6 +69,14 @@ class RequiredSettingsTest {
         assertThrows(AssertionError.class, () -> applied.check(SOME_CLASSES));
     }
 
+    /** This build carries no corral.properties, so the public entry point sees every key missing. */
+    @Test
+    void thePublicEntryPointChecksThisBuildsSettings() {
+        ArchRule applied = RequiredSettings.applyTo(RULE, requiring("acme.x"));
+
+        assertThrows(AssertionError.class, () -> applied.check(SOME_CLASSES));
+    }
+
     @Test
     void aBrokenFileLeavesTheRuleToTheExclusionPath() {
         assertSame(RULE, RequiredSettings.applyTo(RULE, requiring(BASE_PACKAGE), SettingsFile.broken("boom")));

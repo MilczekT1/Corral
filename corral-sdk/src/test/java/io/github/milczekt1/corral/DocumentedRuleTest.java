@@ -19,6 +19,7 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.settings.BasePackage;
 import io.github.milczekt1.corral.settings.CorralSettings;
 import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
@@ -182,6 +183,25 @@ class DocumentedRuleTest {
         assertTrue(freeze >= 0 && required >= 0 && exclude >= 0, () -> "expected all three calls, got " + callOrder);
         assertTrue(freeze < required && required < exclude,
                 () -> "expected freeze, then RequiredSettings.applyTo, then RuleExclusions.applyTo: " + callOrder);
+    }
+
+    /** Inside the freeze, or an unmatched base package reaches the store as resolved debt. */
+    @Test
+    void theBasePackageMustMatchInsideTheFreeze() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+        List<String> callOrder = guard.getMethodCallsFromSelf().stream()
+                .sorted(Comparator.comparingInt(JavaAccess::getLineNumber))
+                .map(call -> call.getTargetOwner().getSimpleName() + "." + call.getName())
+                .toList();
+
+        int covered = callOrder.indexOf("BasePackage.requireMatchingClasses");
+        int freeze = callOrder.indexOf("FreezingArchRule.freeze");
+
+        assertTrue(covered >= 0 && covered < freeze,
+                () -> "expected BasePackage.requireMatchingClasses before the freeze: " + callOrder);
     }
 
     /** The wiring, not the mechanism — {@code SettingsFileTest} and {@code RequiredSettingsTest} own that. */

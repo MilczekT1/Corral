@@ -34,7 +34,11 @@ public class IgnorePatternsGuard {
 
     /** {@code rule} unchanged, or one that fails with {@link #messageFor} when the file is found. */
     public static ArchRule interposeOn(ArchRule rule) {
-        return interposeOn(rule, LOCATIONS, CorralSettings.current().ignorePatternsFail());
+        return interposeOn(rule, LOCATIONS);
+    }
+
+    static ArchRule interposeOn(ArchRule rule, List<URL> locations) {
+        return interposeOn(rule, locations, CorralSettings.current().ignorePatternsFail());
     }
 
     static ArchRule interposeOn(ArchRule rule, List<URL> locations, boolean failEnabled) {

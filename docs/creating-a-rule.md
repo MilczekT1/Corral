@@ -121,8 +121,9 @@ static final ArchRule DEFINITION = noClasses()
 - **Values are read when the rule runs, not when its class loads.** Use the supplier from
   `CorralSettings.setting` inside a predicate or condition; calling `get()` in a static initialiser
   turns a missing key into an `ExceptionInInitializerError`.
-- **A rule reading `corral.base-package` must fail when the package matches no imported class.**
-  A wrong but well-formed package otherwise looks exactly like a codebase with nothing to check.
+- **A rule declaring `corral.base-package` fails when no imported class resides in it.** `guard()`
+  checks this inside the freeze, because a wrong but well-formed package otherwise passes the rule
+  and records its debt as resolved.
 
 ## 3. Examples and test
 

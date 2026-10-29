@@ -63,8 +63,9 @@ change.
 The rule reads `corral.base-package` from `corral.properties` rather than hard-coding
 `com.example.consumer`. It declares the key with `requiredSetting`, so deleting that line fails the
 rule with `corral.base-package is not set` — even in a module with no service classes for it to
-match. The description says "the configured base package", never the value, so changing the setting
-leaves every frozen violation where it is.
+match. The description says "the configured base package", never the value, so moving the setting
+to another package that still holds the same classes leaves every frozen violation where it is. A
+value that matches no imported class, such as a typo, fails the rule instead of passing it.
 
 ## Anti-fix guidance
 

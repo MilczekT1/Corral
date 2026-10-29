@@ -111,12 +111,12 @@ class IgnorePatternsGuardTest {
     /** A consumer who configured nothing gets the failing behaviour. */
     @Test
     void failsByDefaultWhenThePropertyIsNotConfigured(@TempDir Path root) throws IOException {
-        boolean failEnabled = CorralSettings.current().ignorePatternsFail();
-        assertTrue(failEnabled, "this module must not disarm the check, or the assertion below proves nothing");
-        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root), failEnabled);
-        JavaClasses none = nothingToMatch();
+        assertTrue(CorralSettings.current().ignorePatternsFail(),
+                "this module must not disarm the check, or the assertion below proves nothing");
+        String message = failureOf(IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root)));
 
-        assertThrows(AssertionError.class, () -> detected.check(none));
+        assertTrue(message.contains(IGNORE_PATTERNS_FILE),
+                () -> "the guard did not fire; the rule failed for another reason: " + message);
     }
 
     /** The absent direction end to end, through the memoised scan of this build's real classpath. */

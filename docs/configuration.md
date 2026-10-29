@@ -34,7 +34,7 @@ corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interfa
 
 | Key | Notes |
 |---|---|
-| `corral.base-package` | The project's root package, for rules that declare they need it. Must be a valid Java package name. A rule that declares it fails, naming the key, when it is missing. |
+| `corral.base-package` | The project's root package, for rules that declare they need it. Must be a valid Java package name. A rule that declares it fails, naming the key, when it is missing or when no imported class resides in it. |
 | `corral.ignore-patterns.fail` | See the table above. |
 | `corral.exclude.<rule-id>` | See [Excluding a rule](excluding-a-rule.md). |
 | anything outside `corral.` | Read by your own rules. A key no rule in the run declares logs a warning. |
