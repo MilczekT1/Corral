@@ -78,6 +78,21 @@ class RequiredSettingsTest {
     }
 
     @Test
+    void aRuleReadingAnUndeclaredKeyFailsNamingTheFix() {
+        RuleDoc declaringNothing = RuleDoc.builder()
+                .id("test.no-undeclared-read-fixture")
+                .why("A fixture for RequiredSettingsTest.")
+                .howToFix("N/A — this is a test fixture, not a real rule.")
+                .build();
+        CorralSettings.setting(declaringNothing, "acme.y");
+
+        ArchRule applied = RequiredSettings.applyTo(RULE, declaringNothing, parse("acme.y=x"));
+
+        AssertionError thrown = assertThrows(AssertionError.class, () -> applied.check(SOME_CLASSES));
+        assertTrue(thrown.getMessage().contains(".requiredSetting(\"acme.y\")"), thrown.getMessage());
+    }
+
+    @Test
     void aBrokenFileLeavesTheRuleToTheExclusionPath() {
         assertSame(RULE, RequiredSettings.applyTo(RULE, requiring(BASE_PACKAGE), SettingsFile.broken("boom")));
     }

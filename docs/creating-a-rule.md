@@ -112,9 +112,10 @@ static final ArchRule DEFINITION = noClasses()
 ```
 
 - **Declare every key you read** with `requiredSetting`. `guard()` fails the rule when a declared key
-  is missing, even if the rule matches nothing and would never read the value. Reading an
-  undeclared key through `CorralSettings.setting(DOC, key)` throws, so `DOC` must sit above
-  `DEFINITION`.
+  is missing, even if the rule matches nothing and would never read the value. Reading a key you did
+  not declare through `CorralSettings.setting(DOC, key)` fails the rule, naming the
+  `.requiredSetting(...)` line to add. `DOC` must sit above `DEFINITION`, or `DEFINITION` reads
+  `null`.
 - **Never put the value in a description or a violation message.** Both are freeze-store matching
   keys: a consumer who changes the setting would see every frozen violation resurface as new.
   `BasePackage.resideIn` describes itself as "the configured base package" for this reason.

@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.settings;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
@@ -29,18 +30,22 @@ class SettingHandleTest {
 
     private static final JavaClasses PRINTING_SERVICE = new ClassFileImporter().importClasses(PrintingService.class);
 
+    /** A throw here happens during class init, which the ArchUnit engine reports without its cause. */
     @Test
-    void readingAnUndeclaredKeyFailsAtOnce() {
-        RuleDoc declaringNothing = RuleDoc.builder()
-                .id("test.no-undeclared-setting-fixture")
-                .why("A fixture for SettingHandleTest.")
-                .howToFix("N/A — this is a test fixture, not a real rule.")
-                .build();
+    void readingAnUndeclaredKeyDoesNotThrowWhileTheRuleIsBuilt() {
+        RuleDoc declaringNothing = declaringNothing("test.no-undeclared-build-fixture");
 
-        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class,
-                () -> CorralSettings.setting(declaringNothing, BASE_PACKAGE));
+        assertDoesNotThrow(() -> CorralSettings.setting(declaringNothing, BASE_PACKAGE, () -> basePackage("com.a")));
+    }
 
-        assertTrue(thrown.getMessage().contains(BASE_PACKAGE), thrown.getMessage());
+    @Test
+    void anUndeclaredKeyFailsOnGetNamingTheFix() {
+        Supplier<String> handle = CorralSettings.setting(
+                declaringNothing("test.no-undeclared-get-fixture"), BASE_PACKAGE, () -> basePackage("com.a"));
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class, handle::get);
+
+        assertTrue(thrown.getMessage().contains(".requiredSetting(\"" + BASE_PACKAGE + "\")"), thrown.getMessage());
     }
 
     @Test
@@ -102,6 +107,14 @@ class SettingHandleTest {
                 .that(BasePackage.resideIn(REQUIRING_BASE_PACKAGE, "..service..", () -> basePackage(base)))
                 .should().callMethod(PrintStream.class, "println", String.class)
                 .allowEmptyShould(true);
+    }
+
+    private static RuleDoc declaringNothing(String id) {
+        return RuleDoc.builder()
+                .id(id)
+                .why("A fixture for SettingHandleTest.")
+                .howToFix("N/A — this is a test fixture, not a real rule.")
+                .build();
     }
 
     private static SettingsFile basePackage(String value) {

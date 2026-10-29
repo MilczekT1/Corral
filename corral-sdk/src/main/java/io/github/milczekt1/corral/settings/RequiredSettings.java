@@ -27,6 +27,12 @@ public class RequiredSettings {
     }
 
     static ArchRule applyTo(ArchRule rule, RuleDoc doc, SettingsFile settings) {
+        Set<String> undeclared = CorralSettings.undeclaredReads(doc.id());
+        if (!undeclared.isEmpty()) {
+            return new Unconfigured(rule.getDescription(), undeclared.stream().sorted()
+                    .map(key -> CorralSettings.undeclared(doc.id(), key))
+                    .collect(joining(System.lineSeparator())));
+        }
         if (settings.isBroken()) {
             return rule;
         }
