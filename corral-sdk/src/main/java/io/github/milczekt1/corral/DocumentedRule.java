@@ -6,6 +6,8 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
 import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.util.List;
@@ -47,17 +49,20 @@ public interface DocumentedRule {
      * {@link RuleExclusions} and the run-wide {@link FirstEvaluationWarning}s hook in here.
      *
      * <p>Order matters. The run-wide warnings sit inside the freeze, so the result stays a
-     * {@link FreezingArchRule} that a test can hand a store with {@code persistIn}. The exclusion wraps
-     * the frozen rule, keeping an excluded rule out of the freeze store; the ignore-patterns check is
+     * {@link FreezingArchRule} that a test can hand a store with {@code persistIn}. A missing required
+     * setting fails the frozen rule without reaching the store. The exclusion wraps that, keeping an
+     * excluded rule out of the freeze store and needing no settings; the ignore-patterns check is
      * outermost, so a kill switch is reported even for an excluded rule.
      */
     default ArchRule guard() {
         RuleRegistry.register(doc());
         ArchRule warnedOnce = FirstEvaluationWarning.wrap(
                 definition().as(doc().id()).allowEmptyShould(true),
-                List.of(RuleExclusions::unmatchedWarning, UnclaimedStoreEntries::warning));
+                List.of(RuleExclusions::unmatchedWarning, UnclaimedStoreEntries::warning,
+                        CorralSettings::classPathWarning, RequiredSettings::undeclaredKeysWarning));
         ArchRule frozen = FreezingArchRule.freeze(warnedOnce);
-        ArchRule enforcedHere = RuleExclusions.applyTo(frozen, doc().id());
+        ArchRule configured = RequiredSettings.applyTo(frozen, doc());
+        ArchRule enforcedHere = RuleExclusions.applyTo(configured, doc().id());
         return IgnorePatternsGuard.interposeOn(enforcedHere);
     }
 }
