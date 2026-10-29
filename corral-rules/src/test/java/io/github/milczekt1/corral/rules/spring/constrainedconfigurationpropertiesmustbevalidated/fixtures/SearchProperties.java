@@ -3,7 +3,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.Valid;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST FLAG: {@code @Valid} alone is ignored without {@code @Validated}. */
+/** FLAGGED: {@code jakarta} {@code @Valid} alone counts as a constraint. */
 @ConfigurationProperties("search")
 public class SearchProperties {
     @Valid

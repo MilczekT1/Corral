@@ -3,7 +3,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.constraints.AssertTrue;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST FLAG: the only constraint is on a {@code has*} getter, which Hibernate Validator reads. */
+/** FLAGGED: the only constraint is on a {@code has*} getter, which Hibernate Validator reads. */
 @ConfigurationProperties("quorum")
 public class QuorumProperties {
     private int voters;

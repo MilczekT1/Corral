@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.validation.annotation.Validated;
 
-/** A project annotation composing {@code @Validated}. */
+/** Not an example: a project annotation composing {@code @Validated}. */
 @Validated
 @Target(ElementType.TYPE)
 @Retention(RetentionPolicy.RUNTIME)

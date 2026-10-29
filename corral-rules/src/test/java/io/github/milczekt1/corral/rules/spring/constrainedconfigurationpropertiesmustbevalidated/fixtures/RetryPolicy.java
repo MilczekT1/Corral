@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 
 import jakarta.validation.constraints.Positive;
 
-/** MUST IGNORE: an interface, never bound itself. */
+/** NOT FLAGGED: an interface is never bound itself. */
 public interface RetryPolicy {
     @Positive
     int getMaxAttempts();

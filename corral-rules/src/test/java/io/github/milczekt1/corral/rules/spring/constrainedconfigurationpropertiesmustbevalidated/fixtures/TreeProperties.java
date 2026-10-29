@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST IGNORE: holds itself, with no constraints, so the descent must terminate. */
+/** NOT FLAGGED: has no constraints; it holds itself, so the search must terminate. */
 @ConfigurationProperties("tree")
 public class TreeProperties {
     private TreeProperties child;

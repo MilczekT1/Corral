@@ -3,7 +3,9 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST FLAG: javac copies the record component's constraint onto the field. */
-@ConfigurationProperties("mail")
-public record MailProperties(@NotBlank String host) {
+/** NOT FLAGGED: abstract, so Boot never binds it; its concrete subclass is reported instead. */
+@ConfigurationProperties("channel")
+public abstract class ChannelProperties {
+    @NotBlank
+    private String sender;
 }

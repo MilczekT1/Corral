@@ -4,8 +4,8 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST FLAG: the constrained type is nested two type arguments deep. */
+/** FLAGGED: the only constraint is in {@link Datasource}, held two type arguments deep. */
 @ConfigurationProperties("pools")
-public class PoolNestingProperties {
+public class PoolProperties {
     private Map<String, List<Datasource>> pools = Map.of();
 }

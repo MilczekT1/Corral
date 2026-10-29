@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 
 import jakarta.validation.constraints.NotBlank;
 
-/** MUST IGNORE: constrained but not bound; the classes holding it are. */
+/** NOT FLAGGED: constrained, but not bound; the class holding it is. */
 public class Datasource {
     @NotBlank
     private String url;

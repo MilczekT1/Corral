@@ -6,7 +6,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** Carries {@code @NotBlank} without being a {@code @Constraint}, so Bean Validation ignores it. */
+/** Not an example: carries {@code @NotBlank} without being a {@code @Constraint}, so Bean Validation ignores it. */
 @NotBlank
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

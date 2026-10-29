@@ -3,12 +3,12 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST IGNORE: not bound; its inner {@link Section} references it only through {@code this$0}. */
+/** NOT FLAGGED: not bound. */
 public class SettingsHolder {
     @NotBlank
     private String owner = "ops";
 
-    /** MUST IGNORE: bound and unconstrained; the synthetic outer reference is not a property. */
+    /** NOT FLAGGED: its only link to the constrained outer class is the synthetic {@code this$0}. */
     @ConfigurationProperties("section")
     public class Section {
         private String title;

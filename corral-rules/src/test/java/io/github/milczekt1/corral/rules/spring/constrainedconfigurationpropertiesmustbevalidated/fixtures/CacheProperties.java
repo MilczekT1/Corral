@@ -3,9 +3,9 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.constraints.Positive;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** MUST IGNORE: Boot finds {@code @Validated} on the superclass. */
+/** NOT FLAGGED: inherits {@code @Validated} through a composed annotation on its superclass. */
 @ConfigurationProperties("cache")
-public class CacheProperties extends ValidatedBaseProperties {
+public class CacheProperties extends ValidatedSettings {
     @Positive
     private int size;
 }

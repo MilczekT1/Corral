@@ -4,9 +4,9 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** MUST IGNORE {@code reportSettings()} where it compiled, in test output; MUST FLAG once copied. */
 @Configuration
 public class TestOutputConfiguration {
+    /** NOT FLAGGED where it compiled, in test output; FLAGGED once copied into a production layout. */
     @Bean
     @ConfigurationProperties("report")
     public ClientSettings reportSettings() {
