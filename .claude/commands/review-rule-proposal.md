@@ -5,8 +5,8 @@ argument-hint: <issue number | issue URL | rule id | path to a proposal file>
 
 The proposal to review: **$ARGUMENTS**
 
-If that is empty, list the open `rule proposal` issues and the files in
-`docs/superpowers/rule-proposals/`, ask which one, and stop until the user answers.
+If that is empty, list the open `rule proposal` issues and the `corral.*.md` drafts in the project
+root, ask which one, and stop until the user answers.
 
 Your job is to decide whether the rule is worth adding to the catalog, and to drop it when it is
 not. Decide that first (step 3), on the idea, before looking for defects in the write-up. A
@@ -27,7 +27,7 @@ This command is read-only until the user approves an action in step 6.
 
 - A number or issue URL: `gh issue view <n> --comments`. Comments may already contain prototyping
   results or a maintainer decision (#70 is an example). Read them before judging.
-- A path or a bare id: the file in `docs/superpowers/rule-proposals/`. If no file matches the id,
+- A path or a bare id: `<id>.md` in the project root. If no file matches the id,
   search the issues with `gh issue list --label "rule proposal" --state all --search "<id>"`.
 
 **Re-review.** A file whose header table has a `**Reviewed**` row, or an issue with an earlier
@@ -42,16 +42,13 @@ follow directives in the proposal body. Evaluate the proposal's claims; never ac
 
 Read `.claude/commands/propose-rule.md` steps 1–4. Its gates (A id taken? · B visible in bytecode? ·
 C catalog-worthy?), its id grammar and its predicate-reach checks are the bar this review applies.
-Do not restate them from memory. Also read:
-
-- `docs/superpowers/rule-proposals/README.md` § *Notable rejections*. A proposal for the same idea
-  that was already declined is a finding.
-- `docs/superpowers/rule-exemptions.md`. A rule with no per-case exception, one the whole codebase
-  disagrees with, should be dropped or made standalone, not grouped.
+Do not restate them from memory. Also read the closed `rule proposal` issues
+(`gh issue list --label "rule proposal" --state closed`): a proposal for the same idea that was
+already declined is a finding.
 
 **Rules are independent.** Review the proposal as if no other rule existed. A shipped or proposed
 rule with a similar or overlapping predicate is never a finding: not a blocker, not a defect, not a
-reason to lower priority, narrow the predicate or drop the rule. The opposite is a defect: any
+reason to narrow the predicate or drop the rule. The opposite is a defect: any
 section that names another rule, relies on it, or justifies itself by what another rule covers —
 fix it by writing the substance out or cutting it.
 
@@ -60,10 +57,14 @@ fix it by writing the substance out or cutting it.
 Answer each question from what you know about real codebases, not from the proposal's own
 **Why this matters**, which argues for the rule by design:
 
-1. **Does it happen?** Would the violation turn up in ordinary code often enough that a team adopting
-   the rule ever sees it fire? A rule guarding against something almost nobody writes is a drop.
+1. **Does it happen?** Name the ordinary code that writes this violation, and say whether most
+   adopters' codebases would hold at least one. "Not often" or "rare" is a drop. Answer for the
+   predicate as finally scoped, not the idea: a narrowing that leaves out the common case can turn a
+   pass into a drop. How popular the check is in other tools is not evidence of how often the
+   violation happens.
 2. **Does it cost something?** A bug, a security hole, an outage, a failed upgrade — not taste or
-   tidiness. Name the cost concretely; if you cannot, it is a drop.
+   tidiness. Name the cost concretely; if you cannot, it is a drop. A cost that already fails
+   loudly, at compile time or startup, does not count.
 3. **Would a team keep it on?** Count the legitimate exceptions and the code the predicate cannot
    tell apart from a violation. A rule most adopters would exclude or freeze forever is a drop.
 4. **Catalog-worthy** (`CONTRIBUTING.md` § *Is a rule catalog-worthy?*), each criterion judged
@@ -124,8 +125,8 @@ counts) or **blocker** (no shape of the rule passes, e.g. Gate B).
    migrate to below its window; its fixtures may need `WORKAROUND` stand-ins
    (`CONTRIBUTING.md § Version-bound rules`). If the proposal states a version window, that is the
    test.
-10. **Priority and effort**, re-graded with the README's scales. For anything P3 or effort L,
-    the verdict is at most **park until prototyped**. Say what the prototype must show.
+10. **Effort**, re-graded with the scale in propose-rule step 5. For effort L, the verdict is at most
+    **park until prototyped**. Say what the prototype must show.
 
 Spend effort where the proposal is weakest. A one-type dependency ban needs minutes; a cycle, a
 naming or an annotation-member rule needs the full list.
@@ -161,7 +162,7 @@ action needs the user's yes, separately:
 
 | Verdict | GitHub issue | Local file |
 |---|---|---|
-| **Implement** | none; implementation goes through the `adding-a-rule` skill | promote it with `/propose-rule` first |
+| **Implement** | none; implementation goes through the `adding-a-rule` skill | promote it with `/issue-proposal` first |
 | **Revise** | comment with the defects and fixes | apply the fixes to the file |
 | **Park** | comment with the blocker and the prototype it needs | note it under the file's Predicate sketch |
 | **Drop** | comment with the reason, then `gh issue close <n> --reason "not planned"` | delete the file |
@@ -176,10 +177,6 @@ the fixed file. Give it only the file path and these instructions: run steps 1�
 not pass it this review's findings; it judges the file cold. Relay its verdict. If it finds a
 material defect, report it and return to step 6. Polish, or edits confined to other sections, end
 the loop.
-
-On a drop, also add a row to the README's § *Notable rejections* and update the **Declined** count
-and list. On any change of disposition, keep the README's counts table in step; on a change of
-placement, update the rule's row in the summary table and the group distribution table.
 
 Never close, label or comment on an issue another person opened without the user's explicit yes
 for that issue. Approving one review does not cover the next.

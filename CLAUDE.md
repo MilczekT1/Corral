@@ -161,5 +161,4 @@ Rule classes end in `Rule` so they never collide with the `*Test` convention the
 `docs/rules.md` (catalog) · `docs/configuration.md` (freezing, store, formatter) ·
 `docs/creating-a-rule.md` · `docs/retiring-a-rule.md` · `docs/excluding-a-rule.md` ·
 `docs/freezing.md` · `docs/architecture.md` · `docs/release-process.md` ·
-`CONTRIBUTING.md` (rule-id grammar, what breaks consumers) ·
-`docs/superpowers/` (design notes: OSS readiness review, exemption design, 100 rule proposals).
+`CONTRIBUTING.md` (rule-id grammar, what breaks consumers).
