@@ -29,7 +29,7 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("archunit.freeze.refreeze"), "must forbid refreezing");
         assertTrue(all.contains("freeze.store.default.allowStoreCreation"),
                 "must forbid committing store creation");
-        assertTrue(all.contains("corral.ignorePatterns.fail"),
+        assertTrue(all.contains("corral.ignore-patterns.fail"),
                 "must forbid disarming the ignore-patterns check");
         assertTrue(all.contains("corral.exclude."),
                 "must draw the line around the one subtractive mechanism, or it reads as unsanctioned");

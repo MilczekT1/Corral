@@ -1,7 +1,6 @@
 package io.github.milczekt1.corral.guard;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
-import static io.github.milczekt1.corral.guard.IgnorePatternsGuard.FAIL_PROPERTY;
 import static io.github.milczekt1.corral.guard.IgnorePatternsGuard.IGNORE_PATTERNS_FILE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
@@ -10,10 +9,10 @@ import static org.junit.jupiter.api.Assertions.assertSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import io.github.milczekt1.corral.settings.CorralSettings;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
@@ -48,7 +47,7 @@ class IgnorePatternsGuardTest {
         try (URLClassLoader classLoader = classLoaderOver(emptyRoot)) {
             List<URL> found = IgnorePatternsGuard.locate(classLoader);
 
-            assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found));
+            assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found, true));
         }
     }
 
@@ -77,11 +76,12 @@ class IgnorePatternsGuardTest {
         try (URLClassLoader classLoader = classLoaderOver(first, second)) {
             List<URL> found = IgnorePatternsGuard.locate(classLoader);
 
-            String message = failureOf(IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found));
+            String message = failureOf(IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found, true));
 
             assertTrue(message.contains(IGNORE_PATTERNS_FILE), message);
-            assertTrue(message.contains(FAIL_PROPERTY),
+            assertTrue(message.contains(CorralSettings.IGNORE_PATTERNS_FAIL),
                     () -> "a failure that does not name the way out is a dead end: " + message);
+            assertTrue(message.contains(CorralSettings.FILE), message);
             found.forEach(location -> assertTrue(message.contains(location.toString()), message));
         }
     }
@@ -89,7 +89,7 @@ class IgnorePatternsGuardTest {
     /** Keeps the id, so the failure arrives under a recognisable test name; nothing chained softens it. */
     @Test
     void theReplacementKeepsTheRuleIdAndCannotBeChainedIntoPassing(@TempDir Path root) throws IOException {
-        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root));
+        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root), true);
 
         JavaClasses none = nothingToMatch();
         ArchRule because = detected.because("we need it");
@@ -103,36 +103,17 @@ class IgnorePatternsGuardTest {
         assertThrows(AssertionError.class, () -> detected.evaluate(none));
     }
 
-    /** {@code withThreadLocalScope}: config is process-wide, Surefire reuses the JVM, and it cannot be unset. */
-    @ParameterizedTest(name = "\"{0}\" disarms the check")
-    @ValueSource(strings = {"false", "FALSE", "False"})
-    void theFailPropertySetToFalseSuppressesTheFailure(String value, @TempDir Path root) throws IOException {
-        List<URL> found = locateIn(root);
-
-        ArchConfiguration.withThreadLocalScope(configuration -> {
-            configuration.setProperty(FAIL_PROPERTY, value);
-            assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found));
-        });
-    }
-
-    /** A typo must not silently disarm the catalog's most complete kill switch. */
-    @ParameterizedTest(name = "\"{0}\" leaves the check armed")
-    @ValueSource(strings = {"true", "no", "0", ""})
-    void anythingButFalseLeavesTheCheckArmed(String value, @TempDir Path root) throws IOException {
-        List<URL> found = locateIn(root);
-
-        ArchConfiguration.withThreadLocalScope(configuration -> {
-            configuration.setProperty(FAIL_PROPERTY, value);
-            assertNotSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE, found));
-        });
+    @Test
+    void aDisarmedCheckLeavesTheRuleUnchanged(@TempDir Path root) throws IOException {
+        assertSame(INNOCENT_RULE, IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root), false));
     }
 
     /** A consumer who configured nothing gets the failing behaviour. */
     @Test
     void failsByDefaultWhenThePropertyIsNotConfigured(@TempDir Path root) throws IOException {
-        assertEquals("unset", ArchConfiguration.get().getPropertyOrDefault(FAIL_PROPERTY, "unset"),
-                "this module must not configure the property, or the assertion below proves nothing");
-        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root));
+        boolean failEnabled = CorralSettings.current().ignorePatternsFail();
+        assertTrue(failEnabled, "this module must not disarm the check, or the assertion below proves nothing");
+        ArchRule detected = IgnorePatternsGuard.interposeOn(INNOCENT_RULE, locateIn(root), failEnabled);
         JavaClasses none = nothingToMatch();
 
         assertThrows(AssertionError.class, () -> detected.check(none));

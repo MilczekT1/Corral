@@ -2,10 +2,10 @@ package io.github.milczekt1.corral.guard;
 
 import static java.util.stream.Collectors.joining;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
+import io.github.milczekt1.corral.settings.CorralSettings;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.net.URL;
@@ -29,30 +29,18 @@ public class IgnorePatternsGuard {
 
     static final String IGNORE_PATTERNS_FILE = "archunit_ignore_patterns.txt";
 
-    /**
-     * Absent file and absent key both mean "fail". Readable from {@code archunit.properties} despite
-     * the prefix; only the system-property form needs ArchUnit's
-     * ({@code -Darchunit.corral.ignorePatterns.fail=false}).
-     */
-    static final String FAIL_PROPERTY = "corral.ignorePatterns.fail";
-
     /** Scanned once per JVM, on the first {@code guard()} call — one classpath walk for any number of rules. */
     private static final List<URL> LOCATIONS = locate(currentClassLoader());
 
     /** {@code rule} unchanged, or one that fails with {@link #messageFor} when the file is found. */
     public static ArchRule interposeOn(ArchRule rule) {
-        return interposeOn(rule, LOCATIONS);
+        return interposeOn(rule, LOCATIONS, CorralSettings.current().ignorePatternsFail());
     }
 
-    static ArchRule interposeOn(ArchRule rule, List<URL> locations) {
-        return locations.isEmpty() || !failEnabled()
+    static ArchRule interposeOn(ArchRule rule, List<URL> locations, boolean failEnabled) {
+        return locations.isEmpty() || !failEnabled
                 ? rule
                 : new Detected(rule.getDescription(), messageFor(locations));
-    }
-
-    /** Only the literal {@code false} disarms it — a typo leaves it armed rather than silently open. */
-    private static boolean failEnabled() {
-        return !"false".equalsIgnoreCase(ArchConfiguration.get().getPropertyOrDefault(FAIL_PROPERTY, "true"));
     }
 
     /**
@@ -81,10 +69,11 @@ public class IgnorePatternsGuard {
                 leaves no record anywhere.
                 Found (ArchUnit reads the first):
                 %s
-                Delete the file, or set %s=false in archunit.properties if it is yours and deliberate.
+                Delete the file, or set %s=false in %s if it is yours and deliberate.
                 Setting it to silence a rule you should have fixed restores the silence rather than \
                 resolving it, and is the same move as deleting the test.\
-                """.formatted(IGNORE_PATTERNS_FILE, listed(locations), FAIL_PROPERTY);
+                """.formatted(IGNORE_PATTERNS_FILE, listed(locations), CorralSettings.IGNORE_PATTERNS_FAIL,
+                        CorralSettings.FILE);
     }
 
     private static String listed(List<URL> locations) {

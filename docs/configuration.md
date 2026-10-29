@@ -10,7 +10,7 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 | `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 | `corral.exclude.<rule-id>` | optional | In `corral.properties`, not `archunit.properties`. Removes the named rule from your build permanently; the value is the mandatory reason. See [Excluding a rule](excluding-a-rule.md). |
-| `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
+| `corral.ignore-patterns.fail` | optional, defaults to `true` | In `corral.properties`, not `archunit.properties`; there is no system-property override. Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from
