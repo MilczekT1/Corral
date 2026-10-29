@@ -4,6 +4,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.NoBigDecimalDoubleConstructorRule;
 import io.github.milczekt1.corral.rules.java.noclassnewinstance.NoClassNewInstanceRule;
+import io.github.milczekt1.corral.rules.java.noequalswithouthashcode.NoEqualsWithoutHashCodeRule;
 import io.github.milczekt1.corral.rules.java.nofinalizeoverride.NoFinalizeOverrideRule;
 import io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.NoPublicStaticArrayFieldsRule;
 import io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.PublicStaticFieldsMustBeFinalRule;
@@ -29,4 +30,7 @@ public class JavaCorrectnessRulesGroup {
 
     @ArchTest
     public static final ArchTests noFinalizeOverride = ArchTests.in(NoFinalizeOverrideRule.class);
+
+    @ArchTest
+    public static final ArchTests noEqualsWithoutHashCode = ArchTests.in(NoEqualsWithoutHashCodeRule.class);
 }
