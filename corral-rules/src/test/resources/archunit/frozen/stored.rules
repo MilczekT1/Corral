@@ -26,6 +26,7 @@ corral.layering.no-test-libraries-in-production=corral.layering.no-test-librarie
 corral.logging.no-print-stack-trace=corral.logging.no-print-stack-trace
 corral.naming.packages-must-be-lowercase=corral.naming.packages-must-be-lowercase
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
+corral.spring.constrained-configuration-properties-must-be-validated=corral.spring.constrained-configuration-properties-must-be-validated
 corral.spring.no-application-context-injection=corral.spring.no-application-context-injection
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method
 corral.spring.no-component-on-abstract-class=corral.spring.no-component-on-abstract-class

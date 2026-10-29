@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.ConstrainedConfigurationPropertiesMustBeValidatedRule;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.NoApplicationContextInjectionRule;
 import io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.NoAsyncOnUnproxyableMethodRule;
 import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.NoComponentOnAbstractClassRule;
@@ -39,4 +40,8 @@ public class SpringRulesGroup {
     @ArchTest
     public static final ArchTests noApplicationContextInjection =
             ArchTests.in(NoApplicationContextInjectionRule.class);
+
+    @ArchTest
+    public static final ArchTests constrainedConfigurationPropertiesMustBeValidated =
+            ArchTests.in(ConstrainedConfigurationPropertiesMustBeValidatedRule.class);
 }
