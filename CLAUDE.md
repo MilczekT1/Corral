@@ -142,8 +142,8 @@ store — copy the newer shape.
 `AgentFriendlyFailureDisplayFormat` (activated by the consumer's `archunit.properties`) prints WHY /
 HOW TO FIX / HOW NOT TO FIX from `RuleDoc`, plus `AntiFixPolicy`'s ten fixed clauses, appended to
 every failure and droppable by no rule. Two are enforced in code: an `archunit_ignore_patterns.txt`
-anywhere on the classpath fails every rule (`IgnorePatternsGuard`), and an exclusion in
-`corral-exclusions.txt` requires a written reason that is reprinted on every other rule's failure.
+anywhere on the classpath fails every rule (`IgnorePatternsGuard`), and a `corral.exclude.<rule-id>`
+entry in `corral.properties` requires a written reason that is reprinted on every other rule's failure.
 
 `RuleDoc` text is acted on as fact by whoever fixes the violation, increasingly an agent. When the
 anti-fix text names a dodge the predicate does not actually catch, say so explicitly.

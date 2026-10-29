@@ -94,6 +94,36 @@ classloader). Against assignability, only the real artifact will do. For a rule 
 major `corral-rules` does not carry, stubs are the sanctioned workaround — see
 [CONTRIBUTING.md § Version-bound rules](../CONTRIBUTING.md#version-bound-rules).
 
+### Reading a project setting
+
+When the only thing that differs between consumers is a project fact, such as the base package, read
+it from the consumer's `corral.properties` instead of hard-coding it:
+
+```java
+static final RuleDoc DOC = RuleDoc.builder()
+        .id("acme.no-stdout-in-services")
+        .requiredSetting(CorralSettings.BASE_PACKAGE)
+        ...
+        .build();
+
+static final ArchRule DEFINITION = noClasses()
+        .that(BasePackage.resideIn(DOC, "..service.."))
+        ...;
+```
+
+- **Declare every key you read** with `requiredSetting`. `guard()` fails the rule when a declared key
+  is missing, even if the rule matches nothing and would never read the value. Reading an
+  undeclared key through `CorralSettings.setting(DOC, key)` throws, so `DOC` must sit above
+  `DEFINITION`.
+- **Never put the value in a description or a violation message.** Both are freeze-store matching
+  keys: a consumer who changes the setting would see every frozen violation resurface as new.
+  `BasePackage.resideIn` describes itself as "the configured base package" for this reason.
+- **Values are read when the rule runs, not when its class loads.** Use the supplier from
+  `CorralSettings.setting` inside a predicate or condition; calling `get()` in a static initialiser
+  turns a missing key into an `ExceptionInInitializerError`.
+- **A rule reading `corral.base-package` must fail when the package matches no imported class.**
+  A wrong but well-formed package otherwise looks exactly like a codebase with nothing to check.
+
 ## 3. Examples and test
 
 Cover **both** directions against the raw `DEFINITION` — the published field is frozen, so it would

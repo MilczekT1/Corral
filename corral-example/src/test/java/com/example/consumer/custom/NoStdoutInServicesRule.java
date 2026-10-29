@@ -6,6 +6,8 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
+import io.github.milczekt1.corral.settings.BasePackage;
+import io.github.milczekt1.corral.settings.CorralSettings;
 import java.io.PrintStream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
@@ -24,6 +26,7 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("acme.no-stdout-in-services")
+            .requiredSetting(CorralSettings.BASE_PACKAGE)
             .why("""
                     Writing to stdout from a service bypasses the logging setup entirely: no level, no \
                     correlation id, no way to turn it off in production or capture it in tests.""")
@@ -31,13 +34,13 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
                     Inject a logger and log at the level the message deserves, or return the value and \
                     let the caller decide how to present it.""")
             .howNotToFix("""
-                    Do NOT move the call into a helper class outside ..service.. to dodge the package \
-                    matcher — the output still lands on stdout. Do NOT swap System.out for a logger you \
-                    then silence in test configuration.""")
+                    Do NOT move the call into a helper class outside the service packages to dodge the \
+                    package matcher — the output still lands on stdout. Do NOT swap System.out for a \
+                    logger you then silence in test configuration.""")
             .build();
 
     static final ArchRule DEFINITION = noClasses()
-            .that().resideInAPackage("..service..")
+            .that(BasePackage.resideIn(DOC, "..service.."))
             .should().callMethod(PrintStream.class, "println", String.class);
 
     @ArchTest

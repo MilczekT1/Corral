@@ -8,7 +8,7 @@ import io.github.milczekt1.corral.groups.LoggingRulesGroup;
 
 /**
  * The exclusion feature, on its own node: {@code LoggingRulesGroup} holds
- * {@code corral.logging.no-system-err}, which {@code src/test/resources/corral-exclusions.txt}
+ * {@code corral.logging.no-system-err}, which {@code src/test/resources/corral.properties}
  * removes from this build. {@code StderrWriterAllowedByExclusion} is the class that would fail.
  *
  * <p>Wired here rather than from {@link com.example.consumer.wiring.ProjectRulesGroup} on purpose: a

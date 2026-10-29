@@ -21,6 +21,30 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 > property, which is why the one-off override that seeds the store works without editing the
 > committed file.
 
+## `corral.properties`
+
+Corral's own settings live in `src/test/resources/corral.properties`, a file only the consuming
+project owns. Libraries, including Corral's own jars, never ship one.
+
+```properties
+corral.base-package=com.acme.billing
+corral.ignore-patterns.fail=true
+corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interface. ADR-021.
+```
+
+| Key | Notes |
+|---|---|
+| `corral.base-package` | The project's root package, for rules that declare they need it. Must be a valid Java package name. A rule that declares it fails, naming the key, when it is missing. |
+| `corral.ignore-patterns.fail` | See the table above. |
+| `corral.exclude.<rule-id>` | See [Excluding a rule](excluding-a-rule.md). |
+| anything outside `corral.` | Read by your own rules. A key no rule in the run declares logs a warning. |
+
+- Read as UTF-8. A duplicate key, an unknown `corral.*` key or an invalid value fails **every** rule,
+  naming the file and each problem: a file that is not understood is not trusted.
+- When several copies are on the classpath, the first one wins and a warning names them all. Maven,
+  Gradle and IntelliJ put the module's own test resources first. A copy read from inside a jar
+  always produces a warning.
+
 ## The freeze store
 
 `freeze.store=io.github.milczekt1.corral.store.EmptyOmittingViolationStore` changes two things
