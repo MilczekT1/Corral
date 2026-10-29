@@ -26,11 +26,11 @@ Withdrawing an id for *everyone* is a different thing: [retiring a rule](retirin
 
 ## How to exclude
 
-One line in `src/test/resources/corral-exclusions.txt`, beside `archunit.properties`:
+One entry in `src/test/resources/corral.properties`, beside `archunit.properties`. The key is
+`corral.exclude.` followed by the rule id; the value is the reason:
 
-```text
-# <rule-id> :: <reason>
-corral.logging.no-system-err :: We ship a CLI; stderr is the interface. ADR-021.
+```properties
+corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interface. ADR-021.
 ```
 
 That rule now passes without evaluating; everything else is untouched. No file, no change.
@@ -40,6 +40,7 @@ That rule now passes without evaluating; everything else is untouched. No file, 
 | A reason is **mandatory** | The SDK can't judge if it's a good one, but it can make its absence fatal |
 | An id that matches no rule in the run **logs a warning** | A typo, or a rule renamed or retired upstream, removes nothing while reading as though it did |
 | Whole rules only, never one violation | Switching a rule off should be loud in review |
+| The same id excluded twice, or a key that is not a rule id, **fails every rule** | A file that is not understood is not trusted to remove a rule |
 
 Every exclusion in effect is printed under `EXCLUDED IN THIS BUILD` on any rule failure, so a
 switched-off rule can't hide.

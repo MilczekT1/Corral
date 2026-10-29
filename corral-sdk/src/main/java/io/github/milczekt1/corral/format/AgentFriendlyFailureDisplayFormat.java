@@ -7,6 +7,7 @@ import com.tngtech.archunit.lang.Priority;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
+import io.github.milczekt1.corral.settings.CorralSettings;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -111,7 +112,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             // An excluded rule never fails, so the census rides on every other rule's failure.
             List<String> exclusions = census == null ? List.of() : census;
             if (!exclusions.isEmpty()) {
-                out.append("EXCLUDED IN THIS BUILD (").append(RuleExclusions.EXCLUSIONS_FILE)
+                out.append("EXCLUDED IN THIS BUILD (").append(CorralSettings.FILE)
                         .append(" — these rules are not enforced here):").append(nl);
                 for (String exclusion : exclusions) {
                     out.append(INDENT).append("- ").append(exclusion).append(nl);

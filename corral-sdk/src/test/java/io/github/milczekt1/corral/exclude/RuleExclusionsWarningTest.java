@@ -11,6 +11,8 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.exclude.RuleExclusions.Loaded;
+import io.github.milczekt1.corral.settings.CorralSettings;
+import java.util.List;
 import java.util.Set;
 import org.junit.jupiter.api.Test;
 
@@ -24,20 +26,18 @@ class RuleExclusionsWarningTest {
 
     @Test
     void anUnmatchedExclusionWarns() {
-        Loaded state = RuleExclusions.parse(
-                "test.no-unmatched-warning-fixture :: does not apply here", "x");
+        Loaded state = Loaded.of(List.of(new Exclusion("test.no-unmatched-warning-fixture", "does not apply here")));
 
         String message = RuleExclusions.unmatchedWarning(state, Set.of());
 
         assertTrue(message.contains("test.no-unmatched-warning-fixture"), message);
         assertTrue(message.contains("matched no rule in this run"), message);
-        assertTrue(message.contains(RuleExclusions.EXCLUSIONS_FILE), message);
+        assertTrue(message.contains(CorralSettings.FILE), message);
     }
 
     @Test
     void aMatchedExclusionDoesNotWarn() {
-        Loaded state = RuleExclusions.parse(
-                "test.no-matched-warning-fixture :: does not apply here", "x");
+        Loaded state = Loaded.of(List.of(new Exclusion("test.no-matched-warning-fixture", "does not apply here")));
 
         String message = RuleExclusions.unmatchedWarning(state, Set.of("test.no-matched-warning-fixture"));
 
@@ -52,10 +52,7 @@ class RuleExclusionsWarningTest {
     /** Every unmatched id at once, not one per run. */
     @Test
     void everyUnmatchedIdIsListedNotOnlyTheFirst() {
-        Loaded state = RuleExclusions.parse("""
-                test.no-first-unmatched-fixture :: one
-                test.no-second-unmatched-fixture :: two
-                """, "x");
+        Loaded state = Loaded.of(List.of(new Exclusion("test.no-first-unmatched-fixture", "one"), new Exclusion("test.no-second-unmatched-fixture", "two")));
 
         String message = RuleExclusions.unmatchedWarning(state, Set.of());
 
@@ -66,7 +63,7 @@ class RuleExclusionsWarningTest {
 
     @Test
     void aSingleUnmatchedIdIsSingular() {
-        Loaded state = RuleExclusions.parse("test.no-singular-warning-fixture :: x", "x");
+        Loaded state = Loaded.of(List.of(new Exclusion("test.no-singular-warning-fixture", "x")));
 
         String message = RuleExclusions.unmatchedWarning(state, Set.of());
 
@@ -78,7 +75,7 @@ class RuleExclusionsWarningTest {
     @Test
     void applyToRecordsAMatchWhenTheRuleIsExcluded() {
         String id = "test.no-applyto-records-match-fixture";
-        Loaded state = RuleExclusions.parse(id + " :: applies here", "x");
+        Loaded state = Loaded.of(List.of(new Exclusion(id, "applies here")));
         ArchRule rule = noClasses().should().haveNameMatching("does.not.Exist").as(id);
 
         assertFalse(RuleExclusions.hasMatched(id),
@@ -93,7 +90,7 @@ class RuleExclusionsWarningTest {
     void applyToRecordsNoMatchWhenTheRuleIsNotExcluded() {
         String excludedId = "test.no-applyto-unmatched-a";
         String otherId = "test.no-applyto-unmatched-b";
-        Loaded state = RuleExclusions.parse(excludedId + " :: applies here", "x");
+        Loaded state = Loaded.of(List.of(new Exclusion(excludedId, "applies here")));
         ArchRule rule = noClasses().should().haveNameMatching("does.not.Exist").as(otherId);
 
         RuleExclusions.applyTo(rule, otherId, state);

@@ -47,8 +47,8 @@ public final class PublicStaticFieldsMustBeFinalRule implements DocumentedRule {
                     Groovy's __$stMC, is not fixed by hand: freeze what exists as debt, since its lines \
                     name the field, not a line number, and survive regeneration. A codebase that \
                     compiles Groovy, or an Android module with generated R classes, adds a violation \
-                    with every new class: it lists this rule in corral-exclusions.txt, which switches \
-                    it off for the whole build.""")
+                    with every new class: it excludes this rule with a corral.exclude.<rule-id> entry \
+                    in corral.properties, which switches it off for the whole build.""")
             .howNotToFix("""
                     Do NOT make the field private, protected or package-private and leave it mutable, \
                     whether behind a public static setter or with no accessor at all: this rule no \

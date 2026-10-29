@@ -81,7 +81,8 @@ public final class NoAnnotationsOnEntityRule implements DocumentedRule {
                     stay there as debt; a new violation is fixed in code. A codebase that exposes its \
                     entities on purpose — an internal tool with one consumer, or JPA classes a \
                     generator annotates, where every entity it generates is a new violation — should \
-                    not wire this rule, or should list it in corral-exclusions.txt with that reason. \
+                    not wire this rule, or should exclude it with a corral.exclude.<rule-id> entry in \
+                    corral.properties giving that reason. \
                     Only classes annotated @Entity or @MappedSuperclass are checked; an @Embeddable is \
                     not, though the entity embedding it is serialised with it. Test \
                     classes — by output location or a declared test method, never by name — are out \

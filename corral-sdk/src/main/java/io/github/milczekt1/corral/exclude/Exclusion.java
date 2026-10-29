@@ -3,7 +3,8 @@ package io.github.milczekt1.corral.exclude;
 import io.github.milczekt1.corral.doc.RuleDoc;
 
 /**
- * One line of {@code corral-exclusions.txt}: a rule this codebase permanently opts out of, and why.
+ * One {@code corral.exclude.<rule-id>} entry of {@code corral.properties}: a rule this codebase
+ * permanently opts out of, and why.
  *
  * <p>An {@code Exclusion} that exists is well formed: {@link #ruleId()} has the shape of a
  * {@link RuleDoc} id and {@link #reason()} is non-blank.
@@ -21,7 +22,7 @@ public record Exclusion(String ruleId, String reason) {
         }
         if (reason == null || reason.isBlank()) {
             throw new IllegalArgumentException(
-                    "excluding '" + ruleId + "' needs a reason after '::' — a rule dropped without one"
+                    "excluding '" + ruleId + "' needs a reason as the value — a rule dropped without one"
                             + " is indistinguishable from a rule silenced");
         }
         reason = reason.strip();

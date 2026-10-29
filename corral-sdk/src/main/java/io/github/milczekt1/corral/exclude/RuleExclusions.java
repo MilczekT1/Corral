@@ -1,20 +1,15 @@
 package io.github.milczekt1.corral.exclude;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.settings.SettingsFile;
 import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -22,22 +17,15 @@ import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 /**
- * Reads {@value #EXCLUSIONS_FILE} off the classpath: the rules this codebase permanently opts out of.
- *
- * <p>Never throws — loading runs in a static initialiser, so a failure becomes a
- * {@link Loaded#problem()} that fails every rule with a message.
+ * The {@code corral.exclude.<rule-id>} entries of {@code corral.properties}: the rules this codebase
+ * permanently opts out of. A broken settings file becomes a {@link Loaded#problem()} that fails every
+ * rule with a message.
  */
 @UtilityClass
 public class RuleExclusions {
 
-    public static final String EXCLUSIONS_FILE = "corral-exclusions.txt";
-
-    private static final String SEPARATOR = "::";
-
-    private static final String COMMENT = "#";
-
     /** Read once per JVM, on the first {@code guard()} call. */
-    private static final Loaded STATE = load(currentClassLoader());
+    private static final Loaded STATE = from(CorralSettings.current());
 
     /** Excluded ids that matched a rule this run, filled in by {@link #applyTo}. */
     private static final Set<String> MATCHED = ConcurrentHashMap.newKeySet();
@@ -148,117 +136,27 @@ public class RuleExclusions {
                 If you ran a single rule this is expected. In a full run it means the id names \
                 nothing — a typo, or a rule renamed or retired upstream — so it removes nothing \
                 while reading in the diff as though it did.\
-                """.formatted(EXCLUSIONS_FILE, unmatched.size(), unmatched.size() == 1 ? "" : "s",
+                """.formatted(CorralSettings.FILE, unmatched.size(), unmatched.size() == 1 ? "" : "s",
                         unmatched.stream().map(id -> "  " + id).collect(joining(System.lineSeparator())));
     }
 
-    static Loaded load(ClassLoader classLoader) {
-        // RuntimeException too: this runs in a static initialiser, where anything escaping becomes an Error.
-        try {
-            return read(classLoader);
-        } catch (IOException | RuntimeException e) {
-            return Loaded.broken("Could not read " + EXCLUSIONS_FILE + " from the classpath: " + e);
+    static Loaded from(SettingsFile settings) {
+        if (settings.isBroken()) {
+            return Loaded.broken(settings.problem());
         }
+        return Loaded.of(settings.exclusionReasons().entrySet().stream()
+                .map(entry -> new Exclusion(entry.getKey(), entry.getValue()))
+                .toList());
     }
 
-    private static Loaded read(ClassLoader classLoader) throws IOException {
-        List<URL> locations = Collections.list(classLoader.getResources(EXCLUSIONS_FILE));
-
-        if (locations.isEmpty()) {
-            return Loaded.none();
-        }
-        if (locations.size() > 1) {
-            return Loaded.broken(ambiguousClassPathMessage(locations));
-        }
-
-        URL only = locations.get(0);
-        try (InputStream contents = only.openStream()) {
-            return parse(new String(contents.readAllBytes(), UTF_8), only.toString());
-        }
-    }
-
-    /** Reports every broken line, not only the first. */
-    static Loaded parse(String contents, String source) {
-        List<Exclusion> entries = new ArrayList<>();
-        Set<String> problems = new LinkedHashSet<>();
-        Set<String> idsSeen = new LinkedHashSet<>();
-        int lineNumber = 0;
-
-        for (String rawLine : withoutByteOrderMark(contents).lines().toList()) {
-            lineNumber++;
-            String line = rawLine.strip();
-            if (line.isEmpty() || line.startsWith(COMMENT)) {
-                continue;
-            }
-            try {
-                Exclusion exclusion = parseLine(line);
-                if (!idsSeen.add(exclusion.ruleId())) {
-                    throw new IllegalArgumentException("'" + exclusion.ruleId()
-                            + "' is excluded more than once — which reason is in effect is unanswerable");
-                }
-                entries.add(exclusion);
-            } catch (IllegalArgumentException e) {
-                problems.add("  " + source + ":" + lineNumber + " — " + e.getMessage()
-                        + System.lineSeparator() + "      " + line);
-            }
-        }
-
-        return problems.isEmpty()
-                ? Loaded.of(entries)
-                : Loaded.broken(brokenFileMessage(source, problems));
-    }
-
-    /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */
-    private static String withoutByteOrderMark(String contents) {
-        return contents.startsWith("\uFEFF") ? contents.substring(1) : contents;
-    }
-
-    private static Exclusion parseLine(String line) {
-        int separator = line.indexOf(SEPARATOR);
-        if (separator < 0) {
-            throw new IllegalArgumentException(
-                    "no '" + SEPARATOR + "' — every exclusion states a reason: <rule-id> "
-                            + SEPARATOR + " <reason>");
-        }
-        return new Exclusion(
-                line.substring(0, separator).strip(),
-                line.substring(separator + SEPARATOR.length()).strip());
-    }
-
-    private static String brokenFileMessage(String source, Set<String> problems) {
-        return """
-                %s could not be read, so no rule is excluded and every Corral rule fails until it is \
-                fixed. A file that is not understood must not be trusted to remove a rule.
-                %s
-                Each line is either blank, a '%s' comment, or '<rule-id> %s <reason>'.\
-                """.formatted(source, String.join(System.lineSeparator(), problems), COMMENT, SEPARATOR);
-    }
-
-    private static String ambiguousClassPathMessage(List<URL> locations) {
-        return """
-                %s is on the classpath more than once, so which rules it removes is decided by \
-                classpath order rather than by you. One of these may belong to a test-scoped \
-                dependency rather than to this build.
-                Found:
-                %s
-                Keep exactly one, in this module's own test resources.\
-                """.formatted(EXCLUSIONS_FILE, listed(locations));
-    }
-
-    private static String listed(List<URL> locations) {
-        return listedText(locations.stream().map(URL::toString).toList());
-    }
-
-    private static String listedText(Collection<String> lines) {
-        return lines.isEmpty()
-                ? "  (none — no rule has registered yet)"
-                : lines.stream().map(line -> "  " + line).collect(joining(System.lineSeparator()));
-    }
-
-    /** Every exclusion in effect as {@code <id> :: <reason>}; empty when there are none. */
+    /** Every exclusion in effect, as its line in the settings file; empty when there are none. */
     public static List<String> census() {
-        return inEffect().stream()
-                .map(exclusion -> exclusion.ruleId() + " :: " + exclusion.reason())
+        return census(STATE);
+    }
+
+    static List<String> census(Loaded state) {
+        return state.entries().stream()
+                .map(exclusion -> CorralSettings.EXCLUDE_PREFIX + exclusion.ruleId() + "=" + exclusion.reason())
                 .toList();
     }
 
@@ -335,11 +233,5 @@ public class RuleExclusions {
         public ArchRule allowEmptyShould(boolean allowEmptyShould) {
             return this;
         }
-    }
-
-    /** Mirrors {@code ClassLoaders.getCurrentClassLoader}, how ArchUnit resolves its own files. */
-    static ClassLoader currentClassLoader() {
-        ClassLoader contextClassLoader = Thread.currentThread().getContextClassLoader();
-        return contextClassLoader != null ? contextClassLoader : RuleExclusions.class.getClassLoader();
     }
 }

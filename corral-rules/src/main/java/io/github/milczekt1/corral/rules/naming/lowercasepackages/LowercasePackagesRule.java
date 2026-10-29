@@ -50,8 +50,8 @@ public final class LowercasePackagesRule implements DocumentedRule {
                     schema you do not control — a .proto file's java_package, or its package when \
                     java_package is absent, or a <jaxb:package> inside an XSD another team owns — cannot \
                     be renamed here, and every top-level type that schema adds later is a new violation: \
-                    a codebase compiling such a schema should not wire this rule, or should list it in \
-                    corral-exclusions.txt with that reason.""")
+                    a codebase compiling such a schema should not wire this rule, or should exclude it \
+                    with a corral.exclude.<rule-id> entry in corral.properties giving that reason.""")
             .howNotToFix("""
                     Do NOT change only the package line and leave the directory in mixed case. Maven \
                     still compiles it, so this rule passes — it reads class files and cannot see \
