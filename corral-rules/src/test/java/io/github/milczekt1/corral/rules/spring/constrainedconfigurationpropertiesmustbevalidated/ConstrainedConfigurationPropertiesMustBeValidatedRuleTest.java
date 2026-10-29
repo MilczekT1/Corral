@@ -459,10 +459,10 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     /** The counterpart of the test-output case: the same class files, copied into a production layout. */
     @Test
     void flagsTheTestOutputFixturesOnceInAProductionLayout() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("test-output"),
+        Path testOutputCopy = copyIntoProductionLayout(outputRoot.resolve("test-output"),
                 name -> name.startsWith(TEST_OUTPUT_PREFIX)
                         || name.equals(ReportSettings.class.getSimpleName() + ".class"));
-        JavaClasses copied = new ClassFileImporter().importPath(productionOutput);
+        JavaClasses copied = new ClassFileImporter().importPath(testOutputCopy);
 
         List<String> violations = violationsIn(copied);
 
