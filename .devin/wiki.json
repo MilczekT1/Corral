@@ -1,0 +1,60 @@
+{
+  "repo_notes": [
+    {
+      "content": "docs/ and README.md are the source of truth. Where code and docs disagree, describe the code and say the docs differ. Do not state rule counts or version numbers; link docs/rules.md and the Maven Central badge instead."
+    },
+    {
+      "content": "A rule id is a freeze-store key: it names a file in every consumer's committed archunit/frozen/ store. Ids are never renamed or removed, and rewording a rule's predicate resurfaces old violations. Explain this wherever ids, freezing or upgrades come up."
+    },
+    {
+      "content": "Stress the silent failure modes the docs call out: ImportOption.DoNotIncludeTests makes test rules pass vacuously; not committing the freeze store, or pinning allowStoreCreation, re-freezes real violations; an unwired group is not enforced."
+    },
+    {
+      "content": "Published to Maven Central as io.github.milczekt1:corral-rules and io.github.milczekt1:corral-sdk. Java 17 baseline. corral-example is a test fixture, not a published artifact."
+    }
+  ],
+  "pages": [
+    {
+      "title": "Overview",
+      "purpose": "What Corral is, who it is for (teams using coding agents), and how a failure reads: WHY / HOW TO FIX / HOW NOT TO FIX."
+    },
+    {
+      "title": "Getting started",
+      "purpose": "Dependency, wiring groups and standalone rules, archunit.properties, seeding and committing the freeze store."
+    },
+    {
+      "title": "Freezing",
+      "purpose": "How frozen violations decide pass/fail, the store layout, and the silent failure modes.",
+      "parent": "Getting started"
+    },
+    {
+      "title": "Configuration and exclusions",
+      "purpose": "archunit.properties vs corral.properties, excluding a rule with a mandatory reason, corral.ignore-patterns.fail.",
+      "parent": "Getting started"
+    },
+    {
+      "title": "Rules catalog",
+      "purpose": "The groups and standalone rules, summarised per group, linking docs/rules.md for the full table."
+    },
+    {
+      "title": "Failure format and anti-fix policy",
+      "purpose": "AgentFriendlyFailureDisplayFormat, RuleDoc fields, and AntiFixPolicy's fixed clauses, including the two enforced in code."
+    },
+    {
+      "title": "Architecture",
+      "purpose": "corral-sdk vs corral-rules vs corral-example, the one-way dependency, DocumentedRule.guard(), groups as the single source of membership."
+    },
+    {
+      "title": "Writing your own rules",
+      "purpose": "Using corral-sdk alone: RuleDoc, DocumentedRule, field order, testing the raw DEFINITION, your own id namespace."
+    },
+    {
+      "title": "Contributing",
+      "purpose": "Rule-id grammar, the adding-a-rule checklist, what breaks consumers, retiring a rule with DeprecatedRule."
+    },
+    {
+      "title": "Releases",
+      "purpose": "The Release and Publish release workflows and the manual Publish step in the Central Portal."
+    }
+  ]
+}
