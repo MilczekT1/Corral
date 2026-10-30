@@ -94,6 +94,16 @@ jobs:
       - name: Set release version
         run: ./mvnw versions:set -DnewVersion="$RELEASE_VERSION" -DprocessAllModules=true -DgenerateBackupPoms=false ${{ env.MVN_CONFIG }}
 
+      # Fails when the snippets no longer match the pattern, so a reshaped README cannot silently keep
+      # an old version.
+      - name: Point README dependency snippets at the release version
+        run: |
+          perl -0pi -e 's{(<artifactId>corral-(?:sdk|rules)</artifactId>\s*<version>)[^<]*(</version>)}{${1}$ENV{RELEASE_VERSION}${2}}g' README.md
+          if ! grep -q "<version>$RELEASE_VERSION</version>" README.md; then
+            echo "::error::README.md has no corral-sdk/corral-rules snippet to point at $RELEASE_VERSION" >&2
+            exit 1
+          fi
+
       # publish-release.yml finds this commit on main by this exact subject.
       - name: Commit release version
         env:
