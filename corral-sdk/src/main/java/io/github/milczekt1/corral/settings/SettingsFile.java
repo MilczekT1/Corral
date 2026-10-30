@@ -39,7 +39,7 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
     private static final Pattern PACKAGE_NAME =
             Pattern.compile("^[A-Za-z_$][A-Za-z0-9_$]*+(?:\\.[A-Za-z_$][A-Za-z0-9_$]*+)*+$");
 
-    /** The canonical form of Spring Boot's {@code ConfigurationPropertyName}, which refuses anything else at startup. */
+    /** Spring Boot's canonical {@code ConfigurationPropertyName} elements, without indexed or empty elements. */
     private static final Pattern PROPERTY_NAME =
             Pattern.compile("^[a-z0-9][a-z0-9-]*+(?:\\.[a-z0-9][a-z0-9-]*+)*+$");
 

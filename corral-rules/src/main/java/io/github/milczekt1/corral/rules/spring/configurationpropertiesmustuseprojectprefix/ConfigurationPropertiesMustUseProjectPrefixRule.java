@@ -27,8 +27,9 @@ import lombok.NoArgsConstructor;
  * {@value CorralSettings#PROPERTY_PREFIX} or start with it followed by a dot. One violation per
  * declaration site.
  *
- * <p>Direct annotations only: a subclass is never reported for its parent's prefix, and a composed
- * annotation carrying {@code @ConfigurationProperties} is not seen. A method returning a type outside
+ * <p>Direct annotations only: a subclass is never reported for its parent's prefix, and a custom
+ * annotation carrying {@code @ConfigurationProperties} is reported at its own declaration, never at its
+ * uses, so a prefix it forwards through {@code @AliasFor} is not seen. A method returning a type outside
  * the imported classes is skipped, so a library type bound to its own namespace passes.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
@@ -63,7 +64,10 @@ public final class ConfigurationPropertiesMustUseProjectPrefixRule implements Do
                     keys. Leave the violation and report it; this rule has no per-site exception, and \
                     whether it fits this class is a human's call. Only prefixes declared with \
                     @ConfigurationProperties directly on a production class, or on a method whose \
-                    declared return type is one of the imported production classes, are checked. \
+                    declared return type is one of the imported production classes, are checked. A \
+                    custom annotation carrying @ConfigurationProperties is checked like any class, at \
+                    its own declaration; one that forwards the prefix through @AliasFor is reported \
+                    with its own prefix, empty by default, and the prefix each use passes is not seen. \
                     Property files, @Value, @ConditionalOnProperty, Environment and Binder are not \
                     read, and keys you only read from Spring Boot or a library are not in scope.""")
             .howNotToFix("""
@@ -76,8 +80,9 @@ public final class ConfigurationPropertiesMustUseProjectPrefixRule implements Do
                     rule does not read any of them. Do NOT move the annotation to a @Bean method \
                     declared to return a library type or a supertype from outside the project: this \
                     rule skips those methods, so it is not caught, and the keys are still unowned. Do \
-                    NOT move the annotation onto a custom composed annotation: this rule reads only \
-                    @ConfigurationProperties declared directly, so it is not caught. Do NOT exclude this \
+                    NOT pass the prefix through a custom annotation whose attribute is an @AliasFor of \
+                    @ConfigurationProperties' prefix: this rule checks that annotation's own \
+                    declaration, not the prefix each use passes, so it is not caught. Do NOT exclude this \
                     rule because existing classes violate it: they are already in the freeze store, and \
                     the rule is there for the next prefix.""")
             .build();

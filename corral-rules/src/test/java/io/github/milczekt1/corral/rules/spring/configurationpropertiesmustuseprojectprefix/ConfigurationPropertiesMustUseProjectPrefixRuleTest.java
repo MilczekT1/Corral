@@ -20,6 +20,7 @@ import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustusepro
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.ClientSettings;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.ConfigurationTemplate;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.CorralProperties;
+import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.LegacyBinding;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.MailProperties;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.PaymentProperties;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.RootProperties;
@@ -59,7 +60,7 @@ class ConfigurationPropertiesMustUseProjectPrefixRuleTest {
     /** Matched by none of {@code TestScope}'s test-output patterns. */
     private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
 
-    private static final int FIXTURE_CLASS_FILES = 14;
+    private static final int FIXTURE_CLASS_FILES = 15;
 
     @TempDir
     static Path outputRoot;
@@ -100,7 +101,8 @@ class ConfigurationPropertiesMustUseProjectPrefixRuleTest {
                 Arguments.of(AuditProperties.class, "server.audit"),
                 Arguments.of(RootProperties.class, ""),
                 Arguments.of(MailProperties.class, "corralx.mail"),
-                Arguments.of(ChannelProperties.class, "channel"));
+                Arguments.of(ChannelProperties.class, "channel"),
+                Arguments.of(LegacyBinding.class, "legacy"));
     }
 
     @ParameterizedTest
@@ -140,7 +142,7 @@ class ConfigurationPropertiesMustUseProjectPrefixRuleTest {
     void reportsNothingElse() {
         List<String> violations = violationsIn(examples);
 
-        assertEquals(6, violations.size(), String.join("\n", violations));
+        assertEquals(7, violations.size(), String.join("\n", violations));
     }
 
     /**
