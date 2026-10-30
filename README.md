@@ -40,9 +40,9 @@ flowchart LR
         L -->|yes| M["Fix instructions<br/>provided automatically"]
         M --> N
     end
-    style F fill:#ffd7d7,stroke:#b22222
-    style E fill:#d7f5d7,stroke:#2e8b57
-    style N fill:#d7f5d7,stroke:#2e8b57
+    style F fill:#c62828,stroke:#7f0000,color:#ffffff
+    style E fill:#2e7d32,stroke:#1b5e20,color:#ffffff
+    style N fill:#2e7d32,stroke:#1b5e20,color:#ffffff
 ```
 
 Corral verifies concrete statements, not vague descriptions. *No field injection* is something a
