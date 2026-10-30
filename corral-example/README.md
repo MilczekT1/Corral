@@ -12,12 +12,13 @@ would have both writing the same entry.
 | `wiring/ProjectRulesGroup` | **Your own catalog root** — the groups and rules this module runs, composed as one node. It wires the central groups this project opted into, plus this module's own rule; `LoggingRulesGroup` is deliberately not among them — `exclusions/` wires that one instead. |
 | `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. Wired from `ProjectRulesGroup`, alongside the library's. |
+| `custom/ServicesMustLiveInServicePackageRule` | Your own rule reading a **project setting**: `corral.base-package` from `corral.properties` instead of a hard-coded `com.example.consumer`. |
 | `exclusions/ExcludedRuleTest` | Wiring `LoggingRulesGroup`, the group holding the excluded rule. |
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
 | `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
-| `corral.properties` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
-| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
+| `corral.properties` | This project's settings: the base package `ServicesMustLiveInServicePackageRule` reads, and one rule removed from this build permanently while the rest of the catalog stays. |
+| `InvalidlyNamedTestClass`, `service/NoisyService`, `billing/InvoiceService` | Deliberate, permanent violations, frozen as debt. `InvoiceService` is a service outside the service package. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
@@ -58,6 +59,38 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
 Ids are freeze-store keys, so use your own namespace (`acme.`) and treat a rename as a breaking
 change.
+
+### Reading a project setting
+
+`ServicesMustLiveInServicePackageRule` needs to know this project's root package, so it reads it from
+`corral.properties` instead of hard-coding it:
+
+```java
+static final RuleDoc DOC = RuleDoc.builder()
+        .id("acme.services-must-live-in-service-package")
+        .requiredSetting(CorralSettings.BASE_PACKAGE)
+        ...
+        .build();
+```
+
+```properties
+corral.base-package=com.example.consumer
+```
+
+Its frozen line names the pattern, never the value:
+
+```text
+Class <com.example.consumer.billing.InvoiceService> does not reside in the service package under the configured base package
+```
+
+Worth trying:
+
+| Edit | What happens |
+|---|---|
+| Delete the `corral.base-package` line | The rule fails with `corral.base-package is not set. Add it to src/test/resources/corral.properties.` |
+| Misspell it (`com.example.consumr`) | The rule fails: no imported class resides in that package. Without the check it would match nothing, pass, and erase `InvoiceService`'s frozen debt. |
+| Widen it to `com.example` | Still green, and the store is untouched: the same classes match, and the violation text never contained the value. |
+| Remove `.requiredSetting(...)` from the rule | The rule fails, naming the line to add. |
 
 ## Anti-fix guidance
 

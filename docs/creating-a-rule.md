@@ -111,6 +111,8 @@ static final ArchRule DEFINITION = noClasses()
         ...;
 ```
 
+`corral-example`'s `ServicesMustLiveInServicePackageRule` is a worked example.
+
 - **Declare every key you read** with `requiredSetting`. `guard()` fails the rule when a declared key
   is missing, even if the rule matches nothing and would never read the value. Reading a key you did
   not declare through `CorralSettings.setting(DOC, key)` fails the rule, naming the
