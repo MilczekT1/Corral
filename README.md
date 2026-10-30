@@ -1,6 +1,8 @@
 <div align="center">
 
-<img src="docs/assets/corral-logo.png" width="200" alt="Corral logo: three llamas in a wooden corral">
+<p align="center">
+  <img src="docs/assets/corral-logo.png" width="280" alt="Corral logo: three llamas in a wooden corral">
+</p>
 
 # Corral
 
