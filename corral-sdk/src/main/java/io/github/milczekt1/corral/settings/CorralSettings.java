@@ -18,6 +18,8 @@ public class CorralSettings {
 
     public static final String BASE_PACKAGE = "corral.base-package";
 
+    public static final String PROPERTY_PREFIX = "corral.property-prefix";
+
     public static final String IGNORE_PATTERNS_FAIL = "corral.ignore-patterns.fail";
 
     /** Followed by a rule id; the value is the reason the rule does not apply here. */

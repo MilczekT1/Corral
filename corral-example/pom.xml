@@ -39,6 +39,11 @@
       <scope>provided</scope>
     </dependency>
     <dependency>
+      <groupId>org.springframework.boot</groupId>
+      <artifactId>spring-boot</artifactId>
+      <scope>provided</scope>
+    </dependency>
+    <dependency>
       <groupId>io.github.milczekt1</groupId>
       <artifactId>corral-rules</artifactId>
       <version>${project.version}</version>

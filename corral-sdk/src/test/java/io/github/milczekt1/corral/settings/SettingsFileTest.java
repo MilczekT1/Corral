@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.settings;
 
 import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
 import static io.github.milczekt1.corral.settings.CorralSettings.FILE;
+import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -102,6 +103,24 @@ class SettingsFileTest {
 
         assertTrue(settings.isBroken(), () -> basePackage + " was accepted");
         assertTrue(settings.problem().contains(BASE_PACKAGE), settings::problem);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"acme", "acme.payments", "acme-co.v2", "9to5"})
+    void aSpringPropertyNameIsAValidPropertyPrefix(String prefix) {
+        SettingsFile settings = SettingsFile.parse(PROPERTY_PREFIX + "=" + prefix, SOURCE);
+
+        assertFalse(settings.isBroken(), settings::problem);
+        assertEquals(Optional.of(prefix), settings.value(PROPERTY_PREFIX));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"Acme", "acme_x", "-acme", "acme.-x", "acme.", "acme..x", ".acme", ""})
+    void anInvalidPropertyPrefixBreaksTheFile(String prefix) {
+        SettingsFile settings = SettingsFile.parse(PROPERTY_PREFIX + "=" + prefix, SOURCE);
+
+        assertTrue(settings.isBroken(), () -> prefix + " was accepted");
+        assertTrue(settings.problem().contains(PROPERTY_PREFIX), settings::problem);
     }
 
     @Test

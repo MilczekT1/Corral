@@ -4,6 +4,7 @@ import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
 import static io.github.milczekt1.corral.settings.CorralSettings.EXCLUDE_PREFIX;
 import static io.github.milczekt1.corral.settings.CorralSettings.FILE;
 import static io.github.milczekt1.corral.settings.CorralSettings.IGNORE_PATTERNS_FAIL;
+import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
@@ -37,6 +38,10 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
     /** Possessive throughout, as {@code RuleDoc}'s id pattern: greedy repetition overflows the stack. */
     private static final Pattern PACKAGE_NAME =
             Pattern.compile("^[A-Za-z_$][A-Za-z0-9_$]*+(?:\\.[A-Za-z_$][A-Za-z0-9_$]*+)*+$");
+
+    /** Spring Boot's canonical {@code ConfigurationPropertyName} elements, without indexed or empty elements. */
+    private static final Pattern PROPERTY_NAME =
+            Pattern.compile("^[a-z0-9][a-z0-9-]*+(?:\\.[a-z0-9][a-z0-9-]*+)*+$");
 
     public SettingsFile {
         values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
@@ -154,6 +159,12 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                     ? Optional.empty()
                     : Optional.of("'" + value + "' is not a Java package name");
         }
+        if (key.equals(PROPERTY_PREFIX)) {
+            return PROPERTY_NAME.matcher(value).matches()
+                    ? Optional.empty()
+                    : Optional.of("'" + value + "' is not a Spring Boot property name: dot-separated elements of"
+                            + " lower-case letters, digits and '-', none starting with '-'");
+        }
         if (key.startsWith(EXCLUDE_PREFIX)) {
             String ruleId = key.substring(EXCLUDE_PREFIX.length());
             if (!RuleDoc.isId(ruleId)) {
@@ -179,9 +190,9 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                 until it is fixed. A file that is not understood must not be trusted to remove or \
                 configure a rule.
                 %s
-                Corral defines %s, %s and %s<rule-id>; keys outside corral. belong to your own rules.\
+                Corral defines %s, %s, %s and %s<rule-id>; keys outside corral. belong to your own rules.\
                 """.formatted(source, String.join(System.lineSeparator(), problems),
-                        BASE_PACKAGE, IGNORE_PATTERNS_FAIL, EXCLUDE_PREFIX);
+                        BASE_PACKAGE, PROPERTY_PREFIX, IGNORE_PATTERNS_FAIL, EXCLUDE_PREFIX);
     }
 
     private static String listed(List<String> lines) {

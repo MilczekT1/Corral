@@ -6,6 +6,7 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.groups.TestingJunitRulesGroup;
 import io.github.milczekt1.corral.groups.TestingRulesGroup;
+import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.ConfigurationPropertiesMustUseProjectPrefixRule;
 
 /**
  * This project's own catalog root: the central groups it opted into, plus the rules it wrote itself,
@@ -33,6 +34,9 @@ final class ProjectRulesGroup {
 
     @ArchTest
     static final ArchTests servicePlacement = ArchTests.in(ServicesMustLiveInServicePackageRule.class);
+
+    @ArchTest
+    static final ArchTests propertyPrefix = ArchTests.in(ConfigurationPropertiesMustUseProjectPrefixRule.class);
 
     private ProjectRulesGroup() {
     }

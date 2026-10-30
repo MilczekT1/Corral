@@ -4,6 +4,7 @@ acme.services-must-live-in-service-package=acme.services-must-live-in-service-pa
 corral.logging.no-print-stack-trace=corral.logging.no-print-stack-trace
 corral.logging.no-system-err=corral.logging.no-system-err
 corral.logging.no-system-out=corral.logging.no-system-out
+corral.spring.configuration-properties-must-use-project-prefix=corral.spring.configuration-properties-must-use-project-prefix
 corral.test.class-names-must-end-with-test-or-it=corral.test.class-names-must-end-with-test-or-it
 corral.test.junit.no-disabled-without-reason=corral.test.junit.no-disabled-without-reason
 corral.test.no-junit4=corral.test.no-junit4

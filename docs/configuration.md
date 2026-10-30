@@ -28,6 +28,7 @@ project owns. Libraries, including Corral's own jars, never ship one.
 
 ```properties
 corral.base-package=com.acme.billing
+corral.property-prefix=acme
 corral.ignore-patterns.fail=true
 corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interface. ADR-021.
 ```
@@ -35,6 +36,7 @@ corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interfa
 | Key | Notes |
 |---|---|
 | `corral.base-package` | The project's root package, for rules that declare they need it. Must be a valid Java package name. A rule that declares it fails, naming the key, when it is missing or when no imported class resides in it. |
+| `corral.property-prefix` | The one namespace the project's own `@ConfigurationProperties` keys live under, for rules that declare they need it. Must be a Spring Boot property name: dot-separated elements of lower-case letters, digits and `-`, none starting with `-`. Choose it once per project, and choose a value no Kubernetes Service in the namespace is named after or starts with followed by `-`: a Service `acme-redis` injects `ACME_REDIS_PORT`, which binds to `acme.redis.port`. A wrong but valid value is not loud: seeding the store records every existing site as debt, and the build fails only on the next class that uses the right prefix. |
 | `corral.ignore-patterns.fail` | See the table above. |
 | `corral.exclude.<rule-id>` | See [Excluding a rule](excluding-a-rule.md). |
 | anything outside `corral.` | Read by your own rules. A key no rule in the run declares logs a warning. |

@@ -28,6 +28,7 @@ corral.logging.no-print-stack-trace=corral.logging.no-print-stack-trace
 corral.naming.packages-must-be-lowercase=corral.naming.packages-must-be-lowercase
 corral.security.no-jdbc-statement=corral.security.no-jdbc-statement
 corral.shedlock.no-lock-name-over-64-chars=corral.shedlock.no-lock-name-over-64-chars
+corral.spring.configuration-properties-must-use-project-prefix=corral.spring.configuration-properties-must-use-project-prefix
 corral.spring.constrained-configuration-properties-must-be-validated=corral.spring.constrained-configuration-properties-must-be-validated
 corral.spring.no-application-context-injection=corral.spring.no-application-context-injection
 corral.spring.no-async-on-unproxyable-method=corral.spring.no-async-on-unproxyable-method

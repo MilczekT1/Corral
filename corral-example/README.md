@@ -17,8 +17,8 @@ would have both writing the same entry.
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
 | `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
-| `corral.properties` | This project's settings: the base package `ServicesMustLiveInServicePackageRule` reads, and one rule removed from this build permanently while the rest of the catalog stays. |
-| `InvalidlyNamedTestClass`, `service/NoisyService`, `billing/InvoiceService` | Deliberate, permanent violations, frozen as debt. `InvoiceService` is a service outside the service package. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
+| `corral.properties` | This project's settings: the base package `ServicesMustLiveInServicePackageRule` reads, the property prefix the catalog's standalone `corral.spring.configuration-properties-must-use-project-prefix` reads, and one rule removed from this build permanently while the rest of the catalog stays. |
+| `InvalidlyNamedTestClass`, `service/NoisyService`, `billing/InvoiceService`, `billing/InvoiceProperties` | Deliberate, permanent violations, frozen as debt. `InvoiceService` is a service outside the service package. `InvoiceProperties` binds keys under `app.invoice` instead of the configured `acme`. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
