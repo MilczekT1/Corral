@@ -168,9 +168,9 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
         return Optional.of("not a key Corral defines");
     }
 
-    /** {@code String.strip()} leaves it: {@code Character.isWhitespace('﻿')} is false. */
+    /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */
     private static String withoutByteOrderMark(String contents) {
-        return contents.startsWith("﻿") ? contents.substring(1) : contents;
+        return contents.startsWith("\uFEFF") ? contents.substring(1) : contents;
     }
 
     private static String brokenFileMessage(String source, Collection<String> problems) {
@@ -195,6 +195,17 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
 
         private final transient Set<String> keysInOrder = new LinkedHashSet<>();
         private final transient Set<String> duplicates = new LinkedHashSet<>();
+
+        /** The bookkeeping sets are not content: two loads of the same entries are equal. */
+        @Override
+        public synchronized boolean equals(Object other) {
+            return super.equals(other);
+        }
+
+        @Override
+        public synchronized int hashCode() {
+            return super.hashCode();
+        }
 
         @Override
         public synchronized Object put(Object key, Object value) {

@@ -19,7 +19,6 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
-import io.github.milczekt1.corral.settings.BasePackage;
 import io.github.milczekt1.corral.settings.CorralSettings;
 import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;

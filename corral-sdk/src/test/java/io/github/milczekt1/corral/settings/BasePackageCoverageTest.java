@@ -18,7 +18,6 @@ import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Properties;
-import java.util.function.Supplier;
 import org.junit.jupiter.api.Test;
 
 class BasePackageCoverageTest {

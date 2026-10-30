@@ -105,9 +105,11 @@ class RuleExclusionsGuardTest {
         ArchRule unconfigured = RequiredSettings.applyTo(ALWAYS_VIOLATED, requiringAbsentSetting);
         ArchRule excluded = RuleExclusions.applyTo(unconfigured, EXCLUDED_ID, EXCLUDING);
 
-        String message = assertThrows(AssertionError.class, () -> unconfigured.check(nothingToMatch())).getMessage();
+        JavaClasses none = nothingToMatch();
+
+        String message = assertThrows(AssertionError.class, () -> unconfigured.check(none)).getMessage();
         assertTrue(message.contains("acme.absent-setting"), message);
-        assertDoesNotThrow(() -> excluded.check(nothingToMatch()));
+        assertDoesNotThrow(() -> excluded.check(none));
     }
 
     /** A file that cannot be understood removes no rule and fails all of them. */

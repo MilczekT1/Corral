@@ -23,8 +23,6 @@ import java.util.Enumeration;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 /**
  * This JVM carries no {@code archunit_ignore_patterns.txt}, so the "present" case uses real files in

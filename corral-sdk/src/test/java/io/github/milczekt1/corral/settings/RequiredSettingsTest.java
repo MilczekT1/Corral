@@ -48,8 +48,9 @@ class RequiredSettingsTest {
                 .allowEmptyShould(true);
 
         ArchRule applied = RequiredSettings.applyTo(matchesNothing, requiring(BASE_PACKAGE), SettingsFile.none());
+        JavaClasses noClasses = new ClassFileImporter().importClasses();
 
-        assertThrows(AssertionError.class, () -> applied.check(new ClassFileImporter().importClasses()));
+        assertThrows(AssertionError.class, () -> applied.check(noClasses));
     }
 
     @Test

@@ -156,7 +156,7 @@ class SettingsFileTest {
 
     @Test
     void aLeadingByteOrderMarkIsIgnored() {
-        SettingsFile settings = SettingsFile.parse("﻿" + BASE_PACKAGE + "=com.acme", SOURCE);
+        SettingsFile settings = SettingsFile.parse("\uFEFF" + BASE_PACKAGE + "=com.acme", SOURCE);
 
         assertEquals(Optional.of("com.acme"), settings.value(BASE_PACKAGE));
     }
