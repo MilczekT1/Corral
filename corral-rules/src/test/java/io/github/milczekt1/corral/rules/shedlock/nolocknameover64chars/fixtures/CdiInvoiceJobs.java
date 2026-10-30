@@ -11,4 +11,10 @@ public class CdiInvoiceJobs {
     public void sendOverdueReminders() {
         runs++;
     }
+
+    /** MUST FLAG: 75 characters; ShedLock's CDI integration stores the placeholder as written. */
+    @SchedulerLock(name = "${shedlock.names.dunning-runs:com.acme.billing.invoicing.CdiDunningRunJobs}")
+    public void closeStaleDunningRuns() {
+        runs++;
+    }
 }

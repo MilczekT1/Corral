@@ -46,6 +46,18 @@ public class SpringInvoiceJobs {
         runs++;
     }
 
+    /** MUST FLAG: the 73 characters outside the placeholder survive resolution. */
+    @SchedulerLock(name = "${spring.application.name}.com.acme.billing.invoicing.InvoiceReminderScheduler.sendOverdueReminders")
+    public void sendRemindersUnderAppPrefix() {
+        runs++;
+    }
+
+    /** MUST IGNORE: the whole name is one placeholder, the over-long default nested inside it. */
+    @SchedulerLock(name = "${shedlock.names.invoice-reminders:${spring.application.name}.com.acme.billing.invoicing.InvoiceReminderScheduler.sendOverdueReminders}")
+    public void remindersWithNestedDefault() {
+        runs++;
+    }
+
     /** MUST IGNORE: a SpEL template longer than 64, resolved at runtime. */
     @SchedulerLock(name = "#{'billing.overdue-reminders.' + #tenant.substring(0, T(Math).min(#tenant.length(), 16))}")
     public void remindersForTenant(String tenant) {

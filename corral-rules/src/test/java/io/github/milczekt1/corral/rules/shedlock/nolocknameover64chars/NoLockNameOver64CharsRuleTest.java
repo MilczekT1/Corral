@@ -14,6 +14,7 @@ import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.DunningRunService;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.LegacyInvoiceJobs;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.LookalikeLockJobs;
+import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.MicronautDunningService;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.MicronautInvoiceJobs;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.OverdueRemindersLock;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.SpringInvoiceJobs;
@@ -36,7 +37,8 @@ class NoLockNameOver64CharsRuleTest {
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter().importClasses(
             SpringInvoiceJobs.class, OverdueRemindersLock.class, LegacyInvoiceJobs.class, CdiInvoiceJobs.class,
-            MicronautInvoiceJobs.class, DunningRunService.class, LookalikeLockJobs.class);
+            MicronautInvoiceJobs.class, MicronautDunningService.class, DunningRunService.class,
+            LookalikeLockJobs.class);
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
     private static List<String> violations() {
@@ -86,14 +88,29 @@ class NoLockNameOver64CharsRuleTest {
     }
 
     @ParameterizedTest(name = "flags {0}")
-    @ValueSource(strings = {"LegacyInvoiceJobs", "CdiInvoiceJobs", "MicronautInvoiceJobs"})
+    @ValueSource(strings = {"SpringInvoiceJobs", "LegacyInvoiceJobs", "CdiInvoiceJobs", "MicronautInvoiceJobs"})
     void flagsEveryShedLockAnnotationType(String jobs) {
         assertFlagged(jobs + ".sendOverdueReminders()>");
     }
 
     @Test
     void flagsAnAnnotationOnAClass() {
-        assertFlagged("DunningRunService>");
+        assertFlagged("MicronautDunningService>");
+    }
+
+    @Test
+    void ignoresACdiAnnotationOnAClass() {
+        assertNotReported("DunningRunService");
+    }
+
+    @Test
+    void flagsTheTextOutsideAPlaceholder() {
+        assertFlagged("SpringInvoiceJobs.sendRemindersUnderAppPrefix()>");
+    }
+
+    @Test
+    void flagsACdiPlaceholderAsWritten() {
+        assertFlagged("CdiInvoiceJobs.closeStaleDunningRuns()>");
     }
 
     @Test
@@ -114,6 +131,11 @@ class NoLockNameOver64CharsRuleTest {
     @Test
     void ignoresAPlaceholder() {
         assertNotReported("SpringInvoiceJobs.remindersFromConfig()");
+    }
+
+    @Test
+    void ignoresAPlaceholderNestedInsideAnother() {
+        assertNotReported("SpringInvoiceJobs.remindersWithNestedDefault()");
     }
 
     @Test
@@ -142,8 +164,8 @@ class NoLockNameOver64CharsRuleTest {
     }
 
     @Test
-    void reportsExactlyEightDeclarations() {
-        assertEquals(8, violations().size(), String.join("\n", violations()));
+    void reportsExactlyTenDeclarations() {
+        assertEquals(10, violations().size(), String.join("\n", violations()));
     }
 
     @Test
@@ -188,7 +210,8 @@ class NoLockNameOver64CharsRuleTest {
             String debt = Files.readString(Path.of(STORE_PATH, ID));
             assertTrue(debt.contains("SpringInvoiceJobs.sendOverdueReminders()>"), debt);
             assertTrue(debt.contains("OverdueRemindersLock>"), debt);
-            assertFalse(debt.contains("sendPaymentConfirmations"), "a name at the limit must never reach the store: " + debt);
+            assertFalse(debt.contains("sendPaymentConfirmations"),
+                    "a name at the limit must never reach the store: " + debt);
         } finally {
             ArchConfiguration.get().reset();
         }

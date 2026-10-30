@@ -13,6 +13,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import java.util.List;
+import java.util.stream.Stream;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 
@@ -20,8 +21,11 @@ import lombok.NoArgsConstructor;
  * No method or type may carry a ShedLock {@code @SchedulerLock} whose literal {@code name} is longer
  * than 64 characters, the width of the {@code name} column in ShedLock's documented SQL schema.
  *
- * <p>A name containing {@code ${} or {@code #{} resolves at runtime and is skipped. A method using a
- * composed annotation is not flagged; the composed annotation type is.
+ * <p>For the Spring, Micronaut and {@code core} annotations, only the text outside any {@code ${...}}
+ * placeholder or {@code #{...}} template is counted, since those resolve at runtime. ShedLock's CDI
+ * integration resolves neither and reads the annotation only from the method, so a CDI name is counted
+ * whole and only on a method. A method using a composed annotation is not flagged; the composed
+ * annotation type is.
  *
  * @see <a href="https://github.com/lukas-krecan/ShedLock#jdbctemplate">ShedLock: the lock table schema</a>
  */
@@ -52,23 +56,28 @@ public final class NoLockNameOver64CharsRule implements DocumentedRule {
                     ZooKeeper, Hazelcast and others) has no such limit and should not wire this \
                     rule.""")
             .howNotToFix("""
-                    Do NOT move the long name into a ${...} property or a #{...} expression: this \
-                    rule skips such names, and the resolved name still fails at the database — this \
+                    Do NOT move the long name, or part of it, into a ${...} property or a #{...} \
+                    expression: on the Spring, Micronaut and core annotations this rule counts only \
+                    the text outside them, and the resolved name still fails at the database — this \
                     rule does NOT catch it. Do NOT cut the name at character 64: two jobs whose names \
                     share a long prefix then share one lock and one silently skips its runs — not \
                     caught. Do NOT move the long name into a composed annotation's @AliasFor \
                     attribute, or into a LockConfiguration passed to LockingTaskExecutor — this rule \
-                    catches neither. Do NOT remove @SchedulerLock: the job then runs on every node at \
-                    once — not caught. Do NOT freeze or exclude a violation while the column is 64 \
-                    characters wide: it is not debt, the job is not running.""")
+                    catches neither. Do NOT move a CDI @SchedulerLock from the method to the class: \
+                    ShedLock's CDI integration reads it only from the method, so the job runs \
+                    unlocked — not caught. Do NOT remove @SchedulerLock: the job then runs on every \
+                    node at once — not caught. Do NOT freeze or exclude a violation while the column \
+                    is 64 characters wide: it is not debt, the job is not running.""")
             .build();
 
-    /** Matched by name: each lives in its own artifact, and most consumers carry at most one. */
-    static final List<String> SCHEDULER_LOCKS = List.of(
+    /** Resolve {@code ${...}} and {@code #{...}} in the name, and are read from a type as well as a method. */
+    static final List<String> RESOLVING_LOCKS = List.of(
             "net.javacrumbs.shedlock.spring.annotation.SchedulerLock",
             "net.javacrumbs.shedlock.core.SchedulerLock",
-            "net.javacrumbs.shedlock.cdi.SchedulerLock",
             "net.javacrumbs.shedlock.micronaut.SchedulerLock");
+
+    /** Takes the name as written, and is read only from a method. */
+    static final String CDI_LOCK = "net.javacrumbs.shedlock.cdi.SchedulerLock";
 
     static final int MAX_NAME_LENGTH = 64;
 
@@ -92,13 +101,13 @@ public final class NoLockNameOver64CharsRule implements DocumentedRule {
                 "not carry a ShedLock @SchedulerLock whose literal name is longer than 64 characters") {
             @Override
             public void check(JavaClass javaClass, ConditionEvents events) {
-                if (hasOverLongLockName(javaClass)) {
+                if (hasOverLongResolvingName(javaClass)) {
                     events.add(SimpleConditionEvent.violated(javaClass, "Class <" + javaClass.getName()
                             + "> has a @SchedulerLock name longer than 64 characters in "
                             + javaClass.getSourceCodeLocation()));
                 }
                 for (JavaMethod method : javaClass.getMethods()) {
-                    if (hasOverLongLockName(method)) {
+                    if (hasOverLongResolvingName(method) || hasOverLongCdiName(method)) {
                         events.add(SimpleConditionEvent.violated(method, "Method <" + method.getFullName()
                                 + "> has a @SchedulerLock name longer than 64 characters in "
                                 + method.getSourceCodeLocation()));
@@ -108,16 +117,48 @@ public final class NoLockNameOver64CharsRule implements DocumentedRule {
         };
     }
 
-    /**
-     * Do not drop the {@code ${} and {@code #{} skips: ShedLock resolves placeholders and SpEL in the
-     * name, so the literal's length says nothing about the stored one.
-     */
-    private static boolean hasOverLongLockName(HasAnnotations<?> annotated) {
-        return SCHEDULER_LOCKS.stream()
-                .flatMap(type -> annotated.tryGetAnnotationOfType(type).stream())
+    private static boolean hasOverLongResolvingName(HasAnnotations<?> annotated) {
+        return RESOLVING_LOCKS.stream()
+                .flatMap(type -> lockNames(annotated, type))
+                .anyMatch(name -> isOverLong(literalText(name)));
+    }
+
+    private static boolean hasOverLongCdiName(JavaMethod method) {
+        return lockNames(method, CDI_LOCK).anyMatch(NoLockNameOver64CharsRule::isOverLong);
+    }
+
+    private static Stream<String> lockNames(HasAnnotations<?> annotated, String annotationType) {
+        return annotated.tryGetAnnotationOfType(annotationType).stream()
                 .flatMap(annotation -> annotation.get("name").stream())
-                .map(String.class::cast)
-                .anyMatch(name -> !name.contains("${") && !name.contains("#{")
-                        && name.codePointCount(0, name.length()) > MAX_NAME_LENGTH);
+                .map(String.class::cast);
+    }
+
+    private static boolean isOverLong(String name) {
+        return name.codePointCount(0, name.length()) > MAX_NAME_LENGTH;
+    }
+
+    /**
+     * The name without its {@code ${...}} and {@code #{...}} parts, braces nested inside them included.
+     * Resolution keeps this text as written, so its length is a lower bound on the stored name's.
+     */
+    private static String literalText(String name) {
+        StringBuilder literal = new StringBuilder();
+        int depth = 0;
+        for (int i = 0; i < name.length(); i++) {
+            char c = name.charAt(i);
+            if (depth == 0 && (c == '$' || c == '#') && i + 1 < name.length() && name.charAt(i + 1) == '{') {
+                depth = 1;
+                i++;
+            } else if (depth > 0) {
+                if (c == '{') {
+                    depth++;
+                } else if (c == '}') {
+                    depth--;
+                }
+            } else {
+                literal.append(c);
+            }
+        }
+        return literal.toString();
     }
 }
