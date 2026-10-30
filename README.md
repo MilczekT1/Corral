@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="docs/assets/corral-logo.svg" width="128" alt="Corral logo: a ring of fence posts around a check mark">
+<img src="docs/assets/corral-logo.png" width="200" alt="Corral logo: three llamas in a wooden corral">
 
 # Corral
 
