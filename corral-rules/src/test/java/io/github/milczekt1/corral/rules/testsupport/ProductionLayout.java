@@ -1,13 +1,17 @@
 package io.github.milczekt1.corral.rules.testsupport;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.tngtech.archunit.core.importer.Location;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -32,33 +36,57 @@ public class ProductionLayout {
     public static Path copy(Path root, List<Class<?>> classes) throws IOException {
         Path output = root.resolve(MAIN_OUTPUT);
         for (Class<?> type : classes) {
-            String binaryName = binaryNameOf(type);
-            copyMatching(directoryOf(type), destinationFor(output, type),
-                    name -> name.equals(binaryName + ".class") || name.startsWith(binaryName + "$"));
+            copyMatching(directoryOf(type), destinationFor(output, type), belongsTo(type));
         }
         return output;
     }
 
     /**
-     * Copies every class file in {@code anchor}'s package directory whose file name passes
-     * {@code include} into {@code root/}{@value #MAIN_OUTPUT}. Sub-packages are not copied.
+     * Copies every class file in {@code anchor}'s package directory into
+     * {@code root/}{@value #MAIN_OUTPUT}, except {@code excluded} and their nested and anonymous
+     * classes. Sub-packages are not copied.
      *
      * @return the copy's output root, to import from
      */
-    public static Path copyPackageOf(Class<?> anchor, Path root, Predicate<String> include) throws IOException {
-        Path output = root.resolve(MAIN_OUTPUT);
-        copyMatching(directoryOf(anchor), destinationFor(output, anchor), include);
+    public static Path copyPackageOf(Class<?> anchor, Path root, List<Class<?>> excluded) throws IOException {
+        return copyPackageOf(anchor, root, MAIN_OUTPUT, excluded);
+    }
+
+    /** As {@link #copyPackageOf(Class, Path, List)}, into {@code root/layout} instead. */
+    public static Path copyPackageOf(Class<?> anchor, Path root, String layout, List<Class<?>> excluded)
+            throws IOException {
+        Path output = root.resolve(layout);
+        Predicate<String> isExcluded = excluded.stream().map(ProductionLayout::belongsTo)
+                .reduce(name -> false, Predicate::or);
+        copyMatching(directoryOf(anchor), destinationFor(output, anchor), isExcluded.negate());
         return output;
     }
 
-    public static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(binaryNameOf(type) + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
+    /**
+     * {@code productionOutput}, plus each test-output type's class file and its nested and anonymous
+     * classes where they compiled.
+     */
+    public static List<Location> withTestOutput(Path productionOutput, Class<?>... testOutputTypes)
+            throws IOException {
+        List<Location> locations = new ArrayList<>(List.of(Location.of(productionOutput)));
+        for (Class<?> type : testOutputTypes) {
+            for (Path classFile : classFilesIn(directoryOf(type), belongsTo(type))) {
+                locations.add(Location.of(classFile));
+            }
+        }
+        return locations;
+    }
+
+    /** Every class file in {@code anchor}'s package directory, sub-packages excluded. */
+    public static List<Path> classFilesInPackageOf(Class<?> anchor) throws IOException {
+        return classFilesIn(directoryOf(anchor), name -> name.endsWith(".class"));
     }
 
     public static Path directoryOf(Class<?> type) {
-        URL classFile = classFileOf(type);
+        URL classFile = type.getResource(binaryNameOf(type) + ".class");
+        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
+        assertEquals("file", classFile.getProtocol(),
+                () -> "fixtures are copied by listing their directory, so they must load from one: " + classFile);
         try {
             return Path.of(classFile.toURI()).getParent();
         } catch (URISyntaxException e) {
@@ -68,14 +96,25 @@ public class ProductionLayout {
 
     private static void copyMatching(Path source, Path destination, Predicate<String> include) throws IOException {
         Files.createDirectories(destination);
-        try (Stream<Path> classFiles = Files.list(source)) {
-            for (Path classFile : classFiles
+        for (Path classFile : classFilesIn(source, include)) {
+            // Overlapping inputs, such as Outer and Outer.Inner, copy the same file twice.
+            Files.copy(classFile, destination.resolve(classFile.getFileName()), StandardCopyOption.REPLACE_EXISTING);
+        }
+    }
+
+    private static List<Path> classFilesIn(Path directory, Predicate<String> include) throws IOException {
+        try (Stream<Path> files = Files.list(directory)) {
+            return files
                     .filter(Files::isRegularFile)
                     .filter(file -> include.test(file.getFileName().toString()))
-                    .toList()) {
-                Files.copy(classFile, destination.resolve(classFile.getFileName()));
-            }
+                    .toList();
         }
+    }
+
+    /** Matches the class file of {@code type} and of every class nested in it, at any depth. */
+    private static Predicate<String> belongsTo(Class<?> type) {
+        String binaryName = binaryNameOf(type);
+        return name -> name.equals(binaryName + ".class") || name.startsWith(binaryName + "$");
     }
 
     private static Path destinationFor(Path output, Class<?> type) {
@@ -84,6 +123,7 @@ public class ProductionLayout {
 
     /** {@code Outer$Inner} for a nested class, which is also its class file's name. */
     private static String binaryNameOf(Class<?> type) {
-        return type.getName().substring(type.getPackageName().length() + 1);
+        String packageName = type.getPackageName();
+        return packageName.isEmpty() ? type.getName() : type.getName().substring(packageName.length() + 1);
     }
 }

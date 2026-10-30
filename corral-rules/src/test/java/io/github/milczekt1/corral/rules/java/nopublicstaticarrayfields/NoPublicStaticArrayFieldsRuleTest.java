@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.java.nopublicstaticarrayfields.fixtures.RegionCodes;
@@ -47,10 +46,9 @@ class NoPublicStaticArrayFieldsRuleTest {
     @BeforeAll
     static void importExamples() throws IOException {
         Path productionOutput = ProductionLayout.copyPackageOf(RegionCodes.class, outputRoot.resolve("examples"),
-                name -> !name.startsWith(TestOutputArrays.class.getSimpleName()));
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(ProductionLayout.classFileOf(TestOutputArrays.class))));
+                List.of(TestOutputArrays.class));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputArrays.class));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -148,8 +146,7 @@ class NoPublicStaticArrayFieldsRuleTest {
 
     @Test
     void flagsTheTestOutputArrayOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(RegionCodes.class, outputRoot.resolve("arrays"),
-                name -> name.equals(TestOutputArrays.class.getSimpleName() + ".class"));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("arrays"), List.of(TestOutputArrays.class));
         JavaClasses arrays = new ClassFileImporter().importPath(productionOutput);
 
         List<String> violations = violationsIn(arrays);

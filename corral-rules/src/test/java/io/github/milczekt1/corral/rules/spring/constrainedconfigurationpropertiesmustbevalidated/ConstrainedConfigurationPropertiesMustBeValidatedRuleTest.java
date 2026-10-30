@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CacheProperties;
@@ -64,8 +63,6 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    private static final String TEST_OUTPUT_PREFIX = "TestOutput";
-
     private static final int FIXTURE_CLASS_FILES = 33;
 
     @TempDir
@@ -78,11 +75,10 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     @BeforeAll
     static void importExamples() throws IOException {
         productionOutput = ProductionLayout.copyPackageOf(PaymentProperties.class, outputRoot.resolve("examples"),
-                name -> !name.startsWith(TEST_OUTPUT_PREFIX));
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(ProductionLayout.classFileOf(TestOutputProperties.class)),
-                Location.of(ProductionLayout.classFileOf(TestOutputConfiguration.class))));
+                List.of(TestOutputProperties.class, TestOutputConfiguration.class));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput,
+                        TestOutputProperties.class, TestOutputConfiguration.class));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -165,8 +161,8 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     /** The counterpart of ignoring the {@code TestOutput*} fixtures: the same class files, in a production layout. */
     @Test
     void flagsTheTestOutputExamplesOnceInAProductionLayout() throws IOException {
-        Path copy = ProductionLayout.copyPackageOf(PaymentProperties.class, outputRoot.resolve("test-output"),
-                name -> name.startsWith(TEST_OUTPUT_PREFIX) || name.equals(ClientSettings.class.getSimpleName() + ".class"));
+        Path copy = ProductionLayout.copy(outputRoot.resolve("test-output"),
+                List.of(TestOutputProperties.class, TestOutputConfiguration.class, ClientSettings.class));
 
         List<String> violations = violationsIn(new ClassFileImporter().importPath(copy));
 

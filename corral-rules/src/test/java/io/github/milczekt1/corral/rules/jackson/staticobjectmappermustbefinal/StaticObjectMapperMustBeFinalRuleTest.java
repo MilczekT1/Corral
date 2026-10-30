@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.JsonUtils;
@@ -47,10 +46,9 @@ class StaticObjectMapperMustBeFinalRuleTest {
     @BeforeAll
     static void importExamples() throws IOException {
         Path productionOutput = ProductionLayout.copyPackageOf(JsonUtils.class, outputRoot.resolve("examples"),
-                name -> !name.startsWith(TestOutputJson.class.getSimpleName()));
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(ProductionLayout.classFileOf(TestOutputJson.class))));
+                List.of(TestOutputJson.class));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputJson.class));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -153,8 +151,7 @@ class StaticObjectMapperMustBeFinalRuleTest {
 
     @Test
     void flagsTheTestOutputFieldOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(JsonUtils.class, outputRoot.resolve("json"),
-                name -> name.equals(TestOutputJson.class.getSimpleName() + ".class"));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("json"), List.of(TestOutputJson.class));
         JavaClasses json = new ClassFileImporter().importPath(productionOutput);
 
         List<String> violations = violationsIn(json);

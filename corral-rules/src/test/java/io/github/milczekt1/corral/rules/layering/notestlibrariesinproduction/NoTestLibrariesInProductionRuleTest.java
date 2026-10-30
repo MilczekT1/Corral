@@ -16,10 +16,8 @@ import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -49,7 +47,7 @@ class NoTestLibrariesInProductionRuleTest {
     static void importExamples() throws IOException {
         examples = importFromLayout(ProductionLayout.MAIN_OUTPUT);
 
-        assertEquals(fixtureClassFiles().size(), examples.size(),
+        assertEquals(ProductionLayout.classFilesInPackageOf(OrderService.class).size(), examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
     }
 
@@ -225,20 +223,9 @@ class NoTestLibrariesInProductionRuleTest {
         }
     }
 
-    /** Copies every fixture class file into {@code outputRoot/layout}, keeping package directories. */
     private static JavaClasses importFromLayout(String layout) throws IOException {
-        Path root = outputRoot.resolve(layout.replace('/', '-')).resolve(layout);
-        Path destination = root.resolve(OrderService.class.getPackageName().replace('.', '/'));
-        Files.createDirectories(destination);
-        for (Path classFile : fixtureClassFiles()) {
-            Files.copy(classFile, destination.resolve(classFile.getFileName()), StandardCopyOption.REPLACE_EXISTING);
-        }
-        return new ClassFileImporter().importPath(root);
-    }
-
-    private static List<Path> fixtureClassFiles() throws IOException {
-        try (Stream<Path> files = Files.list(ProductionLayout.directoryOf(OrderService.class))) {
-            return files.filter(file -> file.toString().endsWith(".class")).toList();
-        }
+        Path output = ProductionLayout.copyPackageOf(OrderService.class, outputRoot.resolve(layout.replace('/', '-')),
+                layout, List.of());
+        return new ClassFileImporter().importPath(output);
     }
 }

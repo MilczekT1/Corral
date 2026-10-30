@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.fixtures.OrderQuery;
@@ -49,10 +48,9 @@ class NoOptionalMethodParametersRuleTest {
     @BeforeAll
     static void importExamples() throws IOException {
         Path productionOutput = ProductionLayout.copyPackageOf(OrderQuery.class, outputRoot.resolve("examples"),
-                name -> !name.startsWith(TestOutputLookup.class.getSimpleName()));
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(ProductionLayout.classFileOf(TestOutputLookup.class))));
+                List.of(TestOutputLookup.class));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputLookup.class));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -188,8 +186,7 @@ class NoOptionalMethodParametersRuleTest {
     /** The same class file as above, moved: only its location changed, so only scope can explain the difference. */
     @Test
     void flagsTheTestOutputMethodOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(OrderQuery.class, outputRoot.resolve("lookup"),
-                name -> name.equals(TestOutputLookup.class.getSimpleName() + ".class"));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("lookup"), List.of(TestOutputLookup.class));
 
         List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));
 

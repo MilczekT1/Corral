@@ -8,7 +8,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.InvoiceService;
@@ -59,9 +58,8 @@ class NoSetterInjectionRuleTest {
     @BeforeAll
     static void importExamples() throws IOException {
         Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(ProductionLayout.classFileOf(TestOutputWiredHelper.class))));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputWiredHelper.class));
 
         assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
