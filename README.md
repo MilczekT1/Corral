@@ -1,15 +1,21 @@
+<div align="center">
+
+<img src="docs/assets/corral-logo.svg" width="128" alt="Corral logo: a ring of fence posts around a check mark">
+
 # Corral
 
-**ArchUnit rules that fail in the test loop your coding agent already runs, and tell it how to fix
-them.**
-
-A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
-fails deterministically, the failure explains why the rule exists and how to fix it, and violations
-that predate the rule are frozen as debt, so you can adopt it on any codebase today.
+**[ArchUnit](https://www.archunit.org) rules that fail in the test loop your coding agent already
+runs, and tell it how to fix them.**
 
 [![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Quality Gate](https://sonarcloud.io/api/project_badges/measure?project=MilczekT1_Corral&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=MilczekT1_Corral) [![Maven Central](https://img.shields.io/maven-central/v/io.github.milczekt1/corral-rules)](https://central.sonatype.com/artifact/io.github.milczekt1/corral-rules) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml)
 
 [**Why Corral**](#why-corral) · [**Evidence**](docs/evidence.md) · [**Quick start**](#quick-start) · [**Rules**](docs/rules.md) · [**Write your own**](docs/creating-a-rule.md) · [**Example consumer**](corral-example)
+
+</div>
+
+A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
+fails deterministically, the failure explains why the rule exists and how to fix it, and violations
+that predate the rule are frozen as debt, so you can adopt it on any codebase today.
 
 ```mermaid
 ---
@@ -96,15 +102,16 @@ that go with a twelve-run sample are in **[docs/evidence.md](docs/evidence.md)**
 
 ## Quick start
 
-**Prerequisites:** Java 17+, JUnit 5, ArchUnit 1.5+.
+**Prerequisites:** Java 17+ and JUnit 5. ArchUnit comes in transitively; if your build already pins
+it, use 1.5 or later.
 
-**1. Depend on it.**
+**1. Depend on it.** `corral-rules` brings `corral-sdk` with it.
 
 ```xml
 <dependency>
   <groupId>io.github.milczekt1</groupId>
   <artifactId>corral-rules</artifactId>
-  <version>0.1.0</version>
+  <version>0.3.0</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -133,9 +140,11 @@ class ProjectArchitectureTest {
 > excluding them makes those rules pass vacuously — green build, zero enforcement.
 
 The result is one JUnit tree: run the class, one group, or a single rule from the IDE gutter. A group
-you do not wire is not enforced. Splitting across several test classes is fine — wire each rule from
-exactly one of them, since a rule id is a freeze-store key. [`corral-example`](corral-example) is laid
-out that way.
+you do not wire is not enforced. A few rules belong to no group and are wired one at a time, the same
+way — `ArchTests.in(NoEagerCollectionRule.class)`; they are listed under
+[Standalone rules](docs/rules.md#standalone-rules). Splitting across several test classes is fine —
+wire each rule from exactly one of them, since a rule id is a freeze-store key.
+[`corral-example`](corral-example) is laid out that way.
 
 **3. Configure ArchUnit** — `src/test/resources/archunit.properties`. Without the second line, none
 of the output above is printed.
@@ -160,20 +169,22 @@ lost store then silently re-freezes everything). Both are covered in
 
 ## Break it yourself
 
-The fastest way to see what an agent sees. In [`corral-example`](corral-example), add a line to any
-service:
+The fastest way to see what an agent sees. Clone the repository and add a line to any service in
+[`corral-example`](corral-example), such as `GreetingService.greet`:
 
 ```java
 System.out.println("hello");
 ```
 
-then run `./mvnw -q test` from that module and read the failure. Delete the line, and it is green
-again. The example's own [README](corral-example/README.md#expected-output) walks through what each
-part of the output means, and what happens when you try each of the wrong fixes.
+then, from the repository root, run `./mvnw -q test -pl corral-example -am` and read the failure.
+Delete the line, and it is green again. The example's own
+[README](corral-example/README.md#expected-output) walks through what each part of the output means,
+and what happens when you try each of the wrong fixes.
 
 ## What's in the catalog
 
-Rules ship in groups, one per concern, and you wire the groups you want. The current groups and
+Rules ship in groups, one per concern, and you wire the groups you want; a few ship standalone. The
+current groups and
 every rule in them are in the **[rules catalog](docs/rules.md)** — that table is checked against the
 published groups by the build, so it cannot go stale.
 
@@ -181,8 +192,17 @@ Two jars, two jobs. **`corral-sdk`** is the framework: `DocumentedRule`, the fai
 freeze store, exclusions. It is small and meant to stay small. **`corral-rules`** is the catalog built
 on it, and it is where growth happens — rules that hold for most JVM projects, with a fix worth
 spelling out. Rules shaped by *your* project — its layers, packages and names — are written with the
-SDK in your own repo, in your own namespace, and get the same failure format and freeze. Depend on the
-SDK alone to do only that.
+SDK in your own repo, in your own namespace, and get the same failure format and freeze. To do only
+that, depend on the SDK alone:
+
+```xml
+<dependency>
+  <groupId>io.github.milczekt1</groupId>
+  <artifactId>corral-sdk</artifactId>
+  <version>0.3.0</version>
+  <scope>test</scope>
+</dependency>
+```
 
 ## Docs
 
@@ -196,25 +216,6 @@ SDK alone to do only that.
 | Understand freezing: what passes, what fails | [Freezing](docs/freezing.md) |
 | See how the pieces wire together | [Architecture](docs/architecture.md) |
 | See a real consumer, end to end | [`corral-example`](corral-example) |
-
-## Install
-
-`corral-sdk` and `corral-rules` are on Maven Central:
-
-```xml
-<dependency>
-  <groupId>io.github.milczekt1</groupId>
-  <artifactId>corral-sdk</artifactId>
-  <version>0.1.0</version>
-  <scope>test</scope>
-</dependency>
-<dependency>
-  <groupId>io.github.milczekt1</groupId>
-  <artifactId>corral-rules</artifactId>
-  <version>0.1.0</version>
-  <scope>test</scope>
-</dependency>
-```
 
 ## Contributing
 
