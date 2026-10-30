@@ -94,6 +94,40 @@ classloader). Against assignability, only the real artifact will do. For a rule 
 major `corral-rules` does not carry, stubs are the sanctioned workaround — see
 [CONTRIBUTING.md § Version-bound rules](../CONTRIBUTING.md#version-bound-rules).
 
+### Reading a project setting
+
+When the only thing that differs between consumers is a project fact, such as the base package, read
+it from the consumer's `corral.properties` instead of hard-coding it:
+
+```java
+static final RuleDoc DOC = RuleDoc.builder()
+        .id("acme.no-field-injection-in-services")
+        .requiredSetting(CorralSettings.BASE_PACKAGE)
+        ...
+        .build();
+
+static final ArchRule DEFINITION = noClasses()
+        .that(BasePackage.resideIn(DOC, "..service.."))
+        ...;
+```
+
+`corral-example`'s `ServicesMustLiveInServicePackageRule` is a worked example.
+
+- **Declare every key you read** with `requiredSetting`. `guard()` fails the rule when a declared key
+  is missing, even if the rule matches nothing and would never read the value. Reading a key you did
+  not declare through `CorralSettings.setting(DOC, key)` fails the rule, naming the
+  `.requiredSetting(...)` line to add. `DOC` must sit above `DEFINITION`, or `DEFINITION` reads
+  `null`.
+- **Never put the value in a description or a violation message.** Both are freeze-store matching
+  keys: a consumer who changes the setting would see every frozen violation resurface as new.
+  `BasePackage.resideIn` describes itself as "the configured base package" for this reason.
+- **Values are read when the rule runs, not when its class loads.** Use the supplier from
+  `CorralSettings.setting` inside a predicate or condition; calling `get()` in a static initialiser
+  turns a missing key into an `ExceptionInInitializerError`.
+- **A rule declaring `corral.base-package` fails when no imported class resides in it.** `guard()`
+  checks this inside the freeze, because a wrong but well-formed package otherwise passes the rule
+  and records its debt as resolved.
+
 ## 3. Examples and test
 
 Cover **both** directions against the raw `DEFINITION` — the published field is frozen, so it would

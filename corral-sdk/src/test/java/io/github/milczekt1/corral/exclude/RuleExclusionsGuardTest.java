@@ -17,6 +17,7 @@ import com.tngtech.archunit.library.freeze.ViolationStore;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions.Loaded;
+import io.github.milczekt1.corral.settings.RequiredSettings;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,8 +53,7 @@ class RuleExclusionsGuardTest {
                 .build();
     }
 
-    private static final Loaded EXCLUDING = RuleExclusions.parse(
-            EXCLUDED_ID + " :: this rule contradicts how this codebase is built", "test-source");
+    private static final Loaded EXCLUDING = Loaded.of(List.of(new Exclusion(EXCLUDED_ID, "this rule contradicts how this codebase is built")));
 
     @Test
     void anExcludedRuleEvaluatesNothingAndPasses() {
@@ -92,10 +92,30 @@ class RuleExclusionsGuardTest {
                 () -> "an excluded rule must produce no violation lines: " + result.getFailureReport());
     }
 
+    /** An excluded rule needs no settings: the exclusion wraps the required-settings check. */
+    @Test
+    void anExcludedRuleWithAMissingSettingIsReportedAsExcluded() {
+        RuleDoc requiringAbsentSetting = RuleDoc.builder()
+                .id(EXCLUDED_ID)
+                .why("A fixture for RuleExclusionsGuardTest.")
+                .howToFix("N/A — this is a test fixture, not a real rule.")
+                .requiredSetting("acme.absent-setting")
+                .build();
+
+        ArchRule unconfigured = RequiredSettings.applyTo(ALWAYS_VIOLATED, requiringAbsentSetting);
+        ArchRule excluded = RuleExclusions.applyTo(unconfigured, EXCLUDED_ID, EXCLUDING);
+
+        JavaClasses none = nothingToMatch();
+
+        String message = assertThrows(AssertionError.class, () -> unconfigured.check(none)).getMessage();
+        assertTrue(message.contains("acme.absent-setting"), message);
+        assertDoesNotThrow(() -> excluded.check(none));
+    }
+
     /** A file that cannot be understood removes no rule and fails all of them. */
     @Test
     void abrokenFileFailsEveryRuleNamingTheProblem() {
-        Loaded broken = RuleExclusions.parse("logging.no-system-out", "file:/somewhere/x.txt");
+        Loaded broken = Loaded.broken("logging.no-system-out has no reason");
         JavaClasses none = nothingToMatch();
 
         ArchRule named = RuleExclusions.applyTo(ALWAYS_VIOLATED, EXCLUDED_ID, broken);
@@ -109,7 +129,7 @@ class RuleExclusionsGuardTest {
     /** Nothing a caller can chain may soften a broken file into something that passes. */
     @Test
     void abrokenFileCannotBeChainedIntoPassing() {
-        Loaded broken = RuleExclusions.parse("logging.no-system-out", "file:/somewhere/x.txt");
+        Loaded broken = Loaded.broken("logging.no-system-out has no reason");
         ArchRule failing = RuleExclusions.applyTo(ALWAYS_VIOLATED, EXCLUDED_ID, broken);
         JavaClasses none = nothingToMatch();
 
@@ -128,9 +148,7 @@ class RuleExclusionsGuardTest {
      */
     @Test
     void aRunThatNeverLoadsTheExcludedRuleStillPasses() {
-        Loaded namesARuleNotInThisRun = RuleExclusions.parse(
-                "fixture.absent-from-this-run :: a real rule, in a group this run does not wire",
-                "file:/somewhere/x.txt");
+        Loaded namesARuleNotInThisRun = Loaded.of(List.of(new Exclusion("fixture.absent-from-this-run", "a real rule, in a group this run does not wire")));
         ArchRule other = noClasses().should().haveNameMatching(".*").as(OTHER_ID);
         JavaClasses everything = someClasses();
 

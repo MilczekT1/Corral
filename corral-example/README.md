@@ -12,12 +12,13 @@ would have both writing the same entry.
 | `wiring/ProjectRulesGroup` | **Your own catalog root** — the groups and rules this module runs, composed as one node. It wires the central groups this project opted into, plus this module's own rule; `LoggingRulesGroup` is deliberately not among them — `exclusions/` wires that one instead. |
 | `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. Wired from `ProjectRulesGroup`, alongside the library's. |
+| `custom/ServicesMustLiveInServicePackageRule` | Your own rule reading a **project setting**: `corral.base-package` from `corral.properties` instead of a hard-coded `com.example.consumer`. |
 | `exclusions/ExcludedRuleTest` | Wiring `LoggingRulesGroup`, the group holding the excluded rule. |
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
 | `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
-| `corral-exclusions.txt` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
-| `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
+| `corral.properties` | This project's settings: the base package `ServicesMustLiveInServicePackageRule` reads, and one rule removed from this build permanently while the rest of the catalog stays. |
+| `InvalidlyNamedTestClass`, `service/NoisyService`, `billing/InvoiceService` | Deliberate, permanent violations, frozen as debt. `InvoiceService` is a service outside the service package. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
@@ -58,6 +59,38 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
 Ids are freeze-store keys, so use your own namespace (`acme.`) and treat a rename as a breaking
 change.
+
+### Reading a project setting
+
+`ServicesMustLiveInServicePackageRule` needs to know this project's root package, so it reads it from
+`corral.properties` instead of hard-coding it:
+
+```java
+static final RuleDoc DOC = RuleDoc.builder()
+        .id("acme.services-must-live-in-service-package")
+        .requiredSetting(CorralSettings.BASE_PACKAGE)
+        ...
+        .build();
+```
+
+```properties
+corral.base-package=com.example.consumer
+```
+
+Its frozen line names the pattern, never the value:
+
+```text
+Class <com.example.consumer.billing.InvoiceService> does not reside in the service package under the configured base package
+```
+
+Worth trying:
+
+| Edit | What happens |
+|---|---|
+| Delete the `corral.base-package` line | The rule fails with `corral.base-package is not set. Add it to src/test/resources/corral.properties.` |
+| Misspell it (`com.example.consumr`) | The rule fails: no imported class resides in that package. Without the check it would match nothing, pass, and erase `InvoiceService`'s frozen debt. |
+| Widen it to `com.example` | Still green, and the store is untouched: the same classes match, and the violation text never contained the value. |
+| Remove `.requiredSetting(...)` from the rule | The rule fails, naming the line to add. |
 
 ## Anti-fix guidance
 
@@ -101,16 +134,16 @@ HOW NOT TO FIX (always):
   - Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation disappear. The store records pre-existing debt only; new violations must be fixed in code.
   - Do NOT re-run with archunit.freeze.refreeze=true, and do NOT commit freeze.store.default.allowStoreCreation=true. Either one converts every current violation in every rule into accepted debt at once.
   - Do NOT add to or create archunit_ignore_patterns.txt. ArchUnit discards anything matching that file before this rule, the freeze store, or this message ever sees it, leaving no record anywhere. Nothing in this catalog is exempted that way.
-  - Do NOT set corral.ignorePatterns.fail=false to make that check go away. It exists to report the file above, so disarming it restores the silence rather than resolving it. That property is for a file you put there deliberately, for your own rules.
+  - Do NOT set corral.ignore-patterns.fail=false to make that check go away. It exists to report the file above, so disarming it restores the silence rather than resolving it. That property is for a file you put there deliberately, for your own rules.
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.
   - Do NOT rename a class, field, or package solely to dodge a name-based rule (e.g. renaming FooIT so the integration-test rule stops matching).
   - Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.
   - Do NOT downgrade, remove, reword, or otherwise weaken the rule.
-  - corral-exclusions.txt removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding a rule to it in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
+  - A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding one in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.
 
-EXCLUDED IN THIS BUILD (corral-exclusions.txt — these rules are not enforced here):
-  - corral.logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
+EXCLUDED IN THIS BUILD (corral.properties — these rules are not enforced here):
+  - corral.exclude.corral.logging.no-system-err=Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 
 Offending locations:
   Method <com.example.consumer.service.ChattyService.shout(java.lang.String)> calls method <java.io.PrintStream.println(java.lang.String)> in (ChattyService.java:4)
@@ -130,8 +163,8 @@ Three things to read off it:
 `corral.logging.no-system-err` is frozen **clean** in this store, so `StderrWriterAllowedByExclusion`
 writing to stderr is a new violation and fails the build. One committed line keeps it green:
 
-```text
-corral.logging.no-system-err :: Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
+```properties
+corral.exclude.corral.logging.no-system-err=Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 ```
 
 Delete it and run `mvn clean test` to watch the rule bite — `clean` matters, because Maven copies
@@ -144,8 +177,8 @@ Four edits are worth trying while you are in there, because each shows a differe
 
 | Edit | What happens |
 |---|---|
-| Misspell the id (`corral.logging.no-system-errr`) | The build stays green, but logs a warning naming the id: an exclusion that matches no rule removes nothing while reading in the diff as though it did. |
-| Drop the ` :: reason` | Every rule fails, naming the file, the line number and the line. A file that is not understood is not trusted to remove anything. |
+| Misspell the id (`corral.exclude.corral.logging.no-system-errr`) | The build stays green, but logs a warning naming the id: an exclusion that matches no rule removes nothing while reading in the diff as though it did. |
+| Blank the reason after `=` | Every rule fails, naming the file and the key. A file that is not understood is not trusted to remove anything. |
 | Name this module's own `acme.no-stdout-in-services` | Nothing fails and nothing is logged: the file removes any rule that goes through `guard()`, your own included, so `ProjectArchitectureTest` passes with the rule disarmed. Removing a rule you own by not wiring it is the clearer edit. |
 | Break any other rule while the exclusion stands | The failure carries an `EXCLUDED IN THIS BUILD` block listing this exclusion — so whoever reads the build sees what is not being enforced. |
 
@@ -181,7 +214,7 @@ Three things to read off the committed store:
 - **The retired id is still wired.** Unwired it would register a doc that nothing evaluates. Wired,
   a consumer who excluded the old id keeps building and gets told where the rule went.
 
-Worth trying: add `acme.no-java-util-date :: …` to `corral-exclusions.txt`. It resolves against the
+Worth trying: add `corral.exclude.acme.no-java-util-date=…` to `corral.properties`. It resolves against the
 signpost rather than logging the "matched no rule in this run" warning — which is the whole reason a
 withdrawn id stays published instead of simply disappearing.
 

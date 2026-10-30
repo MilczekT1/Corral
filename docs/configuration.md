@@ -9,8 +9,8 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 | `failureDisplayFormat` | recommended | Without it you get ArchUnit's default one-line output instead of WHY / HOW TO FIX. |
 | `freeze.store` | optional | Set to `io.github.milczekt1.corral.store.EmptyOmittingViolationStore` to keep empty violation files out of your commits — see below. |
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
-| `corral-exclusions.txt` | optional | Not a property — a file beside `archunit.properties`. Removes named rules from your build permanently; see [Excluding a rule](excluding-a-rule.md). |
-| `corral.ignorePatterns.fail` | optional, defaults to `true` | Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
+| `corral.exclude.<rule-id>` | optional | In `corral.properties`, not `archunit.properties`. Removes the named rule from your build permanently; the value is the mandatory reason. See [Excluding a rule](excluding-a-rule.md). |
+| `corral.ignore-patterns.fail` | optional, defaults to `true` | In `corral.properties`, not `archunit.properties`; there is no system-property override. Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from
@@ -20,6 +20,30 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 > `Creating new violation store is disabled (…)`. ArchUnit merges any `archunit.`-prefixed system
 > property, which is why the one-off override that seeds the store works without editing the
 > committed file.
+
+## `corral.properties`
+
+Corral's own settings live in `src/test/resources/corral.properties`, a file only the consuming
+project owns. Libraries, including Corral's own jars, never ship one.
+
+```properties
+corral.base-package=com.acme.billing
+corral.ignore-patterns.fail=true
+corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interface. ADR-021.
+```
+
+| Key | Notes |
+|---|---|
+| `corral.base-package` | The project's root package, for rules that declare they need it. Must be a valid Java package name. A rule that declares it fails, naming the key, when it is missing or when no imported class resides in it. |
+| `corral.ignore-patterns.fail` | See the table above. |
+| `corral.exclude.<rule-id>` | See [Excluding a rule](excluding-a-rule.md). |
+| anything outside `corral.` | Read by your own rules. A key no rule in the run declares logs a warning. |
+
+- Read as UTF-8. A duplicate key, an unknown `corral.*` key or an invalid value fails **every** rule,
+  naming the file and each problem: a file that is not understood is not trusted.
+- When several copies are on the classpath, the first one wins and a warning names them all. Maven,
+  Gradle and IntelliJ put the module's own test resources first. A copy read from inside a jar
+  always produces a warning.
 
 ## The freeze store
 

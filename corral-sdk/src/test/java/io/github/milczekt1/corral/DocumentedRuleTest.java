@@ -19,6 +19,8 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
 import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.util.Comparator;
@@ -159,6 +161,64 @@ class DocumentedRuleTest {
         assertTrue(freeze < apply,
                 () -> "freeze(...) must be evaluated before applyTo wraps it, so the exclusion sits"
                         + " outside the freeze: " + callOrder);
+    }
+
+    /** A missing setting must not reach the store, and an excluded rule needs none. */
+    @Test
+    void requiredSettingsSitBetweenTheFreezeAndTheExclusion() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+        List<String> callOrder = guard.getMethodCallsFromSelf().stream()
+                .sorted(Comparator.comparingInt(JavaAccess::getLineNumber))
+                .map(call -> call.getTargetOwner().getSimpleName() + "." + call.getName())
+                .toList();
+
+        int freeze = callOrder.indexOf("FreezingArchRule.freeze");
+        int required = callOrder.indexOf("RequiredSettings.applyTo");
+        int exclude = callOrder.indexOf("RuleExclusions.applyTo");
+
+        assertTrue(freeze >= 0 && required >= 0 && exclude >= 0, () -> "expected all three calls, got " + callOrder);
+        assertTrue(freeze < required && required < exclude,
+                () -> "expected freeze, then RequiredSettings.applyTo, then RuleExclusions.applyTo: " + callOrder);
+    }
+
+    /** Inside the freeze, or an unmatched base package reaches the store as resolved debt. */
+    @Test
+    void theBasePackageMustMatchInsideTheFreeze() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+        List<String> callOrder = guard.getMethodCallsFromSelf().stream()
+                .sorted(Comparator.comparingInt(JavaAccess::getLineNumber))
+                .map(call -> call.getTargetOwner().getSimpleName() + "." + call.getName())
+                .toList();
+
+        int covered = callOrder.indexOf("BasePackage.requireMatchingClasses");
+        int freeze = callOrder.indexOf("FreezingArchRule.freeze");
+
+        assertTrue(covered >= 0 && covered < freeze,
+                () -> "expected BasePackage.requireMatchingClasses before the freeze: " + callOrder);
+    }
+
+    /** The wiring, not the mechanism — {@code SettingsFileTest} and {@code RequiredSettingsTest} own that. */
+    @Test
+    void guardWarnsOnTheSettingsFile() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+
+        assertTrue(guard.getMethodReferencesFromSelf().stream()
+                        .anyMatch(reference -> reference.getTargetOwner().isEquivalentTo(CorralSettings.class)
+                                && reference.getName().equals("classPathWarning")),
+                "guard() must warn when corral.properties is ambiguous or ships inside a jar");
+        assertTrue(guard.getMethodReferencesFromSelf().stream()
+                        .anyMatch(reference -> reference.getTargetOwner().isEquivalentTo(RequiredSettings.class)
+                                && reference.getName().equals("undeclaredKeysWarning")),
+                "guard() must warn on a consumer key no rule declares");
     }
 
     @Test

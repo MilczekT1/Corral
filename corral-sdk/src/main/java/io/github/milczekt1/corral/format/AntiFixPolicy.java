@@ -26,7 +26,7 @@ public class AntiFixPolicy {
                      file before this rule, the freeze store, or this message ever sees it, leaving no record\
                      anywhere. Nothing in this catalog is exempted that way.""",
             """
-                    Do NOT set corral.ignorePatterns.fail=false to make that check go away. It exists to report\
+                    Do NOT set corral.ignore-patterns.fail=false to make that check go away. It exists to report\
                      the file above, so disarming it restores the silence rather than resolving it. That property\
                      is for a file you put there deliberately, for your own rules.""",
             "Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.",
@@ -36,9 +36,10 @@ public class AntiFixPolicy {
             "Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.",
             "Do NOT downgrade, remove, reword, or otherwise weaken the rule.",
             """
-                    corral-exclusions.txt removes a rule from your build permanently, because it does not apply\
-                     to this codebase. It is not a way to pass a failing build. Adding a rule to it in the same\
-                     change that made that rule fail is silencing, not excluding, and reads that way in the diff.""",
+                    A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build\
+                     permanently, because it does not apply to this codebase. It is not a way to pass a failing\
+                     build. Adding one in the same change that made that rule fail is silencing, not excluding,\
+                     and reads that way in the diff.""",
             """
                     The ONLY acceptable resolution is changing the production/test code so the rule genuinely\
                      passes — then follow this rule's HOW TO FIX.""");

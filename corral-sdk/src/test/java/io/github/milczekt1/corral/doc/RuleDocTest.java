@@ -6,6 +6,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
 class RuleDocTest {
@@ -119,4 +120,33 @@ class RuleDocTest {
         assertTrue(thrown.getMessage().contains("72"), thrown.getMessage());
     }
 
+    @Test
+    void requiredSettingsDefaultToEmpty() {
+        assertTrue(valid().build().requiredSettings().isEmpty());
+    }
+
+    @Test
+    void requiredSettingsAreKeptInDeclarationOrder() {
+        RuleDoc doc = valid().requiredSetting("corral.base-package").requiredSetting("acme.x").build();
+
+        assertEquals(List.of("corral.base-package", "acme.x"), doc.requiredSettings());
+    }
+
+    @Test
+    void aRequiredSettingMustHaveKeyShape() {
+        RuleDoc.RuleDocBuilder notAKey = valid().requiredSetting("Not A Key");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, notAKey::build);
+
+        assertTrue(thrown.getMessage().contains("Not A Key"), thrown.getMessage());
+    }
+
+    @Test
+    void aRequiredSettingIsDeclaredOnce() {
+        RuleDoc.RuleDocBuilder twice = valid().requiredSetting("acme.x").requiredSetting("acme.x");
+
+        IllegalArgumentException thrown = assertThrows(IllegalArgumentException.class, twice::build);
+
+        assertTrue(thrown.getMessage().contains("acme.x"), thrown.getMessage());
+    }
 }

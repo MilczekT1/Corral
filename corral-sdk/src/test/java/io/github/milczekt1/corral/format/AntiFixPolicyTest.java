@@ -29,9 +29,9 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("archunit.freeze.refreeze"), "must forbid refreezing");
         assertTrue(all.contains("freeze.store.default.allowStoreCreation"),
                 "must forbid committing store creation");
-        assertTrue(all.contains("corral.ignorePatterns.fail"),
+        assertTrue(all.contains("corral.ignore-patterns.fail"),
                 "must forbid disarming the ignore-patterns check");
-        assertTrue(all.contains("corral-exclusions.txt"),
+        assertTrue(all.contains("corral.exclude."),
                 "must draw the line around the one subtractive mechanism, or it reads as unsanctioned");
     }
 
@@ -42,9 +42,9 @@ class AntiFixPolicyTest {
     @Test
     void theExclusionsClauseDrawsTheLineRatherThanAdvertisingAnEscapeRoute() {
         String clause = AntiFixPolicy.clauses().stream()
-                .filter(line -> line.contains("corral-exclusions.txt"))
+                .filter(line -> line.contains("corral.exclude."))
                 .findFirst()
-                .orElseThrow(() -> new AssertionError("no clause mentions corral-exclusions.txt"));
+                .orElseThrow(() -> new AssertionError("no clause mentions corral.exclude."));
         String text = clause.toLowerCase();
 
         assertTrue(text.contains("permanent"), clause);
