@@ -16,7 +16,7 @@ would have both writing the same entry.
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
 | `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
-| `corral.properties` | This project's settings: the base package its own rule reads, and one rule removed from this build permanently while the rest of the catalog stays. |
+| `corral.properties` | Removing one rule from this build permanently, while keeping the rest of the catalog. |
 | `InvalidlyNamedTestClass`, `service/NoisyService` | Deliberate, permanent violations, frozen as debt. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
@@ -38,14 +38,13 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
     static final RuleDoc DOC = RuleDoc.builder()
             .id("acme.no-stdout-in-services")
-            .requiredSetting(CorralSettings.BASE_PACKAGE)
             .why(...)
             .howToFix(...)
             .howNotToFix(...)
             .build();
 
     static final ArchRule DEFINITION = noClasses()
-            .that(BasePackage.resideIn(DOC, "..service.."))
+            .that().resideInAPackage("..service..")
             .should().callMethod(PrintStream.class, "println", String.class);
 
     @ArchTest
@@ -59,13 +58,6 @@ public final class NoStdoutInServicesRule implements DocumentedRule {
 
 Ids are freeze-store keys, so use your own namespace (`acme.`) and treat a rename as a breaking
 change.
-
-The rule reads `corral.base-package` from `corral.properties` rather than hard-coding
-`com.example.consumer`. It declares the key with `requiredSetting`, so deleting that line fails the
-rule with `corral.base-package is not set` — even in a module with no service classes for it to
-match. The description says "the configured base package", never the value, so moving the setting
-to another package that still holds the same classes leaves every frozen violation where it is. A
-value that matches no imported class, such as a typo, fails the rule instead of passing it.
 
 ## Anti-fix guidance
 

@@ -101,7 +101,7 @@ it from the consumer's `corral.properties` instead of hard-coding it:
 
 ```java
 static final RuleDoc DOC = RuleDoc.builder()
-        .id("acme.no-stdout-in-services")
+        .id("acme.no-field-injection-in-services")
         .requiredSetting(CorralSettings.BASE_PACKAGE)
         ...
         .build();
