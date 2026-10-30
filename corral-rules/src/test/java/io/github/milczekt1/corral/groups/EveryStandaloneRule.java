@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.NoOption
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.SerializableMustDeclareSerialVersionUidRule;
 import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.NoTestLibrariesInProductionRule;
 import io.github.milczekt1.corral.rules.naming.lowercasepackages.LowercasePackagesRule;
+import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.NoLockNameOver64CharsRule;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.NoRepositoryInControllerRule;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.NoTransactionalInControllerRule;
 import io.github.milczekt1.corral.rules.spring.novalueonfield.NoValueOnFieldRule;
@@ -98,4 +99,7 @@ public class EveryStandaloneRule {
 
     @ArchTest
     public static final ArchTests noEagerCollection = ArchTests.in(NoEagerCollectionRule.class);
+
+    @ArchTest
+    public static final ArchTests noLockNameOver64Chars = ArchTests.in(NoLockNameOver64CharsRule.class);
 }

@@ -31,7 +31,7 @@ class RuleIdGrammarTest {
     /** Segment-2 values, closed on purpose — see CONTRIBUTING. {@code java<N>} is matched separately. */
     private static final Set<String> CONCERNS = Set.of(
             "concurrency", "dependencies", "exception", "jackson", "jakarta", "java",
-            "layering", "logging", "lombok", "naming", "security", "spring", "test");
+            "layering", "logging", "lombok", "naming", "security", "shedlock", "spring", "test");
 
     /** A JDK-version concern, for a rule about an API that exists only from that release. */
     private static final Pattern JAVA_VERSION = Pattern.compile("^java[0-9]++$");

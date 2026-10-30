@@ -66,6 +66,7 @@
     <jackson-annotations.version>2.22</jackson-annotations.version>
     <hibernate.version>7.4.14.Final</hibernate.version>
     <hibernate-validator.version>9.0.1.Final</hibernate-validator.version>
+    <shedlock.version>7.10.1</shedlock.version>
     <mockito.version>5.24.0</mockito.version>
     <assertj.version>3.27.7</assertj.version>
     <testcontainers.version>2.0.5</testcontainers.version>
@@ -258,6 +259,21 @@
         <groupId>org.hibernate.validator</groupId>
         <artifactId>hibernate-validator</artifactId>
         <version>${hibernate-validator.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.javacrumbs.shedlock</groupId>
+        <artifactId>shedlock-spring</artifactId>
+        <version>${shedlock.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.javacrumbs.shedlock</groupId>
+        <artifactId>shedlock-cdi</artifactId>
+        <version>${shedlock.version}</version>
+      </dependency>
+      <dependency>
+        <groupId>net.javacrumbs.shedlock</groupId>
+        <artifactId>shedlock-micronaut4</artifactId>
+        <version>${shedlock.version}</version>
       </dependency>
       <dependency>
         <groupId>org.mockito</groupId>
