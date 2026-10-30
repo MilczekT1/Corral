@@ -144,19 +144,21 @@ public final class NoLockNameOver64CharsRule implements DocumentedRule {
     private static String literalText(String name) {
         StringBuilder literal = new StringBuilder();
         int depth = 0;
-        for (int i = 0; i < name.length(); i++) {
-            char c = name.charAt(i);
-            if (depth == 0 && (c == '$' || c == '#') && i + 1 < name.length() && name.charAt(i + 1) == '{') {
+        int i = 0;
+        while (i < name.length()) {
+            if (depth == 0 && (name.startsWith("${", i) || name.startsWith("#{", i))) {
                 depth = 1;
-                i++;
-            } else if (depth > 0) {
-                if (c == '{') {
+                i += 2;
+            } else {
+                char c = name.charAt(i);
+                if (depth == 0) {
+                    literal.append(c);
+                } else if (c == '{') {
                     depth++;
                 } else if (c == '}') {
                     depth--;
                 }
-            } else {
-                literal.append(c);
+                i++;
             }
         }
         return literal.toString();
