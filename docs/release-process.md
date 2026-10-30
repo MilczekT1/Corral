@@ -10,8 +10,8 @@ PR's commits land on `main`, uploads to **Maven Central**, and tags. Only allowl
       workflow appends it).
 3. Run it. It checks you are on the allowlist and that neither the tag nor the branch exists,
    then pushes `release/v<version>` with two commits — `Release Corral <version>` (crediting you
-   as co-author) and the bump to `<nextVersion>-SNAPSHOT` — opens a PR to `main` and enables
-   **auto-merge**. The PR rebase-merges once the required checks pass.
+   as co-author, and pointing the README's dependency snippets at `<version>`) and the bump to
+   `<nextVersion>-SNAPSHOT` — opens a PR to `main` and enables **auto-merge**. The PR rebase-merges once the required checks pass.
 4. The merge pushes both commits to `main`, and the push runs **Publish release**. It finds the `Release Corral <version>` commit **as it
    landed on `main`**, checks its project version, runs `./mvnw clean verify` on it, then signs and
    uploads `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
