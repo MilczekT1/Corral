@@ -3,13 +3,11 @@ package io.github.milczekt1.corral.rules.spring.norepositoryincontroller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.AbstractRefundEndpoint;
@@ -35,10 +33,9 @@ import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.ReportDao;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.StockController;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.TestOutputController;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -58,9 +55,6 @@ class NoRepositoryInControllerRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             OrderController.class, LedgerController.class, CatalogController.class, StockController.class,
             PaymentController.class, RefundController.class, AuditController.class, ReportController.class,
@@ -76,10 +70,9 @@ class NoRepositoryInControllerRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(classFileOf(TestOutputController.class))));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputController.class));
 
         assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -224,7 +217,7 @@ class NoRepositoryInControllerRuleTest {
     /** The same class file as above, moved: only its location changed, so only scope can explain the difference. */
     @Test
     void flagsTheTestOutputControllerOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("controller"),
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("controller"),
                 List.of(TestOutputController.class));
 
         List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));
@@ -264,24 +257,5 @@ class NoRepositoryInControllerRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    /** Copies each class file into {@code root/}{@value #PRODUCTION_LAYOUT}, keeping package directories. */
-    private static Path copyIntoProductionLayout(Path root, List<Class<?>> classes) throws IOException {
-        Path output = root.resolve(PRODUCTION_LAYOUT);
-        for (Class<?> type : classes) {
-            Path destination = output.resolve(type.getName().replace('.', '/') + ".class");
-            Files.createDirectories(destination.getParent());
-            try (InputStream compiled = classFileOf(type).openStream()) {
-                Files.copy(compiled, destination);
-            }
-        }
-        return output;
-    }
-
-    private static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(type.getSimpleName() + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
     }
 }

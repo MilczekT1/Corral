@@ -3,27 +3,22 @@ package io.github.milczekt1.corral.rules.jackson.noannotationsonentity;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.core.importer.Location;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.PurchaseOrder;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.TestOutputTicket;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.WireName;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -40,9 +35,6 @@ class NoAnnotationsOnEntityRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final String ANNOTATED_WITH = "> is annotated with <";
 
     private static final String MEMBER_OF_TYPE = "> has annotation member of type <";
@@ -56,11 +48,10 @@ class NoAnnotationsOnEntityRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("examples"),
-                name -> !name.startsWith(TestOutputTicket.class.getSimpleName()));
-        examples = new ClassFileImporter().importLocations(List.of(
-                Location.of(productionOutput),
-                Location.of(classFileOf(TestOutputTicket.class))));
+        Path productionOutput = ProductionLayout.copyPackageOf(PurchaseOrder.class, outputRoot.resolve("examples"),
+                List.of(TestOutputTicket.class));
+        examples = new ClassFileImporter().importLocations(
+                ProductionLayout.withTestOutput(productionOutput, TestOutputTicket.class));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -206,8 +197,7 @@ class NoAnnotationsOnEntityRuleTest {
 
     @Test
     void flagsTheTestOutputEntityOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("ticket"),
-                name -> name.equals(TestOutputTicket.class.getSimpleName() + ".class"));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("ticket"), List.of(TestOutputTicket.class));
         JavaClasses ticket = new ClassFileImporter().importPath(productionOutput);
 
         List<String> violations = violationsIn(ticket);
@@ -245,31 +235,5 @@ class NoAnnotationsOnEntityRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    private static Path copyIntoProductionLayout(Path root, Predicate<String> include) throws IOException {
-        Path destination = root.resolve(PRODUCTION_LAYOUT)
-                .resolve(PurchaseOrder.class.getPackageName().replace('.', '/'));
-        Files.createDirectories(destination);
-        try (Stream<Path> classFiles = Files.list(fixturesDirectory())) {
-            for (Path classFile : classFiles.filter(file -> include.test(file.getFileName().toString())).toList()) {
-                Files.copy(classFile, destination.resolve(classFile.getFileName()));
-            }
-        }
-        return root.resolve(PRODUCTION_LAYOUT);
-    }
-
-    private static Path fixturesDirectory() {
-        try {
-            return Path.of(classFileOf(PurchaseOrder.class).toURI()).getParent();
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(type.getSimpleName() + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
     }
 }
