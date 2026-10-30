@@ -3,7 +3,6 @@ package io.github.milczekt1.corral.rules.spring.notransactionalincontroller;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
@@ -39,10 +38,9 @@ import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtu
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.StockController;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.TestOutputController;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.TransactionalAuditBase;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -62,9 +60,6 @@ class NoTransactionalInControllerRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             OrderController.class, LedgerController.class, InvoiceController.class, BillingController.class,
             CatalogController.class, ReadOnlyTransaction.class, StockController.class, RefundController.class,
@@ -81,10 +76,10 @@ class NoTransactionalInControllerRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
         examples = new ClassFileImporter().importLocations(List.of(
                 Location.of(productionOutput),
-                Location.of(classFileOf(TestOutputController.class))));
+                Location.of(ProductionLayout.classFileOf(TestOutputController.class))));
 
         assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -246,7 +241,7 @@ class NoTransactionalInControllerRuleTest {
 
     @Test
     void flagsTheTestOutputControllerOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("controller"),
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("controller"),
                 List.of(TestOutputController.class));
 
         List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));
@@ -285,24 +280,5 @@ class NoTransactionalInControllerRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    /** Copies each class file into {@code root/}{@value #PRODUCTION_LAYOUT}, keeping package directories. */
-    private static Path copyIntoProductionLayout(Path root, List<Class<?>> classes) throws IOException {
-        Path output = root.resolve(PRODUCTION_LAYOUT);
-        for (Class<?> type : classes) {
-            Path destination = output.resolve(type.getName().replace('.', '/') + ".class");
-            Files.createDirectories(destination.getParent());
-            try (InputStream compiled = classFileOf(type).openStream()) {
-                Files.copy(compiled, destination);
-            }
-        }
-        return output;
-    }
-
-    private static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(type.getSimpleName() + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
     }
 }

@@ -3,7 +3,6 @@ package io.github.milczekt1.corral.rules.java.nooptionalfields;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
@@ -14,15 +13,12 @@ import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.java.nooptionalfields.fixtures.OrderQuery;
 import io.github.milczekt1.corral.rules.java.nooptionalfields.fixtures.TestOutputQuery;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.function.Predicate;
-import java.util.stream.Stream;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -39,9 +35,6 @@ class NoOptionalFieldsRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final String RAW_TYPES = "has raw type Optional, OptionalInt, OptionalLong or OptionalDouble";
 
     /** Fifteen fixture sources, plus {@code ShippingService$Quote} and {@code ReminderTask$1}. */
@@ -54,11 +47,11 @@ class NoOptionalFieldsRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("examples"),
+        Path productionOutput = ProductionLayout.copyPackageOf(OrderQuery.class, outputRoot.resolve("examples"),
                 name -> !name.startsWith(TestOutputQuery.class.getSimpleName()));
         examples = new ClassFileImporter().importLocations(List.of(
                 Location.of(productionOutput),
-                Location.of(classFileOf(TestOutputQuery.class))));
+                Location.of(ProductionLayout.classFileOf(TestOutputQuery.class))));
 
         assertEquals(FIXTURE_CLASS_FILES, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -197,7 +190,7 @@ class NoOptionalFieldsRuleTest {
     /** The same class file as above, moved: only its location changed, so only scope can explain the difference. */
     @Test
     void flagsTheTestOutputFieldOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("query"),
+        Path productionOutput = ProductionLayout.copyPackageOf(OrderQuery.class, outputRoot.resolve("query"),
                 name -> name.equals(TestOutputQuery.class.getSimpleName() + ".class"));
         JavaClasses query = new ClassFileImporter().importPath(productionOutput);
 
@@ -235,37 +228,5 @@ class NoOptionalFieldsRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    /**
-     * Copies the fixture class files whose names pass {@code include} into
-     * {@code root/}{@value #PRODUCTION_LAYOUT}, keeping package directories.
-     */
-    private static Path copyIntoProductionLayout(Path root, Predicate<String> include)
-            throws IOException {
-        Path fixtures = fixturesDirectory();
-        Path destination = root.resolve(PRODUCTION_LAYOUT)
-                .resolve(OrderQuery.class.getPackageName().replace('.', '/'));
-        Files.createDirectories(destination);
-        try (Stream<Path> classFiles = Files.list(fixtures)) {
-            for (Path classFile : classFiles.filter(file -> include.test(file.getFileName().toString())).toList()) {
-                Files.copy(classFile, destination.resolve(classFile.getFileName()));
-            }
-        }
-        return root.resolve(PRODUCTION_LAYOUT);
-    }
-
-    private static Path fixturesDirectory() {
-        try {
-            return Path.of(classFileOf(OrderQuery.class).toURI()).getParent();
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(e);
-        }
-    }
-
-    private static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(type.getSimpleName() + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
     }
 }

@@ -3,7 +3,6 @@ package io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
@@ -12,10 +11,9 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.fixtures.OrderService;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardCopyOption;
@@ -40,8 +38,6 @@ class NoTestLibrariesInProductionRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final String FIXTURES = OrderService.class.getPackageName() + ".";
 
     @TempDir
@@ -51,7 +47,7 @@ class NoTestLibrariesInProductionRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        examples = importFromLayout(PRODUCTION_LAYOUT);
+        examples = importFromLayout(ProductionLayout.MAIN_OUTPUT);
 
         assertEquals(fixtureClassFiles().size(), examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -150,7 +146,7 @@ class NoTestLibrariesInProductionRuleTest {
 
     @Test
     void ignoresTheExamplesWhereTheyCompiledInMavenTestOutput() {
-        JavaClasses testOutput = new ClassFileImporter().importPath(fixturesDirectory());
+        JavaClasses testOutput = new ClassFileImporter().importPath(ProductionLayout.directoryOf(OrderService.class));
 
         assertEquals(List.of(), violationsIn(testOutput));
     }
@@ -241,18 +237,8 @@ class NoTestLibrariesInProductionRuleTest {
     }
 
     private static List<Path> fixtureClassFiles() throws IOException {
-        try (Stream<Path> files = Files.list(fixturesDirectory())) {
+        try (Stream<Path> files = Files.list(ProductionLayout.directoryOf(OrderService.class))) {
             return files.filter(file -> file.toString().endsWith(".class")).toList();
-        }
-    }
-
-    private static Path fixturesDirectory() {
-        URL classFile = OrderService.class.getResource(OrderService.class.getSimpleName() + ".class");
-        assertNotNull(classFile, "no compiled class file on the classpath for " + OrderService.class.getName());
-        try {
-            return Path.of(classFile.toURI()).getParent();
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(e);
         }
     }
 }

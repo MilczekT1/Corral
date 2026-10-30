@@ -3,7 +3,6 @@ package io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.ArchConfiguration;
@@ -24,10 +23,9 @@ import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtur
 import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.DomainService;
 import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.OrderRepository;
 import io.github.milczekt1.corral.rules.spring.nocomponentonabstractclass.fixtures.TestOutputAbstractBean;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
@@ -47,9 +45,6 @@ class NoComponentOnAbstractClassRuleTest {
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
-
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             AbstractOrderHandler.class, AbstractBillingService.class, AbstractLedgerPolicy.class,
             AbstractRefundHandler.class, AbstractLookupSupport.class, AbstractPrototypeFactory.class,
@@ -63,10 +58,10 @@ class NoComponentOnAbstractClassRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
         examples = new ClassFileImporter().importLocations(List.of(
                 Location.of(productionOutput),
-                Location.of(classFileOf(TestOutputAbstractBean.class))));
+                Location.of(ProductionLayout.classFileOf(TestOutputAbstractBean.class))));
 
         assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
                 "every example must be imported, or the ignore assertions below are vacuous");
@@ -158,7 +153,8 @@ class NoComponentOnAbstractClassRuleTest {
     /** The same class file as above, moved: only its location changed, so only scope can explain the difference. */
     @Test
     void flagsTheTestOutputBeanOnceItSitsInProductionOutput() throws IOException {
-        Path productionOutput = copyIntoProductionLayout(outputRoot.resolve("bean"), List.of(TestOutputAbstractBean.class));
+        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("bean"),
+                List.of(TestOutputAbstractBean.class));
         JavaClasses bean = new ClassFileImporter().importPath(productionOutput);
 
         List<String> violations = violationsIn(bean);
@@ -196,24 +192,5 @@ class NoComponentOnAbstractClassRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    /** Copies each class file into {@code root/}{@value #PRODUCTION_LAYOUT}, keeping package directories. */
-    private static Path copyIntoProductionLayout(Path root, List<Class<?>> classes) throws IOException {
-        Path output = root.resolve(PRODUCTION_LAYOUT);
-        for (Class<?> type : classes) {
-            Path destination = output.resolve(type.getName().replace('.', '/') + ".class");
-            Files.createDirectories(destination.getParent());
-            try (InputStream compiled = classFileOf(type).openStream()) {
-                Files.copy(compiled, destination);
-            }
-        }
-        return output;
-    }
-
-    private static URL classFileOf(Class<?> type) {
-        URL classFile = type.getResource(type.getSimpleName() + ".class");
-        assertNotNull(classFile, () -> "no compiled class file on the classpath for " + type.getName());
-        return classFile;
     }
 }
