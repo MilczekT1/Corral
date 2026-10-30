@@ -1,0 +1,1 @@
+Class <com.example.consumer.billing.InvoiceProperties> declares @ConfigurationProperties prefix "app.invoice" outside the configured property prefix in (InvoiceProperties.java:0)
