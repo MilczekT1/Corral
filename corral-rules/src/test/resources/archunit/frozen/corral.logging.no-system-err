@@ -1,0 +1,2 @@
+Method <io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures.StderrCaller.report(java.lang.Exception)> gets field <java.lang.System.err> in (StderrCaller.java:7)
+Method <io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures.StderrCaller.report(java.lang.Exception)> gets field <java.lang.System.err> in (StderrCaller.java:8)

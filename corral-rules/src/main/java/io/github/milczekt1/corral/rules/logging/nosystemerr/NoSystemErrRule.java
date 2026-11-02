@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.logging;
+package io.github.milczekt1.corral.rules.logging.nosystemerr;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 
@@ -12,7 +12,7 @@ import lombok.NoArgsConstructor;
 /**
  * No class may write to {@code System.err}.
  *
- * <p>Separate from {@link NoSystemOutRule} so stdout and stderr debt freeze independently. Matches
+ * <p>Separate from {@code NoSystemOutRule} so stdout and stderr debt freeze independently. Matches
  * the field access, so every method on the stream counts.
  *
  * <p>Blind to {@code throwable.printStackTrace()}: it reaches System.err from inside

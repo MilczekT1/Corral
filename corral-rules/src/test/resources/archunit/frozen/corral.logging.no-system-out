@@ -1,0 +1,4 @@
+Method <io.github.milczekt1.corral.rules.logging.nosystemout.fixtures.PrintfCaller.report(java.lang.String)> gets field <java.lang.System.out> in (PrintfCaller.java:7)
+Method <io.github.milczekt1.corral.rules.logging.nosystemout.fixtures.PrintfCaller.report(java.lang.String)> gets field <java.lang.System.out> in (PrintfCaller.java:8)
+Method <io.github.milczekt1.corral.rules.logging.nosystemout.fixtures.PrintlnIntCaller.report(int)> gets field <java.lang.System.out> in (PrintlnIntCaller.java:7)
+Static Initializer <io.github.milczekt1.corral.rules.logging.nosystemout.fixtures.StaticInitializerPrinter.<clinit>()> gets field <java.lang.System.out> in (StaticInitializerPrinter.java:7)
