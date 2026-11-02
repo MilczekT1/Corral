@@ -1,9 +1,11 @@
-package io.github.milczekt1.corral.doc;
+package io.github.milczekt1.corral;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import com.tngtech.archunit.lang.Priority;
+import io.github.milczekt1.corral.doc.RuleDoc;
+import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import java.util.Collections;
 import java.util.Set;

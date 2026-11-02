@@ -4,7 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.milczekt1.corral.doc.DeprecatedRule;
+import io.github.milczekt1.corral.DeprecatedRule;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.LinkedHashSet;
 import java.util.Set;
