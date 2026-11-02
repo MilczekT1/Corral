@@ -35,7 +35,7 @@ public class ProductionLayout {
      * test output where it compiled.
      */
     public static JavaClasses importFixtures(Class<?> ruleTest, Path root) throws IOException {
-        Path fixtures = packageDirectoryOf(ruleTest, "fixtures");
+        Path fixtures = directoryOf(ruleTest).resolve("fixtures");
         String productionPackage = ruleTest.getPackageName() + ".fixtures.production";
         Path output = root.resolve(MAIN_OUTPUT);
         copyMatching(fixtures.resolve("production"), output.resolve(productionPackage.replace('.', '/')),
@@ -63,16 +63,11 @@ public class ProductionLayout {
     }
 
     /**
-     * Copies every class file in {@code anchor}'s package directory into
-     * {@code root/}{@value #MAIN_OUTPUT}. Sub-packages are not copied.
+     * Copies every class file in {@code anchor}'s package directory into {@code root/layout}.
+     * Sub-packages are not copied.
      *
      * @return the copy's output root, to import from
      */
-    public static Path copyPackageOf(Class<?> anchor, Path root) throws IOException {
-        return copyPackageOf(anchor, root, MAIN_OUTPUT);
-    }
-
-    /** As {@link #copyPackageOf(Class, Path)}, into {@code root/layout} instead. */
     public static Path copyPackageOf(Class<?> anchor, Path root, String layout) throws IOException {
         Path output = root.resolve(layout);
         copyMatching(directoryOf(anchor), destinationFor(output, anchor), name -> name.endsWith(".class"));
@@ -93,18 +88,6 @@ public class ProductionLayout {
             return Path.of(classFile.toURI()).getParent();
         } catch (URISyntaxException e) {
             throw new IllegalStateException(classFile.toString(), e);
-        }
-    }
-
-    private static Path packageDirectoryOf(Class<?> anchor, String relativePackage) {
-        URL directory = anchor.getResource(relativePackage);
-        assertNotNull(directory, () -> "no compiled package " + relativePackage + " beside " + anchor.getName());
-        assertEquals("file", directory.getProtocol(),
-                () -> "fixtures are copied by listing their directory, so they must load from one: " + directory);
-        try {
-            return Path.of(directory.toURI());
-        } catch (URISyntaxException e) {
-            throw new IllegalStateException(directory.toString(), e);
         }
     }
 

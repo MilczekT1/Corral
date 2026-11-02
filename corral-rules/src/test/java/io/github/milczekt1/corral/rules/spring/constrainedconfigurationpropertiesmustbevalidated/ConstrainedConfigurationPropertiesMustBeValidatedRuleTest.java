@@ -126,11 +126,11 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     /** Without resolution every Validation API type is a stub carrying no annotations: only the package names it. */
     @ParameterizedTest
     @ValueSource(classes = {PaymentProperties.class, JavaxProperties.class, ScheduleProperties.class})
-    void flagsABuiltInConstraintByPackageWhenItsTypeIsNotResolved(Class<?> type) throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(PaymentProperties.class, outputRoot.resolve("unresolved"));
+    void flagsABuiltInConstraintByPackageWhenItsTypeIsNotResolved(Class<?> type) {
         ArchConfiguration.get().setResolveMissingDependenciesFromClassPath(false);
         try {
-            List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));
+            List<String> violations = violationsIn(new ClassFileImporter()
+                    .importPath(outputRoot.resolve("examples").resolve(ProductionLayout.MAIN_OUTPUT)));
 
             assertTrue(violations.contains(classLine(type)), String.join("\n", violations));
         } finally {

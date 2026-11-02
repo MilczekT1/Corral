@@ -29,9 +29,6 @@ class NoGenericExceptionThrownRuleTest {
 
     private static final String ID = "corral.exception.no-generic-exception-thrown";
 
-    /** {@link OrderService}'s anonymous {@code RuntimeException}. */
-    private static final int ANONYMOUS_EXAMPLES = 1;
-
     @TempDir
     static Path outputRoot;
 

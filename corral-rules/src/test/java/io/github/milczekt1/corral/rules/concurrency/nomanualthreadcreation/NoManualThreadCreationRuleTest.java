@@ -30,9 +30,6 @@ class NoManualThreadCreationRuleTest {
 
     private static final String ID = "corral.concurrency.no-manual-thread-creation";
 
-    /** {@link ExpiryScheduler}'s anonymous {@code TimerTask} and {@link WorkerPool}'s anonymous {@code Thread}. */
-    private static final int ANONYMOUS_EXAMPLES = 2;
-
     @TempDir
     static Path outputRoot;
 
