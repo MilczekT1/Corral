@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.testing.nostaticmocking.fixtures;
 
 import org.mockito.Mockito;
 
-/** MUST NOT FLAG: ordinary Mockito, which installs nothing. */
+/** MUST IGNORE: ordinary Mockito, which installs nothing. */
 public class PlainMockitoUser {
 
     public Runnable stubbed() {

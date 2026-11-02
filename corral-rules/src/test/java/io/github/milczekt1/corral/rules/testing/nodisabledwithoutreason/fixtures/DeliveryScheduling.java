@@ -6,7 +6,7 @@ import org.junit.jupiter.api.condition.DisabledIfEnvironmentVariable;
 import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 
-/** MUST NOT FLAG: a stated reason on the type, and two conditional annotations on the methods. */
+/** MUST IGNORE: a stated reason on the type, and two conditional annotations on the methods. */
 @Disabled("Blocked on the carrier sandbox, see #900 — re-enable when it returns")
 public class DeliveryScheduling {
 
