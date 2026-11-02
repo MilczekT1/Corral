@@ -4,9 +4,9 @@ import com.example.consumer.custom.NoStdoutInServicesRule;
 import com.example.consumer.custom.ServicesMustLiveInServicePackageRule;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.groups.TestingJunitRulesGroup;
 import io.github.milczekt1.corral.groups.TestingRulesGroup;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.ConfigurationPropertiesMustUseProjectPrefixRule;
-import io.github.milczekt1.corral.rules.testing.testclassnamingconvention.TestClassNamingConventionRule;
 
 /**
  * This project's own catalog root: the central groups it opted into, plus the rules it wrote itself,
@@ -27,7 +27,7 @@ final class ProjectRulesGroup {
     static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
 
     @ArchTest
-    static final ArchTests testClassNaming = ArchTests.in(TestClassNamingConventionRule.class);
+    static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
 
     @ArchTest
     static final ArchTests ownRules = ArchTests.in(NoStdoutInServicesRule.class);
