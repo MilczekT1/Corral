@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.TestOutputTicket;
-import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.production.PurchaseOrder;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.production.WireName;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;

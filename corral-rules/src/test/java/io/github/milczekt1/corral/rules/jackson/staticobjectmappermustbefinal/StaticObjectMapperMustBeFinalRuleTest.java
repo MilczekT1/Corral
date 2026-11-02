@@ -7,7 +7,6 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.TestOutputJson;
-import io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.production.JsonUtils;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
