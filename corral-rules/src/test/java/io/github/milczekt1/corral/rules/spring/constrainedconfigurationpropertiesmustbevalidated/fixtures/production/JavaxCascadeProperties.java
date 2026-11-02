@@ -3,7 +3,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import javax.validation.Valid;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** FLAGGED: {@code javax} {@code @Valid} alone counts as a constraint. */
+/** MUST FLAG: {@code javax} {@code @Valid} alone counts as a constraint. */
 @ConfigurationProperties("legacy-search")
 public class JavaxCascadeProperties {
     @Valid

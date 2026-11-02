@@ -2,7 +2,10 @@ package io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.fixtu
 
 import org.springframework.scheduling.annotation.Async;
 
-/** An async superclass: its annotation reaches every subclass's instance methods. */
+/**
+ * MUST IGNORE: an async superclass with no methods of its own; its annotation reaches every subclass's
+ * instance methods.
+ */
 @Async
 public abstract class AsyncWorkerBase {
 

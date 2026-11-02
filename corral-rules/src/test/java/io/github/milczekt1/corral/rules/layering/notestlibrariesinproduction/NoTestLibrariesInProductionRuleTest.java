@@ -8,6 +8,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.fixtures.production.OrderService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -177,6 +178,11 @@ class NoTestLibrariesInProductionRuleTest {
             "file:/repo/out/production/classes/com/acme/Service.class"})
     void doesNotMistakeProductionOutputForTestOutput(String uri) {
         assertFalse(NoTestLibrariesInProductionRule.isTestOutput(uri));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoTestLibrariesInProductionRuleTest.class, NoTestLibrariesInProductionRule.DEFINITION, examples);
     }
 
     @Test

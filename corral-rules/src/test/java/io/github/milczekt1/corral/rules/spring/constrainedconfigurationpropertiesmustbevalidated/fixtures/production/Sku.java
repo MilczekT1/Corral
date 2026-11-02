@@ -8,7 +8,7 @@ import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
-/** Not an example: a repeatable project constraint whose container is not itself a {@code @Constraint}. */
+/** SUPPORT: a repeatable project constraint whose container is not itself a {@code @Constraint}. */
 @Constraint(validatedBy = {})
 @Repeatable(Sku.List.class)
 @Target(ElementType.FIELD)

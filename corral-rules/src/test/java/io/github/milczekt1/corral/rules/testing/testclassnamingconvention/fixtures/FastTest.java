@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 import org.junit.jupiter.api.Test;
 
 /**
- * A project's own composed test annotation — the shape JUnit 5 documents and encourages.
+ * MUST IGNORE: a project's own composed test annotation — the shape JUnit 5 documents and encourages.
  *
  * <p>JUnit resolves {@code @Test} through the meta-annotation and runs methods annotated with it.
  */

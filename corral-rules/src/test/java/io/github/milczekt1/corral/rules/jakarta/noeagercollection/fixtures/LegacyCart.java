@@ -8,7 +8,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToMany;
 import javax.persistence.OneToMany;
 
-/** {@code javax} Persistence, field access. */
+/** MUST FLAG: {@code javax} Persistence, field access. */
 @Entity
 public class LegacyCart {
 

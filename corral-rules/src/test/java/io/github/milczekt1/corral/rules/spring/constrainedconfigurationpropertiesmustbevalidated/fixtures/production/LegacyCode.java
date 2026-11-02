@@ -7,7 +7,7 @@ import java.lang.annotation.Target;
 import javax.validation.Constraint;
 import javax.validation.Payload;
 
-/** Not an example: a project constraint meta-annotated with {@code javax} {@code @Constraint}. */
+/** SUPPORT: a project constraint meta-annotated with {@code javax} {@code @Constraint}. */
 @Constraint(validatedBy = {})
 @Target(ElementType.FIELD)
 @Retention(RetentionPolicy.RUNTIME)

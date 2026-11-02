@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import org.springframework.stereotype.Repository;
 
-/** Not an example: a hand-written DAO carrying the {@code @Repository} stereotype and no Spring Data supertype. */
+/** SUPPORT: a hand-written DAO carrying the {@code @Repository} stereotype and no Spring Data supertype. */
 @Repository
 public class LedgerDao {
 

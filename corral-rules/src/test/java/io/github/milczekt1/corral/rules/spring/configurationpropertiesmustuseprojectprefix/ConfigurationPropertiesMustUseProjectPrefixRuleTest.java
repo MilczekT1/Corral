@@ -21,6 +21,7 @@ import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustusepro
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.production.SettingsTemplate;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.production.TimeoutDefaults;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -116,6 +117,11 @@ class ConfigurationPropertiesMustUseProjectPrefixRuleTest {
         List<String> violations = violationsIn(examples);
 
         assertEquals(7, violations.size(), String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(ConfigurationPropertiesMustUseProjectPrefixRuleTest.class, ConfigurationPropertiesMustUseProjectPrefixRule.DEFINITION, examples);
     }
 
     @Test

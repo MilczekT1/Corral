@@ -19,6 +19,7 @@ import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.product
 import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.ShippingConfig;
 import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.UseCase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -134,6 +135,11 @@ class NoFinalComponentRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("TestOutputFinalBean")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoFinalComponentRuleTest.class, NoFinalComponentRule.DEFINITION, examples);
     }
 
     @Test

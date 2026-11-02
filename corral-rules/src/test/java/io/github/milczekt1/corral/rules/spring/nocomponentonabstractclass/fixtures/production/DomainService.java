@@ -7,8 +7,8 @@ import java.lang.annotation.Target;
 import org.springframework.stereotype.Service;
 
 /**
- * A project's own stereotype; the meta-annotation chain is what the rule must see through. MUST
- * IGNORE the annotation type itself, which is abstract in bytecode.
+ * MUST IGNORE the annotation type itself, which is abstract in bytecode: a project's own stereotype, and
+ * the meta-annotation chain is what the rule must see through.
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)

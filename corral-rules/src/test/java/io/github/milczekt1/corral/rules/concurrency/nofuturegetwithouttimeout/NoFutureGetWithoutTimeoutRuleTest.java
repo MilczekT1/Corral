@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fi
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.production.TracedFuture;
 import io.github.milczekt1.corral.rules.concurrency.nofuturegetwithouttimeout.fixtures.production.UntimedFuture;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -149,6 +150,11 @@ class NoFutureGetWithoutTimeoutRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("AsyncAssertions.awaited(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoFutureGetWithoutTimeoutRuleTest.class, NoFutureGetWithoutTimeoutRule.DEFINITION, examples);
     }
 
     @Test

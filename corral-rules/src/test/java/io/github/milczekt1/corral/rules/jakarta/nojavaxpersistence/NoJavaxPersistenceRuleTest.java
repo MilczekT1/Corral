@@ -12,6 +12,7 @@ import io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.Lega
 import io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.OptimisticLockSwallower;
 import io.github.milczekt1.corral.rules.jakarta.nojavaxpersistence.fixtures.PersistenceSupport;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -79,6 +80,11 @@ class NoJavaxPersistenceRuleTest {
         String report = String.join("\n", violations());
 
         assertFalse(report.contains("PersistenceSupport"), report);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJavaxPersistenceRuleTest.class, NoJavaxPersistenceRule.DEFINITION, EXAMPLES);
     }
 
     @Test

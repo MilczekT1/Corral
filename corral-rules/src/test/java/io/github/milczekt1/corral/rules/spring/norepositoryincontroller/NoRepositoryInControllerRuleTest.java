@@ -27,6 +27,7 @@ import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.ReportController;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.StockController;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -195,6 +196,11 @@ class NoRepositoryInControllerRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> names(originOf(line), "TestOutputController")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoRepositoryInControllerRuleTest.class, NoRepositoryInControllerRule.DEFINITION, examples);
     }
 
     @Test

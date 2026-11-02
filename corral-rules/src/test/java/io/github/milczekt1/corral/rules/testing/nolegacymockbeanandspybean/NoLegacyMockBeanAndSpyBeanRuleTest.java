@@ -13,6 +13,7 @@ import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtu
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.ResetPolicyHelper;
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.SpyBeanFieldHolder;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
@@ -85,6 +86,11 @@ class NoLegacyMockBeanAndSpyBeanRuleTest {
 
         String report = reportFor(moved);
         assertTrue(report.contains("MockBeanFieldHolder.clock>"), report);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoLegacyMockBeanAndSpyBeanRuleTest.class, NoLegacyMockBeanAndSpyBeanRule.DEFINITION, EXAMPLES);
     }
 
     @Test

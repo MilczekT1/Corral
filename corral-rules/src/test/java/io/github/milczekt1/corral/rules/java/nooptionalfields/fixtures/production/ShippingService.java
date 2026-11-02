@@ -4,7 +4,7 @@ import java.time.Clock;
 import java.util.Optional;
 import org.springframework.stereotype.Service;
 
-/** MUST IGNORE {@code tracker}, a field of a stereotyped bean; MUST FLAG {@code Quote.carrier}, whose class is not one. */
+/** MUST FLAG {@code Quote.carrier}, whose class is not a stereotyped bean; MUST IGNORE {@code tracker}, a field of one. */
 @Service
 public class ShippingService {
 

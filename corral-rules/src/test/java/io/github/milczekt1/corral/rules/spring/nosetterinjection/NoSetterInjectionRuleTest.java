@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.produc
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.RepositoryConfiguration;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.ShippingService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -131,6 +132,11 @@ class NoSetterInjectionRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("TestOutputWiredHelper.setRepository")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoSetterInjectionRuleTest.class, NoSetterInjectionRule.DEFINITION, examples);
     }
 
     @Test

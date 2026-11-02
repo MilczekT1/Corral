@@ -10,6 +10,7 @@ import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.T
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.production.PurchaseOrder;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.production.WireName;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -183,6 +184,11 @@ class NoAnnotationsOnEntityRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputTicket.secret" + ANNOTATED_WITH)),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoAnnotationsOnEntityRuleTest.class, NoAnnotationsOnEntityRule.DEFINITION, examples);
     }
 
     @Test

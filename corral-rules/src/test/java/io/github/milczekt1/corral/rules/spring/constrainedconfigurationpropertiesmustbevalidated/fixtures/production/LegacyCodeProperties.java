@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** FLAGGED: the only constraint is a project annotation meta-annotated with {@code javax} {@code @Constraint}. */
+/** MUST FLAG: the only constraint is a project annotation meta-annotated with {@code javax} {@code @Constraint}. */
 @ConfigurationProperties("legacy-code")
 public class LegacyCodeProperties {
     @LegacyCode

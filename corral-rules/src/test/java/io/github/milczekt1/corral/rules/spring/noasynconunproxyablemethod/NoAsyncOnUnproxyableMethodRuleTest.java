@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.fixtur
 import io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.fixtures.PaymentService;
 import io.github.milczekt1.corral.rules.spring.noasynconunproxyablemethod.fixtures.ReportService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -161,6 +162,11 @@ class NoAsyncOnUnproxyableMethodRuleTest {
     @Test
     void ignoresAStaticHelperMadeAsyncOnlyByItsClass() {
         assertNotReported("pageSize");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoAsyncOnUnproxyableMethodRuleTest.class, NoAsyncOnUnproxyableMethodRule.DEFINITION, EXAMPLES);
     }
 
     @Test

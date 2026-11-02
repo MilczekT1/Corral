@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixture
 
 import java.util.List;
 
-/** Not an example: a hand-written DAO with neither {@code @Repository} nor a Spring Data supertype. */
+/** SUPPORT: a hand-written DAO with neither {@code @Repository} nor a Spring Data supertype. */
 public class ReportDao {
 
     public List<String> monthly() {

@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtu
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.production.PaymentService;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.production.SchemaVersions;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -165,6 +166,11 @@ class NoGenericExceptionThrownRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("FailingGatewayStub.fetch(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoGenericExceptionThrownRuleTest.class, NoGenericExceptionThrownRule.DEFINITION, examples);
     }
 
     @Test

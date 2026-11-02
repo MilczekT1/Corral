@@ -13,6 +13,7 @@ import io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.produc
 import io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.production.PaymentDao;
 import io.github.milczekt1.corral.rules.security.nojdbcstatement.fixtures.production.ReportExporter;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -103,6 +104,11 @@ class NoJdbcStatementRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("SchemaBuilder.create(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJdbcStatementRuleTest.class, NoJdbcStatementRule.DEFINITION, examples);
     }
 
     @Test

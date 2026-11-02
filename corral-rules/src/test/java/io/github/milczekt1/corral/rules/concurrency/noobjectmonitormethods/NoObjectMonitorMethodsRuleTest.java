@@ -17,6 +17,7 @@ import io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtu
 import io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.WakeupRelay;
 import io.github.milczekt1.corral.rules.concurrency.noobjectmonitormethods.fixtures.WorkQueue;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -133,6 +134,12 @@ class NoObjectMonitorMethodsRuleTest {
     @Test
     void ignoresAConditionAwaitedAndSignalled() {
         assertNotReported("HandoffBuffer");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoObjectMonitorMethodsRuleTest.class, NoObjectMonitorMethodsRule.DEFINITION,
+                new ClassFileImporter().importPackagesOf(PendingJobs.class));
     }
 
     @Test

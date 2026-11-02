@@ -32,6 +32,7 @@ import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtu
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.StockController;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.TransactionalAuditBase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -217,6 +218,11 @@ class NoTransactionalInControllerRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> names(controllerOf(line), "TestOutputController")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoTransactionalInControllerRuleTest.class, NoTransactionalInControllerRule.DEFINITION, examples);
     }
 
     @Test

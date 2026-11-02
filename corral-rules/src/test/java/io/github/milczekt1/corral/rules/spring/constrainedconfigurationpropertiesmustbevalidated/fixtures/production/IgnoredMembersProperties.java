@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** NOT FLAGGED: every constraint is on a member Bean Validation does not read. */
+/** MUST IGNORE: every constraint is on a member Bean Validation does not read. */
 @ConfigurationProperties("ignored")
 public class IgnoredMembersProperties {
     /** Static field. */

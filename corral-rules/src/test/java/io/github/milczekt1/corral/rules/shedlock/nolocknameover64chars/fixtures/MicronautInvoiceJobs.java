@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures
 
 import net.javacrumbs.shedlock.micronaut.SchedulerLock;
 
+/** MUST FLAG: ShedLock's Micronaut annotation. */
 public class MicronautInvoiceJobs {
 
     private int runs;

@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.fixtures.TestOutputLookup;
 import io.github.milczekt1.corral.rules.java.nooptionalmethodparameters.fixtures.production.OrderQuery;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -170,6 +171,11 @@ class NoOptionalMethodParametersRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputLookup.apply(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoOptionalMethodParametersRuleTest.class, NoOptionalMethodParametersRule.DEFINITION, examples);
     }
 
     @Test

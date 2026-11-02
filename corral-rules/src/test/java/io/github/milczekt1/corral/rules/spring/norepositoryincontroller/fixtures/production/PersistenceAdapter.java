@@ -6,7 +6,7 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.stereotype.Repository;
 
-/** Not an example: a project's own stereotype composed from {@code @Repository}. */
+/** SUPPORT: a project's own stereotype composed from {@code @Repository}. */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.TYPE)
 @Repository

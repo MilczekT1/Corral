@@ -5,7 +5,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
-/** MUST IGNORE as a class: not annotated; its methods carry the verdicts. */
+/** MUST FLAG through its methods, which carry the verdicts; MUST IGNORE as a class, which is not annotated. */
 @Configuration
 public class ClientConfiguration extends ConfigurationTemplate {
     /** MUST FLAG once: binds the project's own type outside the project prefix; javac copies the annotation onto the bridge. */

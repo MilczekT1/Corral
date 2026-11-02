@@ -3,7 +3,7 @@ package io.github.milczekt1.corral.rules.spring.constrainedconfigurationproperti
 import jakarta.validation.constraints.NotBlank;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
-/** NOT FLAGGED: abstract, so Boot never binds it; its concrete subclass is reported instead. */
+/** MUST IGNORE: abstract, so Boot never binds it; its concrete subclass is reported instead. */
 @ConfigurationProperties("channel")
 public abstract class ChannelProperties {
     @NotBlank

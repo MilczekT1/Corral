@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixture
 
 import org.springframework.stereotype.Service;
 
-/** Not an example: a service with no repository behind it. */
+/** SUPPORT: a service with no repository behind it. */
 @Service
 public class PricingService {
 

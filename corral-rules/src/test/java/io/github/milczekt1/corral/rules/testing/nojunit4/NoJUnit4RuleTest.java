@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.testing.nojunit4.fixtures.MessageFirstAs
 import io.github.milczekt1.corral.rules.testing.nojunit4.fixtures.RunnerAndRuleCase;
 import io.github.milczekt1.corral.rules.testing.nojunit4.fixtures.SuiteDecoratorCase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.List;
@@ -140,6 +141,11 @@ class NoJUnit4RuleTest {
 
         assertFalse(report().contains("Class <junit.framework.TestSuite>"),
                 "this rule is scoped to test classes, and JUnit 4's own code is not one: " + report());
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJUnit4RuleTest.class, NoJUnit4Rule.DEFINITION, EXAMPLES);
     }
 
     @Test

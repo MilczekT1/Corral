@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.product
 import io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.production.ReportWriter;
 import io.github.milczekt1.corral.rules.spring.nofieldinjection.fixtures.production.WiringConfiguration;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -132,6 +133,11 @@ class NoFieldInjectionRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("TestOutputInjectedHelper.seeded")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoFieldInjectionRuleTest.class, NoFieldInjectionRule.DEFINITION, examples);
     }
 
     @Test

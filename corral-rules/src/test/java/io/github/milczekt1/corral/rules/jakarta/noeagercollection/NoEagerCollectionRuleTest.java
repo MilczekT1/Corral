@@ -11,6 +11,7 @@ import io.github.milczekt1.corral.rules.jakarta.noeagercollection.fixtures.Legac
 import io.github.milczekt1.corral.rules.jakarta.noeagercollection.fixtures.PropertyAccessCart;
 import io.github.milczekt1.corral.rules.jakarta.noeagercollection.fixtures.ShoppingCart;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -182,6 +183,11 @@ class NoEagerCollectionRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoEagerCollectionRuleTest.class, NoEagerCollectionRule.DEFINITION, EXAMPLES);
     }
 
     @Test

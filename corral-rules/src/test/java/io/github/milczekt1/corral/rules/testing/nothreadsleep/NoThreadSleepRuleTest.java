@@ -8,6 +8,7 @@ import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures.ThreadSleeper;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
@@ -48,6 +49,11 @@ class NoThreadSleepRuleTest {
 
         assertFalse(report().contains("TimeUnit"),
                 "this rule is scoped to test classes, and TimeUnit is not one: " + report());
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoThreadSleepRuleTest.class, NoThreadSleepRule.DEFINITION, EXAMPLES);
     }
 
     @Test

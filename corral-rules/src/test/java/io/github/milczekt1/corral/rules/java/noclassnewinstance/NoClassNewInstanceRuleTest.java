@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.ReflectiveFactory;
 import io.github.milczekt1.corral.rules.java.noclassnewinstance.fixtures.SafeInstantiation;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -73,6 +74,11 @@ class NoClassNewInstanceRuleTest {
     @Test
     void ignoresArrayNewInstanceAndANewInstanceMethodOfAnotherType() {
         assertNotReported("SafeInstantiation");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoClassNewInstanceRuleTest.class, NoClassNewInstanceRule.DEFINITION, EXAMPLES);
     }
 
     @Test

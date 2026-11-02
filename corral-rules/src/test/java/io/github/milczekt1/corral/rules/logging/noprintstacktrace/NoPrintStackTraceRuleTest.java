@@ -17,6 +17,7 @@ import io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.Repor
 import io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.SettlementException;
 import io.github.milczekt1.corral.rules.logging.noprintstacktrace.fixtures.SettlementJob;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -110,6 +111,11 @@ class NoPrintStackTraceRuleTest {
     @Test
     void ignoresAMethodNamedPrintStackTraceOnANonThrowable() {
         assertNotReported("DiagnosticsPanel");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoPrintStackTraceRuleTest.class, NoPrintStackTraceRule.DEFINITION, EXAMPLES);
     }
 
     @Test

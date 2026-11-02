@@ -13,6 +13,7 @@ import io.github.milczekt1.corral.rules.testing.nostaticmocking.fixtures.StaticH
 import io.github.milczekt1.corral.rules.testing.nostaticmocking.fixtures.StaticHandoffCaller;
 import io.github.milczekt1.corral.rules.testing.nostaticmocking.fixtures.StaticMockingCaller;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -84,6 +85,11 @@ class NoStaticMockingRuleTest {
 
         String description = NoStaticMockingRule.DEFINITION.getDescription();
         assertTrue(description.contains("test classes"), description);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoStaticMockingRuleTest.class, NoStaticMockingRule.DEFINITION, EXAMPLES);
     }
 
     @Test

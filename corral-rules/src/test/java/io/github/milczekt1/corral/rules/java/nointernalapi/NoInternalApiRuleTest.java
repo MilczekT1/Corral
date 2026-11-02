@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.SolarDashboa
 import io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.VarHandleCounter;
 import io.github.milczekt1.corral.rules.java.nointernalapi.fixtures.sun.SolarReading;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -107,6 +108,11 @@ class NoInternalApiRuleTest {
     @Test
     void ignoresASunSegmentBelowTheRootPackage() {
         assertNotReported("SolarDashboard");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoInternalApiRuleTest.class, NoInternalApiRule.DEFINITION, EXAMPLES);
     }
 
     @Test

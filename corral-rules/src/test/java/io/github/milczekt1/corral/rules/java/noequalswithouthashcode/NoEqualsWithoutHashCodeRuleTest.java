@@ -26,6 +26,7 @@ import io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.Sk
 import io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.TagSet;
 import io.github.milczekt1.corral.rules.java.noequalswithouthashcode.fixtures.ValidationFailure;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -165,6 +166,11 @@ class NoEqualsWithoutHashCodeRuleTest {
 
         assertFalse(NoEqualsWithoutHashCodeRule.DEFINITION.evaluate(object).hasViolation(),
                 NoEqualsWithoutHashCodeRule.DEFINITION.evaluate(object).getFailureReport().toString());
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoEqualsWithoutHashCodeRuleTest.class, NoEqualsWithoutHashCodeRule.DEFINITION, EXAMPLES);
     }
 
     @Test

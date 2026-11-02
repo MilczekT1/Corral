@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.TestOutputSettings;
 import io.github.milczekt1.corral.rules.java.publicstaticfieldsmustbefinal.fixtures.production.RuntimeSettings;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -133,6 +134,11 @@ class PublicStaticFieldsMustBeFinalRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputSettings.overrideUrl" + NOT_FINAL)),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(PublicStaticFieldsMustBeFinalRuleTest.class, PublicStaticFieldsMustBeFinalRule.DEFINITION, examples);
     }
 
     @Test

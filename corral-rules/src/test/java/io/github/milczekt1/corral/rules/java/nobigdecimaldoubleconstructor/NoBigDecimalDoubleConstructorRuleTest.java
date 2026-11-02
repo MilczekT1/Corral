@@ -11,6 +11,7 @@ import io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtu
 import io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.RateStreams;
 import io.github.milczekt1.corral.rules.java.nobigdecimaldoubleconstructor.fixtures.SafePricing;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -94,6 +95,11 @@ class NoBigDecimalDoubleConstructorRuleTest {
     @Test
     void ignoresADoubleConstructorOfAnotherType() {
         assertNotReported("ExchangeRate");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoBigDecimalDoubleConstructorRuleTest.class, NoBigDecimalDoubleConstructorRule.DEFINITION, EXAMPLES);
     }
 
     @Test

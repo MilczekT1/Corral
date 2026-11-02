@@ -8,7 +8,10 @@ import jakarta.persistence.Id;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 
-/** Property access: the mapping is on the getters, so MUST IGNORE the unannotated fields. */
+/**
+ * MUST FLAG on a getter. Property access: the mapping is on the getters, so MUST IGNORE the unannotated
+ * fields.
+ */
 @Entity
 @Access(AccessType.PROPERTY)
 public class Subscription {

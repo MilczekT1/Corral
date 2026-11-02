@@ -12,6 +12,7 @@ import io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.LocalNames
 import io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.ValidationFailureSwallower;
 import io.github.milczekt1.corral.rules.dependencies.nojavax.fixtures.javax.LocalNamespaceType;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -80,6 +81,11 @@ class NoJavaxRuleTest {
     void flagsACatchClauseAlone() {
         assertFlagged("ValidationFailureSwallower.tryValidate",
                 "catches type <javax.validation.ValidationException>");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJavaxRuleTest.class, NoJavaxRule.DEFINITION, EXAMPLES);
     }
 
     @Test

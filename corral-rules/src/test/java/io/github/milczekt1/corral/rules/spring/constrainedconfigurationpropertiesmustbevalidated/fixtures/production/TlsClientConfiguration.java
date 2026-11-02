@@ -4,9 +4,10 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
+/** MUST FLAG: an override of a binding method. */
 @Configuration
 public class TlsClientConfiguration extends ClientConfiguration {
-    /** FLAGGED once; the synthetic bridge javac adds, returning {@link ClientSettings}, NOT FLAGGED. */
+    /** MUST FLAG once; the synthetic bridge javac adds, returning {@link ClientSettings}, MUST IGNORE. */
     @Override
     @Bean
     @ConfigurationProperties("client")

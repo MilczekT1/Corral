@@ -6,7 +6,9 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 import org.springframework.scheduling.annotation.Async;
 
-/** A project's own composed annotation; the meta-annotation is what the rule must see through. */
+/**
+ * SUPPORT: a project's own composed annotation; the meta-annotation is what the rule must see through.
+ */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.METHOD)
 @Async

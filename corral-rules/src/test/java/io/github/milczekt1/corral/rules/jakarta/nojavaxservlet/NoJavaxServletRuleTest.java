@@ -12,6 +12,7 @@ import io.github.milczekt1.corral.rules.jakarta.nojavaxservlet.fixtures.JavaxTen
 import io.github.milczekt1.corral.rules.jakarta.nojavaxservlet.fixtures.LegacyRequestLogger;
 import io.github.milczekt1.corral.rules.jakarta.nojavaxservlet.fixtures.SocketSupport;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -78,6 +79,11 @@ class NoJavaxServletRuleTest {
         String report = String.join("\n", violations());
 
         assertFalse(report.contains("SocketSupport"), report);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJavaxServletRuleTest.class, NoJavaxServletRule.DEFINITION, EXAMPLES);
     }
 
     @Test

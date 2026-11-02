@@ -22,6 +22,7 @@ import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversio
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.RefundDto;
 import io.github.milczekt1.corral.rules.java.serializablemustdeclareserialversionuid.fixtures.ShipmentDto;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -134,6 +135,11 @@ class SerializableMustDeclareSerialVersionUidRuleTest {
     @Test
     void ignoresAnExceptionSerializableOnlyThroughThrowable() {
         assertNotReported("PaymentDeclinedException");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(SerializableMustDeclareSerialVersionUidRuleTest.class, SerializableMustDeclareSerialVersionUidRule.DEFINITION, EXAMPLES);
     }
 
     @Test

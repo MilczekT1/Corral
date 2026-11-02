@@ -22,6 +22,7 @@ import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fix
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.production.ShopApplication;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.production.SpringContextHolder;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -169,6 +170,11 @@ class NoApplicationContextInjectionRuleTest {
     @Test
     void ignoresATestClassAutowiringTheContext() {
         assertNotReported("ContextWiringTest");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoApplicationContextInjectionRuleTest.class, NoApplicationContextInjectionRule.DEFINITION, examples);
     }
 
     @Test

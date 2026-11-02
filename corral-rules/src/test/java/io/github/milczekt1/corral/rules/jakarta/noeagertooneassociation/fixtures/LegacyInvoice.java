@@ -6,7 +6,7 @@ import javax.persistence.Id;
 import javax.persistence.ManyToOne;
 import javax.persistence.OneToOne;
 
-/** {@code javax} Persistence, field access. */
+/** MUST FLAG: {@code javax} Persistence, field access. */
 @Entity
 public class LegacyInvoice {
 

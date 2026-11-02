@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.java.nooptionalfields.fixtures.TestOutputQuery;
 import io.github.milczekt1.corral.rules.java.nooptionalfields.fixtures.production.OrderQuery;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -173,6 +174,11 @@ class NoOptionalFieldsRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputQuery.keyword>")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoOptionalFieldsRuleTest.class, NoOptionalFieldsRule.DEFINITION, examples);
     }
 
     @Test

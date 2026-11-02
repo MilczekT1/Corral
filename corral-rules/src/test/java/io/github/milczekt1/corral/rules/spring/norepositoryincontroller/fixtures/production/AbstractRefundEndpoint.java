@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixture
 
 import org.springframework.beans.factory.annotation.Autowired;
 
-/** Not an example: an unannotated base class, the only one that touches the repository. */
+/** SUPPORT: an unannotated base class, the only one that touches the repository. */
 public abstract class AbstractRefundEndpoint {
 
     @Autowired

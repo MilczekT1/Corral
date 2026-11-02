@@ -35,6 +35,7 @@ import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertie
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.TreeProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ValidatedSettings;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -150,6 +151,11 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
         assertTrue(violations.stream().anyMatch(line -> line.startsWith(
                         methodLine(TestOutputConfiguration.class, "reportSettings", ClientSettings.class))),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(ConstrainedConfigurationPropertiesMustBeValidatedRuleTest.class, ConstrainedConfigurationPropertiesMustBeValidatedRule.DEFINITION, examples);
     }
 
     @Test

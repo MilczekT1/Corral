@@ -17,6 +17,7 @@ import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtu
 import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.SweepTimer;
 import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.WorkerPool;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -179,6 +180,11 @@ class NoManualThreadCreationRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("RaceProvoker.contender(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoManualThreadCreationRuleTest.class, NoManualThreadCreationRule.DEFINITION, examples);
     }
 
     @Test

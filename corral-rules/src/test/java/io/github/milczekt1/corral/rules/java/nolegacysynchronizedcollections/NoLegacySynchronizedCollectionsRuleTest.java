@@ -16,6 +16,7 @@ import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fix
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.SettingsLoader;
 import io.github.milczekt1.corral.rules.java.nolegacysynchronizedcollections.fixtures.UndoStack;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -116,6 +117,11 @@ class NoLegacySynchronizedCollectionsRuleTest {
     @Test
     void ignoresDictionary() {
         assertNotReported("ConfigListener");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoLegacySynchronizedCollectionsRuleTest.class, NoLegacySynchronizedCollectionsRule.DEFINITION, EXAMPLES);
     }
 
     @Test

@@ -11,7 +11,7 @@ import java.util.Set;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
-/** Jakarta Persistence, field access, with Hibernate fetch modes. */
+/** MUST FLAG: Jakarta Persistence, field access, with Hibernate fetch modes. */
 @Entity
 public class ShoppingCart {
 
