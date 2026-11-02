@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.fixtures;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
-import io.github.milczekt1.corral.doc.DeprecatedRule;
+import io.github.milczekt1.corral.DeprecatedRule;
 import lombok.experimental.UtilityClass;
 
 /**

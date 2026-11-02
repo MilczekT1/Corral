@@ -2,7 +2,7 @@ package io.github.milczekt1.corral.groups;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import io.github.milczekt1.corral.doc.DeprecatedRule;
+import io.github.milczekt1.corral.DeprecatedRule;
 import io.github.milczekt1.corral.fixtures.RetiredRuleFixtureGroup;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.Set;

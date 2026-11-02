@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.doc;
+package io.github.milczekt1.corral;
 
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -7,6 +7,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
+import io.github.milczekt1.corral.doc.RuleDoc;
+import io.github.milczekt1.corral.doc.RuleRegistry;
 import org.junit.jupiter.api.Test;
 
 class DeprecatedRuleTest {
