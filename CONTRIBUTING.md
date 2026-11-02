@@ -138,8 +138,9 @@ exists so you can author those without forking anything.
 
 ## Rule ids
 
-An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumers)), so its grammar
-is closed and the closure is enforced, not a style convention.
+An id is the freeze-store key (see [What breaks consumers](#what-breaks-consumers)), so the parts of
+its grammar that matter are enforced, not a style convention. Everything between the vendor prefix
+and the polarity marker is free-form.
 
 **Every id Corral publishes starts with the `corral.` vendor prefix.** Corral can enforce its own ids
 against its own catalog test, but it deliberately cannot enforce a consumer's — `RuleDoc` is public
@@ -158,39 +159,36 @@ exactly that case, and it must keep working.
 | `corral.<concern>.<slug>` | a catalog rule | `corral.logging.no-system-out` |
 | `corral.<concern>.<library>.<slug>` | a catalog rule specific to one library | `corral.test.mockito.no-static-mocking` |
 
-**Segment 1 is always `corral`** — provenance, not taxonomy. **Segment 2 is a closed vocabulary**, in
-four kinds: a **concern** (`logging`, `security`, …), a **library** (`spring`, `jackson`, …), the
-**JDK** (`java`, plus `java<N>` for a version-gated API), or **meta** — the one exception, where a
-depth-2 `corral.<slug>` id has no segment-2 concern at all and the slug itself sits at segment 2.
-**Segment 3, when present, is a library qualifier.** The accepted words for each are the lists in
-`RuleIdGrammarTest`; that test is the vocabulary, so adding a word means adding it there and nowhere
-else.
+**Segment 1 is always `corral`** — provenance, not taxonomy. **The segments after it are not a
+closed list.** Segment 2 is usually a concern (`logging`, `security`, …), a library (`spring`,
+`jackson`, …) or the JDK (`java`, `java<N>` for a version-gated API); a fourth segment, when present,
+usually names one library. Reuse a word the catalog already uses when one fits, so related ids sort
+together, but a new word needs no change anywhere else.
 
-**Tie-break when a predicate touches a library:** the segment-3 qualifier is the non-JDK library whose
+**Tie-break when a predicate touches a library:** the library segment names the non-JDK library whose
 *correct use* the rule asserts, not any library the predicate merely detects. A rule that flagged test
 libraries leaking into production code, for instance, would name JUnit and Mockito only to detect
 them — it polices layering, not correct use of either library — so it would stay `corral.layering.*`
-rather than take on either library's qualifier.
+rather than take on either library's name.
 
 **Exactly two polarity markers.** A slug either starts with `no-` (a prohibition) or contains
 `-must-`, read as `<subject>-must-<predicate>` (`fields-must-be-final`: the subject is fields, the
 predicate is being final). Six inconsistent forms across the early catalog collapsed into these two
 so a slug's intent is legible without opening the rule.
 
-**Caps:** depth ≤ 4 segments, and a fourth segment is legal only when segment 3 is a library
-qualifier. Anything finer-grained belongs in a group, which can be reorganised, not in the id, which
-cannot once a consumer has frozen it. Length ≤ 72 characters — segment 1 is a fixed vendor prefix on
+**Caps:** depth ≤ 4 segments. Anything finer-grained belongs in a group, which can be reorganised,
+not in the id, which cannot once a consumer has frozen it. Length ≤ 72 characters — segment 1 is a fixed vendor prefix on
 top, so the taxonomy budget below it is unchanged from before the prefix existed.
 
 **The check is split across two layers, deliberately.** `RuleDoc`'s constructor enforces only the
 shape regex, the length cap and the depth cap — universal hygiene that binds every id, including a
 consumer's own, because the id becomes a *file name* in every consumer's freeze store (see [The
-freeze store](docs/configuration.md#the-freeze-store)). The vendor prefix, the segment vocabularies
-and the polarity marker are enforced separately, by `RuleIdGrammarTest` in `corral-rules`, and only
-against ids reachable from `EveryPublishedGroup` — this catalog, not the world. `corral-sdk` is
+freeze store](docs/configuration.md#the-freeze-store)). The vendor prefix and the polarity marker are
+enforced separately, by `RuleIdGrammarTest` in `corral-rules`, and only against ids reachable from
+`EveryPublishedGroup` and `EveryStandaloneRule` — this catalog, not the world. `corral-sdk` is
 published precisely so a consumer can author rules in their own namespace ("[a rule that encodes one
 team's preference is better off in that team's own rule namespace](#is-a-rule-catalog-worthy)"); a
-closed vocabulary enforced inside `RuleDoc` itself would revoke that promise.
+`corral.` prefix enforced inside `RuleDoc` itself would revoke that promise.
 
 **Deprecate, never rename.** A rule id is a freeze-store key, and ArchUnit's `ViolationStore` SPI has
 no rename verb — so a rename orphans every consumer's recorded violations, silently. Withdraw an id

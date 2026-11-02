@@ -95,7 +95,7 @@ counts) or **blocker** (no shape of the rule passes, e.g. Gate B).
 
 1. **Gates A–C** from `propose-rule`. For Gate A, skip the proposal's own issue; it checks the id
    only.
-2. **Id.** Grammar, vocabulary, polarity and caps, checked against `RuleIdGrammarTest`. A wrong id
+2. **Id.** Vendor prefix, polarity and caps, checked against `RuleIdGrammarTest`. A wrong id
    is cheap now and permanent after release.
 3. **Predicate reach** (propose-rule step 4): over-match, missed subtypes in other packages,
    sibling types left out, prefixes or string FQNs, and where the rule stops.

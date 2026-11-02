@@ -18,10 +18,11 @@ sequences and cross-references them for *this* catalog, it does not restate them
 
 ## The steps, in order
 
-1. **Choose the id.** Grammar, closed vocabulary and caps are in
+1. **Choose the id.** Grammar and caps are in
    [CONTRIBUTING.md § Rule ids](../../../CONTRIBUTING.md#rule-ids). Segment 1 is always the fixed
-   `corral.` vendor prefix — never a judgment call. The one judgment call: the segment-2 concern (or,
-   for a library-specific rule, the segment-3 qualifier after it) is the non-JDK **library whose
+   `corral.` vendor prefix — never a judgment call. The segments after it are free-form; reuse a word
+   the catalog already uses when one fits. The one judgment call: the segment-2 concern (or, for a
+   library-specific rule, the library segment after it) is the non-JDK **library whose
    correct use the rule asserts**, not a library the predicate merely uses to *detect* something. A
    rule that flags JUnit/Mockito types leaking into production code names them only to find them — it
    polices layering, not either library's correct use — so it stays `corral.layering.*`, not
@@ -174,8 +175,8 @@ Skip a step above and one of these tests fails the build, on purpose:
   renaming orphans every consumer's recorded violations (rule re-seeds clean, build stays green,
   nothing is enforced). Retire the old id with `DeprecatedRule.supersededBy(retiredId,
   replacementId, why)` in `corral-sdk` instead, and keep the retired id in the published set.
-- **`RuleIdGrammarTest`** — fails if the id violates the closed grammar (namespace, polarity marker,
-  segment cap) from step 1. Fix the id, not the test.
+- **`RuleIdGrammarTest`** — fails if the id lacks the `corral.` prefix or a polarity marker (step 1).
+  Fix the id, not the test.
 - **`RulesCatalogDocTest`** — fails if `docs/rules.md` and the published groups disagree, on either
   the id set or the group column (step 8 skipped, or a rule moved group).
 

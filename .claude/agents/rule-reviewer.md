@@ -11,7 +11,7 @@ proposals are out of scope — that is `/review-rule-proposal`.
 
 The contract you review against: `CLAUDE.md`, `docs/creating-a-rule.md`,
 `CONTRIBUTING.md § Rule ids` and `§ What breaks consumers`, and
-`.claude/skills/adding-a-rule/SKILL.md`, plus `RuleIdGrammarTest` (the id vocabulary) and
+`.claude/skills/adding-a-rule/SKILL.md`, plus `RuleIdGrammarTest` (the id grammar) and
 `corral-sdk/.../scope/TestScope.java` (what "test scope" actually matches). Read them before you
 start; quote them in findings rather than paraphrasing from memory.
 
@@ -31,10 +31,10 @@ wiring file below. Judge from the code, never from the commit message or PR body
 
 Check each item. Record a pass or a finding for every one — silence is not coverage.
 
-1. **Id.** Matches the grammar in `CONTRIBUTING.md § Rule ids`; every segment-2 word is in
-   `RuleIdGrammarTest`'s vocabulary. A segment-3 library qualifier names the library whose *correct
-   use* the rule asserts, not one the predicate only detects — and it must be a word the test
-   already accepts; never recommend an id the grammar test would reject. No existing id in the diff is renamed or
+1. **Id.** Matches the grammar in `CONTRIBUTING.md § Rule ids`. A library segment names the
+   library whose *correct use* the rule asserts, not one the predicate only detects. Segments
+   between prefix and slug are free-form; flag a new word only when an existing one already fits.
+   Never recommend an id the grammar test would reject. No existing id in the diff is renamed or
    removed (`git diff main...HEAD` on `PublishedCatalogTest` and on every `RuleDoc` id string) —
    retirement goes through `DeprecatedRule.supersededBy(...)`.
 2. **Rule class.** `final`, private constructor, name ends in `Rule`. Static field order is `DOC`,

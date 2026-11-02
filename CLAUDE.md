@@ -49,11 +49,12 @@ Everything unusual here follows from this. An id becomes a file name in every co
   `DeprecatedRule.supersededBy(...)` (`docs/retiring-a-rule.md`) and keep the old id published.
 - **A rule's predicate text is also a matching key.** Rewording it resurfaces old violations in
   consumers' builds on upgrade, on code they did not touch.
-- The full grammar (vendor prefix `corral.`, closed segment-2 vocabulary, `no-` / `-must-` polarity
-  marker, ≤ 4 segments, ≤ 72 chars) lives in `CONTRIBUTING.md § Rule ids` and is enforced by
-  `RuleIdGrammarTest`, which *is* the vocabulary — add a word there and nowhere else.
+- The full grammar (vendor prefix `corral.`, `no-` / `-must-` polarity marker, ≤ 4 segments,
+  ≤ 72 chars) lives in `CONTRIBUTING.md § Rule ids`. The segments between prefix and slug are
+  free-form; reuse an existing word when one fits.
 - Shape-only checks (regex, length, depth) live in `RuleDoc`'s constructor because they bind consumer
-  ids too. Vocabulary checks deliberately do **not**, so consumers keep their own namespace.
+  ids too. The prefix and polarity checks live in `RuleIdGrammarTest` and deliberately do **not**, so
+  consumers keep their own namespace.
 
 The consumer-visible surface with no automated check is raising the Java baseline.
 `docs/rules.md` drifting from the published groups *is* checked, by `RulesCatalogDocTest` — but only
