@@ -6,80 +6,23 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.DaoMockingIT;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.GatewayMockingIT;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.InheritedMockingIT;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.OrderDao;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.OrderRepository;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.PaymentGateway;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.RealRepositoryIT;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.RepositoryMockingIT;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.RepositoryMockingUnitTest;
+import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.SharedMockBase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mock;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
-/**
- * The examples are nested and static, so no runner selects them — a top-level {@code *IT} outside a
- * {@code fixtures} package is run by Failsafe for real. ArchUnit reads a nested class's unqualified
- * simple name, which is what the rule's {@code haveSimpleNameEndingWith("IT")} clause matches.
- */
 class NoMockedRepositoryInIntegrationTestRuleTest {
-
-    interface OrderRepository {
-        String findById(String id);
-    }
-
-    interface OrderDao {
-        String load(String id);
-    }
-
-    /** Not a repository or dao — mocking this in an integration test is fine. */
-    interface PaymentGateway {
-        boolean charge(long amountMinor);
-    }
-
-    /** MUST FLAG: {@code @Mock} on a type ending in Repository, in a class named {@code *IT}. */
-    static class RepositoryMockingIT {
-
-        @Mock
-        OrderRepository mockedOrderRepository;
-    }
-
-    /** MUST FLAG: the Dao half of the type clause, mocked through Spring's {@code @MockitoBean}. */
-    static class DaoMockingIT {
-
-        @MockitoBean
-        OrderDao mockedOrderDao;
-    }
-
-    /** MUST IGNORE: mocked, but a gateway is not a persistence type. */
-    static class GatewayMockingIT {
-
-        @Mock
-        PaymentGateway mockedPaymentGateway;
-    }
-
-    /** MUST IGNORE: a real repository in an integration test is exactly the point of one. */
-    static class RealRepositoryIT {
-
-        OrderRepository unmockedOrderRepository;
-    }
-
-    /**
-     * MUST IGNORE in its own right: holds the mock, but is not named {@code *IT}, so it is not an
-     * integration test. Only {@link InheritedMockingIT} is.
-     */
-    abstract static class SharedMockBase {
-
-        @Mock
-        OrderRepository inheritedOrderRepository;
-    }
-
-    /** MUST FLAG: declares no field itself — the mock arrives through {@link SharedMockBase}. */
-    static class InheritedMockingIT extends SharedMockBase {
-    }
-
-    /** MUST IGNORE: mocking a repository is what a unit test is for. */
-    static class RepositoryMockingUnitTest {
-
-        @Mock
-        OrderRepository unitTestOrderRepository;
-    }
 
     private static final String ID = "corral.test.no-mocked-repository-in-integration-test";
 
@@ -161,6 +104,12 @@ class NoMockedRepositoryInIntegrationTestRuleTest {
                         "org.springframework.test.context.bean.override.mockito.MockitoBean",
                         "org.springframework.boot.test.mock.mockito.MockBean"),
                 NoMockedRepositoryInIntegrationTestRule.FORBIDDEN_MOCK_ANNOTATIONS);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoMockedRepositoryInIntegrationTestRuleTest.class,
+                NoMockedRepositoryInIntegrationTestRule.DEFINITION, EXAMPLES);
     }
 
     @Test
