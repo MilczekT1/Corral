@@ -3,16 +3,20 @@ package io.github.milczekt1.corral;
 import static com.tngtech.archunit.lang.conditions.ArchConditions.be;
 import static com.tngtech.archunit.lang.conditions.ArchConditions.have;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.fields;
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.library.dependencies.SliceAssignment;
 import com.tngtech.archunit.library.dependencies.SliceIdentifier;
+import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.nio.file.Path;
@@ -23,7 +27,7 @@ import org.junit.jupiter.api.Test;
 class CatalogArchitectureTest {
 
     private static final String RULES = "io.github.milczekt1.corral.rules";
-    private static final JavaClasses CATALOG =new ClassFileImporter().importPackages("io.github.milczekt1.corral");
+    private static final JavaClasses CATALOG = new ClassFileImporter().importPackages("io.github.milczekt1.corral");
     /** Everything this module publishes; Surefire runs with the module directory as working directory. */
     private static final JavaClasses PUBLISHED = new ClassFileImporter().importPath(Path.of("target/classes"));
 
@@ -49,6 +53,36 @@ class CatalogArchitectureTest {
                 .should().haveNameMatching(".*RuleTest\\$.*")
                 .because("Sonar lints a class nested in a test as a real test; an example belongs in fixtures/")
                 .check(CATALOG);
+    }
+
+    @Test
+    void ruleClassesAreFinalDocumentedRulesWithPrivateConstructors() {
+        classes().that().areTopLevelClasses().and().haveSimpleNameEndingWith("Rule")
+                .should().haveModifier(JavaModifier.FINAL)
+                .andShould().implement(DocumentedRule.class)
+                .andShould().haveOnlyPrivateConstructors()
+                .check(PUBLISHED);
+    }
+
+    @Test
+    void ruleDocsAndDefinitionsAreStaticFinalAndPackagePrivate() {
+        fields().that().haveName("DOC")
+                .should().bePackagePrivate().andShould().beStatic().andShould().beFinal()
+                .andShould().haveRawType(RuleDoc.class)
+                .check(PUBLISHED);
+        fields().that().haveName("DEFINITION")
+                .should().bePackagePrivate().andShould().beStatic().andShould().beFinal()
+                .andShould().haveRawType(ArchRule.class)
+                .check(PUBLISHED);
+    }
+
+    @Test
+    void publishedRuleFieldsArePublicStaticFinalArchTests() {
+        fields().that().haveName("rule")
+                .should().bePublic().andShould().beStatic().andShould().beFinal()
+                .andShould().haveRawType(ArchRule.class)
+                .andShould().beAnnotatedWith(ArchTest.class)
+                .check(PUBLISHED);
     }
 
     @Test
