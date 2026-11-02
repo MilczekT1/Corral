@@ -38,7 +38,7 @@ Check each item. Record a pass or a finding for every one — silence is not cov
    removed (`git diff main...HEAD` on `PublishedCatalogTest` and on every `RuleDoc` id string) —
    retirement goes through `DeprecatedRule.supersededBy(...)`.
 2. **Rule class.** `final`, private constructor, name ends in `Rule`. Static field order is `DOC`,
-   then `DEFINITION`, then the `@ArchTest` field — anything else freezes against `null`. Another
+   then `DEFINITION`, then the `@ArchTest` field — anything else fails class initialisation. Another
    library's type or package is named by a **string**, never a class literal, and the diff adds no
    compile- or runtime-scope dependency to any POM.
 

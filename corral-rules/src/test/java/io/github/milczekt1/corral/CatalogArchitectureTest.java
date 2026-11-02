@@ -1,0 +1,41 @@
+package io.github.milczekt1.corral;
+
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.classes;
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
+
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
+import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
+import org.junit.jupiter.api.Test;
+
+class CatalogArchitectureTest {
+
+    private static final JavaClasses CATALOG = new ClassFileImporter().importPackages("io.github.milczekt1.corral");
+
+    /** Main and test classes alike, so one rule's test borrowing another rule's fixtures fails too. */
+    @Test
+    void rulesDoNotDependOnEachOther() {
+        slices().matching("io.github.milczekt1.corral.rules.(*).(*)..")
+                .should().notDependOnEachOther()
+                .check(CATALOG);
+    }
+
+    @Test
+    void everyRuleTestChecksItsFixtureVerdictsAndCommittedStore() {
+        classes().that().haveSimpleNameEndingWith("RuleTest")
+                .should().callMethod(FixtureVerdicts.class, "assertMatch", Class.class, ArchRule.class, JavaClasses.class)
+                .andShould().callMethod(CommittedStore.class, "freeze", ArchRule.class, String.class, JavaClasses.class)
+                .check(CATALOG);
+    }
+
+    @Test
+    void ruleTestsDeclareNoNestedClasses() {
+        noClasses().that().areNestedClasses()
+                .should().haveNameMatching(".*RuleTest\\$.*")
+                .because("Sonar lints a class nested in a test as a real test; an example belongs in fixtures/")
+                .check(CATALOG);
+    }
+}

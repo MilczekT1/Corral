@@ -76,9 +76,9 @@ public final class NoStdoutRule implements DocumentedRule {
 `guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, freezes
 it, applies exclusions, and interposes `IgnorePatternsGuard`.
 
-**Field order is load-bearing.** `guard()` runs during static init and reads `DOC`/`DEFINITION`;
-static fields initialise in declaration order, so an `@ArchTest` field declared first reads `null`.
-Nothing enforces this.
+**Field order is load-bearing.** `guard()` runs during static init and dereferences `DOC` and
+`DEFINITION`; static fields initialise in declaration order, so an `@ArchTest` field declared above
+either throws `ExceptionInInitializerError` in every test that touches the rule.
 
 Membership is declared once, as `@ArchTest ArchTests` fields on a group. `ArchTests.in(X)` descends
 into exactly those fields, so the field *is* the membership — no second list. Groups nest to any
@@ -89,15 +89,14 @@ A rule may sit in two groups: it then runs once per path and the catalog test re
 rule *object* per id (two objects sharing an id is the real hazard — `RuleRegistry` misses it when
 their docs are identical).
 
-## Four ways to ship a rule that enforces nothing (all green)
+## Three ways to ship a rule that enforces nothing (all green)
 
-1. `@ArchTest` field declared above `DOC`/`DEFINITION` → freezes against `null`.
-2. Testing the predicate through the published (frozen) field instead of raw `DEFINITION` → against a
+1. Testing the predicate through the published (frozen) field instead of raw `DEFINITION` → against a
    store with no entry it seeds every violation as debt and reports zero, forever. Freezing the
    published field against a *committed* store is a different thing and is correct (step 4 below).
-3. A consumer setting `ImportOption.DoNotIncludeTests` → every test-scope rule passes vacuously. Call
+2. A consumer setting `ImportOption.DoNotIncludeTests` → every test-scope rule passes vacuously. Call
    this out in the Javadoc of any rule scoped through `TestScope`.
-4. A typo in a fully-qualified string naming another library's type → indistinguishable from a
+3. A typo in a fully-qualified string naming another library's type → indistinguishable from a
    consumer who does not use that library: the predicate matches nothing. Only a fixture built from
    the real type tells them apart, which is what the test-scope dependency is for.
 
@@ -139,7 +138,8 @@ whichever test touches the rule first.
 
 Every fixture's type Javadoc opens with `MUST FLAG`, `MUST IGNORE` or `SUPPORT`.
 `FixtureVerdicts.assertMatch` checks those against the raw `DEFINITION`'s report and that every
-fixture is imported; `FixtureVerdictsTest` makes every rule test keep a `fixtures/` package and call it.
+fixture is imported. `FixtureVerdictsTest` makes every rule test keep a `fixtures/` package, and
+`CatalogArchitectureTest` makes it call both `assertMatch` and `CommittedStore.freeze`.
 
 `NoJUnit4Rule` is the worked example (per-rule `fixtures/`, committed store).
 
