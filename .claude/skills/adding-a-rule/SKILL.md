@@ -100,11 +100,12 @@ sequences and cross-references them for *this* catalog, it does not restate them
    Seed the store once, then **commit it**:
 
    ```bash
-   ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true
+   ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true \
+       -Darchunit.freeze.store.default.allowStoreUpdate=true
    ```
 
-   Nothing in the build sets `allowStoreCreation`, so a missing store fails loudly rather than
-   re-seeding itself green.
+   `CommittedStore` forbids store updates otherwise, so a missing entry, or a recorded line the
+   predicate stopped matching, fails loudly rather than rewriting the store green.
 
    Before seeding, make each line survive edits to the violating file — see
    [Keep the frozen line stable](#keep-the-frozen-line-stable). Once a consumer has recorded it,

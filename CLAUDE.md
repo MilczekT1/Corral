@@ -123,10 +123,12 @@ replace the real jar (`CONTRIBUTING.md § Version-bound rules`). The contract is
 | Expected id set | `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` |
 | Catalog table | `docs/rules.md` — `RulesCatalogDocTest` checks the id set and the group column |
 
-Seed a store once, then commit it — nothing in the build sets the flag, so a missing store fails loudly:
+Seed a store once, then commit it. `CommittedStore` forbids store updates, so a missing entry, or a
+recorded line the predicate no longer matches, fails loudly instead of rewriting the store:
 
 ```bash
-./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true
+./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true \
+    -Darchunit.freeze.store.default.allowStoreUpdate=true
 ```
 
 Check a rule against the committed store with `CommittedStore.freeze(TheRule.rule, ID, EXAMPLES)`
