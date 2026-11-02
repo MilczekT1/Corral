@@ -9,7 +9,7 @@
 **[ArchUnit](https://www.archunit.org) rules that fail in the test loop your coding agent already
 runs, and tell it how to fix them.**
 
-[![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Maven Central](https://img.shields.io/maven-central/v/io.github.milczekt1/corral-rules)](https://central.sonatype.com/artifact/io.github.milczekt1/corral-rules) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml) [![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/MilczekT1/Corral)
+[![Build](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml/badge.svg?branch=main)](https://github.com/MilczekT1/Corral/actions/workflows/build-java.yml) [![Maven Central](https://img.shields.io/maven-central/v/io.github.milczekt1/corral-rules)](https://central.sonatype.com/artifact/io.github.milczekt1/corral-rules) [![License: MIT](https://img.shields.io/github/license/MilczekT1/Corral)](LICENSE) [![Java 17+](https://img.shields.io/badge/Java-17%2B-blue)](pom.xml) [![Ask DeepWiki](https://img.shields.io/badge/DeepWiki-Ask-blue)](https://deepwiki.com/MilczekT1/Corral)
 
 [**Why Corral**](#why-corral) · [**Evidence**](docs/evidence.md) · [**Quick start**](#quick-start) · [**Rules**](docs/rules.md) · [**Write your own**](docs/creating-a-rule.md) · [**Example consumer**](corral-example)
 
