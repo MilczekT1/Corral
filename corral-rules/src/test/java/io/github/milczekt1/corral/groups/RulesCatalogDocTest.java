@@ -52,13 +52,20 @@ class RulesCatalogDocTest {
                         + " row, or remove the stale one.");
     }
 
+    /** The group named is the one declaring the rule, so a rule in a nested group names that group. */
     @Test
     void catalogTableNamesTheGroupEachRuleShipsIn() throws IOException {
-        Map<String, String> documented = rowsUnder(GROUPED_SECTION);
+        assertGroupColumns(EveryPublishedGroup.class, rowsUnder(GROUPED_SECTION));
+    }
 
-        for (ArchTests member : PublishedRules.archTestsFieldsOf(EveryPublishedGroup.class)) {
-            Class<?> group = member.getDefinitionLocation();
-            for (String id : PublishedRules.idsOf(group)) {
+    private static void assertGroupColumns(Class<?> group, Map<String, String> documented) {
+        for (ArchTests member : PublishedRules.archTestsFieldsOf(group)) {
+            Class<?> location = member.getDefinitionLocation();
+            if (PublishedRules.archRuleFieldsOf(location).isEmpty()) {
+                assertGroupColumns(location, documented);
+                continue;
+            }
+            for (String id : PublishedRules.idsOf(location)) {
                 assertEquals(group.getSimpleName(), documented.get(id),
                         () -> "docs/rules.md lists " + id + " under group '" + documented.get(id)
                                 + "' but it is published from " + group.getSimpleName());
