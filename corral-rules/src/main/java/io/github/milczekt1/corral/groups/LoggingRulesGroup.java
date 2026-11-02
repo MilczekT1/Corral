@@ -2,9 +2,9 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
-import io.github.milczekt1.corral.rules.logging.NoSystemErrRule;
-import io.github.milczekt1.corral.rules.logging.NoSystemOutRule;
 import io.github.milczekt1.corral.rules.logging.noprintstacktrace.NoPrintStackTraceRule;
+import io.github.milczekt1.corral.rules.logging.nosystemerr.NoSystemErrRule;
+import io.github.milczekt1.corral.rules.logging.nosystemout.NoSystemOutRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass

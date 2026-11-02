@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * MUST NOT FLAG. The shapes the predicate lets through, the mutable object behind {@code static final} among them:
+ * MUST IGNORE. The shapes the predicate lets through, the mutable object behind {@code static final} among them:
  * it is ignored here because the rule genuinely does not see it, not because it is safe.
  */
 public class BasketPricing {

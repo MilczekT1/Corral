@@ -123,20 +123,21 @@ replace the real jar (`CONTRIBUTING.md § Version-bound rules`). The contract is
 | Expected id set | `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` |
 | Catalog table | `docs/rules.md` — `RulesCatalogDocTest` checks the id set and the group column |
 
-Seed a store once, then commit it — nothing in the build sets the flag, so a missing store fails loudly:
+Seed a store once, then commit it. `CommittedStore` forbids store updates, so a missing entry, or a
+recorded line the predicate no longer matches, fails loudly instead of rewriting the store:
 
 ```bash
-./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true
+./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true \
+    -Darchunit.freeze.store.default.allowStoreUpdate=true
 ```
 
-Hand the store to a test with `persistIn(new EmptyOmittingViolationStore())`, never by setting
-`freeze.store` in a test body: `FreezingArchRule` captures its store at *construction*, which happens
-during class init at whichever test touches the rule first. Only the store *path* goes on the
-process-wide `ArchConfiguration`, reset in a `finally`.
+Check a rule against the committed store with `CommittedStore.freeze(TheRule.rule, ID, EXAMPLES)`
+(`rules/testsupport`), which returns the recorded debt to assert on. It hands the store over with
+`persistIn(new EmptyOmittingViolationStore())`, never by setting `freeze.store` in a test body:
+`FreezingArchRule` captures its store at *construction*, which happens during class init at
+whichever test touches the rule first.
 
-`NoJUnit4Rule` is the worked example (per-rule `fixtures/`, committed store). `NoThreadSleepRule`
-keeps its examples nested in the test — do not copy that. The three older rules sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package with no committed
-store — copy the newer shape.
+`NoJUnit4Rule` is the worked example (per-rule `fixtures/`, committed store).
 
 ## Failure output
 

@@ -59,7 +59,6 @@ sequences and cross-references them for *this* catalog, it does not restate them
    Surefire, Failsafe and Sonar; nothing excludes a nested class from analysis. Getting this wrong
    costs a dozen findings on the PR, not a build failure, so it surfaces late. Give example methods
    real bodies, and open each with a one-line Javadoc saying `MUST FLAG` or `MUST IGNORE` and why.
-   (`NoThreadSleepRule`'s nested `ThreadSleeper` predates this — do not copy its placement.)
 
    **Both directions is two things, not necessarily two classes.** Where the verdict is about a
    *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
@@ -82,32 +81,31 @@ sequences and cross-references them for *this* catalog, it does not restate them
    and the extra findings fail the build instead of quietly joining the accepted set.
 
    ```java
-   ArchConfiguration.get().setProperty("freeze.store.default.path", "src/test/resources/archunit/frozen");
-   try {
-       ArchRule frozen = assertInstanceOf(FreezingArchRule.class, TheRule.rule, "...")
-               .persistIn(new EmptyOmittingViolationStore());
-       frozen.check(EXAMPLES);
-       // then read stored.rules and the <id> file back off disk and assert on them
-   } finally {
-       ArchConfiguration.get().reset();
+   @Test
+   void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
+       String debt = CommittedStore.freeze(TheRule.rule, ID, EXAMPLES);
+
+       assertTrue(debt.contains("FlaggedExample"), debt);
+       assertFalse(debt.contains("IgnoredExample"), debt);
    }
    ```
 
-   **Hand the store over with `persistIn`; do not name it in `freeze.store`.**
-   `FreezingArchRule` captures its store when the rule object is *constructed*, and the published
-   field is constructed during class initialisation — at whichever test touches the rule first. A
-   `freeze.store` set in a test body therefore races class loading: it passes when the test runs
-   alone and silently gets ArchUnit's stock store in a full module run. Only the store *path* goes
-   on the process-wide `ArchConfiguration`, reset in a `finally`.
+   `CommittedStore` (`rules/testsupport`) checks the published field against the store and asserts
+   the `stored.rules` index files it under the id. It hands the store over with `persistIn`; do not
+   name it in `freeze.store` instead. `FreezingArchRule` captures its store when the rule object is
+   *constructed*, and the published field is constructed during class initialisation — at whichever
+   test touches the rule first. A `freeze.store` set in a test body therefore races class loading:
+   it passes when the test runs alone and silently gets ArchUnit's stock store in a full module run.
 
    Seed the store once, then **commit it**:
 
    ```bash
-   ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true
+   ./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true \
+       -Darchunit.freeze.store.default.allowStoreUpdate=true
    ```
 
-   Nothing in the build sets `allowStoreCreation`, so a missing store fails loudly rather than
-   re-seeding itself green.
+   `CommittedStore` forbids store updates otherwise, so a missing entry, or a recorded line the
+   predicate stopped matching, fails loudly rather than rewriting the store green.
 
    Before seeding, make each line survive edits to the violating file — see
    [Keep the frozen line stable](#keep-the-frozen-line-stable). Once a consumer has recorded it,

@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.rules.logging;
+package io.github.milczekt1.corral.rules.logging.nosystemout;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 

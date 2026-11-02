@@ -2,14 +2,10 @@ package io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.AuditJob;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.Basket;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.CatalogService;
@@ -26,10 +22,9 @@ import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fix
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ShippingService;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ShopApplication;
 import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.SpringContextHolder;
+import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
-import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -43,9 +38,6 @@ import org.junit.jupiter.api.io.TempDir;
 class NoApplicationContextInjectionRuleTest {
 
     private static final String ID = "corral.spring.no-application-context-injection";
-
-    /** Resolved against the JVM working directory, which under Surefire is the module. */
-    private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final List<Class<?>> EXAMPLES = List.of(
             OrderService.class, InvoiceService.class, CatalogService.class, ContextAwareRegistry.class,
@@ -193,36 +185,15 @@ class NoApplicationContextInjectionRuleTest {
         assertNotReported("ContextWiringTest");
     }
 
-    /**
-     * {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a frozen rule captures its store
-     * when constructed, which is class initialisation, so naming one here races class loading. Only
-     * the path goes on the process-wide {@link ArchConfiguration}.
-     *
-     * <p>Reseed with {@code -Darchunit.freeze.store.default.allowStoreCreation=true}, then commit.
-     */
     @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
-        ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
-        try {
-            ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoApplicationContextInjectionRule.rule,
-                    "the published field must be frozen — an unfrozen rule fails on adoption")
-                    .persistIn(new EmptyOmittingViolationStore());
+        String debt = CommittedStore.freeze(NoApplicationContextInjectionRule.rule, ID, examples);
 
-            frozen.check(examples);
-
-            String index = Files.readString(Path.of(STORE_PATH, "stored.rules"));
-            assertTrue(index.contains(ID + "=" + ID),
-                    "the index must file this rule's debt under its id: " + index);
-
-            String debt = Files.readString(Path.of(STORE_PATH, ID));
-            assertTrue(debt.contains(".OrderService.context> has type <"), debt);
-            assertTrue(debt.contains(".InvoiceService.context> has type <"), debt);
-            assertTrue(debt.contains(".CatalogService.beans> has type <"), debt);
-            assertTrue(debt.contains(".ContextAwareRegistry.context> has type <"), debt);
-            assertTrue(debt.contains(".FactoryAwareRegistry.beanFactory> has type <"), debt);
-            assertTrue(debt.contains(".ReportJob.run("), debt);
-        } finally {
-            ArchConfiguration.get().reset();
-        }
+        assertTrue(debt.contains(".OrderService.context> has type <"), debt);
+        assertTrue(debt.contains(".InvoiceService.context> has type <"), debt);
+        assertTrue(debt.contains(".CatalogService.beans> has type <"), debt);
+        assertTrue(debt.contains(".ContextAwareRegistry.context> has type <"), debt);
+        assertTrue(debt.contains(".FactoryAwareRegistry.beanFactory> has type <"), debt);
+        assertTrue(debt.contains(".ReportJob.run("), debt);
     }
 }

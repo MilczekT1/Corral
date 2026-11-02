@@ -1,6 +1,6 @@
-package io.github.milczekt1.corral.fixtures.logging;
+package io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures;
 
-/** Touches System.err only, so it is also the proof that the two rules do not overlap. */
+/** MUST FLAG: {@code print} and {@code println} on System.err. */
 public class StderrCaller {
 
     public void report(Exception failure) {
