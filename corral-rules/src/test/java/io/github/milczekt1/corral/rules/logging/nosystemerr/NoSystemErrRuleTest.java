@@ -30,7 +30,8 @@ class NoSystemErrRuleTest {
     void flagsAnyMethodCalledOnStderr() {
         String report = report();
 
-        assertTrue(report.contains("StderrCaller"), report);
+        assertTrue(report.contains("(StderrCaller.java:7)"), "print: " + report);
+        assertTrue(report.contains("(StderrCaller.java:8)"), "println: " + report);
     }
 
     @Test

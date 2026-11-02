@@ -39,7 +39,8 @@ class NoSystemOutRuleTest {
     void flagsPrintfAndPrint() {
         String report = report();
 
-        assertTrue(report.contains("PrintfCaller.report("), report);
+        assertTrue(report.contains("(PrintfCaller.java:7)"), "printf: " + report);
+        assertTrue(report.contains("(PrintfCaller.java:8)"), "print: " + report);
     }
 
     @Test
