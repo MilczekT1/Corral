@@ -13,6 +13,8 @@ import io.github.milczekt1.corral.rules.logging.nosystemout.fixtures.StderrCalle
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 class NoSystemOutRuleTest {
 
@@ -50,18 +52,12 @@ class NoSystemOutRuleTest {
         assertTrue(report.contains("StaticInitializerPrinter.<clinit>()"), report);
     }
 
-    @Test
-    void ignoresAClassTouchingNeitherStream() {
+    @ParameterizedTest(name = "ignores {0}")
+    @ValueSource(strings = {"SilentComponent", "StderrCaller"})
+    void ignoresClassesThatNeverTouchTheStdoutField(String example) {
         String report = report();
 
-        assertFalse(report.contains("SilentComponent"), report);
-    }
-
-    @Test
-    void ignoresStderrWrites() {
-        String report = report();
-
-        assertFalse(report.contains("StderrCaller"), report);
+        assertFalse(report.contains(example), report);
     }
 
     @Test
