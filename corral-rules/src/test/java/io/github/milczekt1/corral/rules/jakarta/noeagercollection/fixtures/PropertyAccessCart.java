@@ -9,7 +9,10 @@ import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
 import java.util.Set;
 
-/** Property access: the mapping is on the getters, so MUST IGNORE the unannotated fields. */
+/**
+ * MUST FLAG on a getter. Property access: the mapping is on the getters, so MUST IGNORE the unannotated
+ * fields.
+ */
 @Entity
 @Access(AccessType.PROPERTY)
 public class PropertyAccessCart {

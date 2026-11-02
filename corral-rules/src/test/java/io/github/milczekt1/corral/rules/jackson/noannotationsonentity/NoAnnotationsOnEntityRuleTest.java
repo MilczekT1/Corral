@@ -6,10 +6,10 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.PurchaseOrder;
 import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.TestOutputTicket;
-import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.WireName;
+import io.github.milczekt1.corral.rules.jackson.noannotationsonentity.fixtures.production.WireName;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -18,11 +18,6 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * fixture class files are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputTicket} alone is imported from where it compiled.
- */
 class NoAnnotationsOnEntityRuleTest {
 
     private static final String ID = "corral.jackson.no-annotations-on-entity";
@@ -31,8 +26,6 @@ class NoAnnotationsOnEntityRuleTest {
 
     private static final String MEMBER_OF_TYPE = "> has annotation member of type <";
 
-    private static final int FIXTURE_CLASS_FILES = 16;
-
     @TempDir
     static Path outputRoot;
 
@@ -40,13 +33,7 @@ class NoAnnotationsOnEntityRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(PurchaseOrder.class, outputRoot.resolve("examples"),
-                List.of(TestOutputTicket.class));
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputTicket.class));
-
-        assertEquals(FIXTURE_CLASS_FILES, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoAnnotationsOnEntityRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
@@ -196,6 +183,11 @@ class NoAnnotationsOnEntityRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputTicket.secret" + ANNOTATED_WITH)),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoAnnotationsOnEntityRuleTest.class, NoAnnotationsOnEntityRule.DEFINITION, examples);
     }
 
     @Test

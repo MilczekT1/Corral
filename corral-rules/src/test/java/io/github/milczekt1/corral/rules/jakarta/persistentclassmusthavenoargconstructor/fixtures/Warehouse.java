@@ -3,7 +3,7 @@ package io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargcon
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 
-/** MUST IGNORE: not mapped itself; its inner {@link Bay} is the example. */
+/** MUST FLAG its inner {@link Bay}, the example; MUST IGNORE the outer class, which is not mapped. */
 public class Warehouse {
 
     private final String name;

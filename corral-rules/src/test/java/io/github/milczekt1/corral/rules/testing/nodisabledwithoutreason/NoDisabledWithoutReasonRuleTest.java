@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures
 import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ReceiptWriting;
 import io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -102,6 +103,11 @@ class NoDisabledWithoutReasonRuleTest {
 
         String description = NoDisabledWithoutReasonRule.DEFINITION.getDescription();
         assertTrue(description.contains("test classes"), description);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoDisabledWithoutReasonRuleTest.class, NoDisabledWithoutReasonRule.DEFINITION, EXAMPLES);
     }
 
     @Test

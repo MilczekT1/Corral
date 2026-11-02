@@ -6,8 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.fixtures.OrderService;
+import io.github.milczekt1.corral.rules.layering.notestlibrariesinproduction.fixtures.production.OrderService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -20,10 +21,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * fixture class files are copied into Gradle output layouts and imported from there.
- */
 class NoTestLibrariesInProductionRuleTest {
 
     private static final String ID = "corral.layering.no-test-libraries-in-production";
@@ -184,6 +181,11 @@ class NoTestLibrariesInProductionRuleTest {
     }
 
     @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoTestLibrariesInProductionRuleTest.class, NoTestLibrariesInProductionRule.DEFINITION, examples);
+    }
+
+    @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
         String debt = CommittedStore.freeze(NoTestLibrariesInProductionRule.rule, ID, examples);
 
@@ -196,7 +198,7 @@ class NoTestLibrariesInProductionRuleTest {
 
     private static JavaClasses importFromLayout(String layout) throws IOException {
         Path output = ProductionLayout.copyPackageOf(OrderService.class, outputRoot.resolve(layout.replace('/', '-')),
-                layout, List.of());
+                layout);
         return new ClassFileImporter().importPath(output);
     }
 }

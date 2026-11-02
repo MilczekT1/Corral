@@ -6,16 +6,12 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.CallerTrace;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.FailingGatewayStub;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.LeakTracker;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.LedgerImporter;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.OrderService;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.OutageDrillTest;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.PaymentDeclinedException;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.SchemaVersions;
+import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.production.LeakTracker;
+import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.production.OrderService;
+import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.production.PaymentDeclinedException;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -24,21 +20,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link FailingGatewayStub} alone is imported from where it compiled.
- */
 class NoGenericExceptionThrownRuleTest {
 
     private static final String ID = "corral.exception.no-generic-exception-thrown";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderService.class, LedgerImporter.class, SchemaVersions.class, LeakTracker.class,
-            PaymentDeclinedException.class, CallerTrace.class, PaymentService.class, OutageDrillTest.class);
-
-    /** {@link OrderService}'s anonymous {@code RuntimeException}. */
-    private static final int ANONYMOUS_EXAMPLES = 1;
 
     @TempDir
     static Path outputRoot;
@@ -47,12 +31,7 @@ class NoGenericExceptionThrownRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, FailingGatewayStub.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + ANONYMOUS_EXAMPLES + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoGenericExceptionThrownRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
@@ -179,6 +158,11 @@ class NoGenericExceptionThrownRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains("FailingGatewayStub.fetch(")),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoGenericExceptionThrownRuleTest.class, NoGenericExceptionThrownRule.DEFINITION, examples);
     }
 
     @Test

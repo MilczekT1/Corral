@@ -17,6 +17,7 @@ import io.github.milczekt1.corral.rules.java.nolegacydateapi.fixtures.RetryBacko
 import io.github.milczekt1.corral.rules.java.nolegacydateapi.fixtures.ShipmentRowMapper;
 import io.github.milczekt1.corral.rules.java.nolegacydateapi.fixtures.ZoneDefaults;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -118,6 +119,11 @@ class NoLegacyDateApiRuleTest {
     @Test
     void ignoresDateFormatSymbols() {
         assertNotReported("MonthNames");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoLegacyDateApiRuleTest.class, NoLegacyDateApiRule.DEFINITION, EXAMPLES);
     }
 
     @Test

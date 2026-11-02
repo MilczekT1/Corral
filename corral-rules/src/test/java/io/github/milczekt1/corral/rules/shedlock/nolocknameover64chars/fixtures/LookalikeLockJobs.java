@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures
 
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.lookalike.SchedulerLock;
 
+/** MUST IGNORE: a project's own annotation that shares ShedLock's simple name. */
 public class LookalikeLockJobs {
 
     private int runs;

@@ -58,7 +58,20 @@ sequences and cross-references them for *this* catalog, it does not restate them
    that test and flags the deliberate violation under test. `**/fixtures/**` is excluded from
    Surefire, Failsafe and Sonar; nothing excludes a nested class from analysis. Getting this wrong
    costs a dozen findings on the PR, not a build failure, so it surfaces late. Give example methods
-   real bodies, and open each with a one-line Javadoc saying `MUST FLAG` or `MUST IGNORE` and why.
+   real bodies.
+
+   **Open every fixture's type Javadoc with its verdict and why:** `MUST FLAG`, `MUST IGNORE`, or
+   `SUPPORT` for a type that is not an example (a collaborator, a composed annotation). A class with
+   any flagged member opens with `MUST FLAG`. Add a test calling
+   `FixtureVerdicts.assertMatch(TheRuleTest.class, TheRule.DEFINITION, EXAMPLES)`: it fails a
+   `MUST FLAG` fixture that is not reported, a `MUST IGNORE` one that is, and either one that
+   `EXAMPLES` never imports. `FixtureVerdictsTest` fails a fixture with no verdict and a rule test
+   that skips the call.
+
+   **A production-scoped rule needs its examples in production output**, but every fixture compiles
+   into test output. Put those examples in `fixtures/production/`, keep the ones that must stay in
+   test output in `fixtures/`, and import both with
+   `ProductionLayout.importFixtures(TheRuleTest.class, outputRoot)`.
 
    **Both directions is two things, not necessarily two classes.** Where the verdict is about a
    *call*, one example carries both — `NoThreadSleepRule`'s `ThreadSleeper` sleeps *and* calls
@@ -221,12 +234,10 @@ defect in the last rule added here — none was caught by the build.
 |---|---|
 | Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
 | Rule test | `corral-rules/src/test/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>RuleTest.java` |
-| Examples | `.../<topic>/<rule>/fixtures/`, always — never nested in the test |
+| Examples | `.../<topic>/<rule>/fixtures/`, always — never nested in the test; `fixtures/production/` for those a production-scoped rule imports from production output |
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` (plus its `stored.rules` line) |
 | Group wiring | `corral-rules/src/main/java/io/github/milczekt1/corral/groups/<Topic>RulesGroup.java` |
 | Discovery test | `corral-rules/src/test/java/io/github/milczekt1/corral/groups/PublishedCatalogTest.java` |
 | Rules table | `docs/rules.md` |
 
-`NoJUnit4Rule` is the worked example. The three rules that predate this layout still sit flat
-under `rules/<topic>/`, with their examples in a shared `fixtures/<topic>/` package and no committed
-store at all — copy the per-rule shape, not theirs.
+`NoJUnit4Rule` is the worked example; `NoTransactionalInControllerRule` is the production-scoped one.

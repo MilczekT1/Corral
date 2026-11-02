@@ -7,6 +7,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -83,6 +84,11 @@ class TestClassNamingConventionRuleTest {
     void pinsTheJunit5RootAnnotations() {
         // Roots only: @ParameterizedTest and @RepeatedTest are reached through @TestTemplate.
         assertEquals(EXPECTED_JUNIT_ROOTS, TestClassNamingConventionRule.JUNIT_TEST_ANNOTATIONS);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(TestClassNamingConventionRuleTest.class, TestClassNamingConventionRule.DEFINITION, EXAMPLES);
     }
 
     @Test

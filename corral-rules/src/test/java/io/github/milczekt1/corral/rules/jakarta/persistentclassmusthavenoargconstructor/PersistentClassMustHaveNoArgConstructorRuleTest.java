@@ -31,6 +31,7 @@ import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargcons
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Warehouse;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Weight;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import jakarta.persistence.Entity;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -233,6 +234,11 @@ class PersistentClassMustHaveNoArgConstructorRuleTest {
                         .anyMatch(constructor -> constructor.getModifiers().contains(JavaModifier.SYNTHETIC)),
                 "the generated no-arg constructor must be imported as synthetic, or this test proves nothing");
         assertEquals(List.of(), violations(generated));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(PersistentClassMustHaveNoArgConstructorRuleTest.class, PersistentClassMustHaveNoArgConstructorRule.DEFINITION, EXAMPLES);
     }
 
     @Test

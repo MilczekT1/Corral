@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures
 
 import net.javacrumbs.shedlock.core.SchedulerLock;
 
+/** MUST FLAG: ShedLock 4.x's core annotation. */
 public class LegacyInvoiceJobs {
 
     private int runs;

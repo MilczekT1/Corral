@@ -2,7 +2,10 @@ package io.github.milczekt1.corral.rules.spring.notransactionalonfinalorstatic.f
 
 import org.springframework.transaction.annotation.Transactional;
 
-/** A transactional superclass: its annotation reaches every subclass's instance methods. */
+/**
+ * MUST IGNORE: a transactional superclass with no methods of its own; its annotation reaches every
+ * subclass's instance methods.
+ */
 @Transactional
 public abstract class CarrierBase {
 

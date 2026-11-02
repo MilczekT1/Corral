@@ -15,6 +15,7 @@ import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.OverdueRemindersLock;
 import io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures.SpringInvoiceJobs;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
@@ -175,6 +176,11 @@ class NoLockNameOver64CharsRuleTest {
         assertTrue(violations().contains("Class <" + OverdueRemindersLock.class.getName()
                         + "> has a @SchedulerLock name longer than 64 characters in (OverdueRemindersLock.java:0)"),
                 String.join("\n", violations()));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoLockNameOver64CharsRuleTest.class, NoLockNameOver64CharsRule.DEFINITION, EXAMPLES);
     }
 
     @Test

@@ -13,6 +13,7 @@ import io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.LeakyCo
 import io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.PublicFinalizer;
 import io.github.milczekt1.corral.rules.java.nofinalizeoverride.fixtures.SafeConnection;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -85,6 +86,11 @@ class NoFinalizeOverrideRuleTest {
     @Test
     void ignoresACleanerBackstop() {
         assertNotReported("CleanerBackedBuffer");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoFinalizeOverrideRuleTest.class, NoFinalizeOverrideRule.DEFINITION, EXAMPLES);
     }
 
     @Test

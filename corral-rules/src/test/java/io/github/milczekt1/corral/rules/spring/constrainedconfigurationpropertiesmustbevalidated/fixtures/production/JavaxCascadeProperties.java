@@ -1,0 +1,11 @@
+package io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production;
+
+import javax.validation.Valid;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+
+/** MUST FLAG: {@code javax} {@code @Valid} alone counts as a constraint. */
+@ConfigurationProperties("legacy-search")
+public class JavaxCascadeProperties {
+    @Valid
+    private SearchIndex index = new SearchIndex();
+}

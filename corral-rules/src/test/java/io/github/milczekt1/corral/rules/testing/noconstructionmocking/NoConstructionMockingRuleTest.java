@@ -14,6 +14,7 @@ import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.C
 import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.PlainMockitoUser;
 import io.github.milczekt1.corral.rules.testing.noconstructionmocking.fixtures.WithAnswerHandoffCaller;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.stream.Stream;
@@ -88,6 +89,11 @@ class NoConstructionMockingRuleTest {
 
         String description = NoConstructionMockingRule.DEFINITION.getDescription();
         assertTrue(description.contains("test classes"), description);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoConstructionMockingRuleTest.class, NoConstructionMockingRule.DEFINITION, EXAMPLES);
     }
 
     @Test

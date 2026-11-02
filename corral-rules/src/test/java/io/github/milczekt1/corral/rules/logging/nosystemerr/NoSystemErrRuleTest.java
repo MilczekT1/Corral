@@ -10,6 +10,7 @@ import io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures.SilentCompo
 import io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures.StderrCaller;
 import io.github.milczekt1.corral.rules.logging.nosystemerr.fixtures.StdoutCaller;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -42,6 +43,11 @@ class NoSystemErrRuleTest {
         String report = report();
 
         assertFalse(report.contains(example), report);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoSystemErrRuleTest.class, NoSystemErrRule.DEFINITION, EXAMPLES);
     }
 
     @Test

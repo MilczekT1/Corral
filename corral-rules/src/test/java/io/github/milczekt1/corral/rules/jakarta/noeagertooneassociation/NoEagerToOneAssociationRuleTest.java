@@ -11,6 +11,7 @@ import io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures
 import io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.PurchaseOrder;
 import io.github.milczekt1.corral.rules.jakarta.noeagertooneassociation.fixtures.Subscription;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import java.util.List;
 import org.junit.jupiter.api.Test;
@@ -164,6 +165,11 @@ class NoEagerToOneAssociationRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoEagerToOneAssociationRuleTest.class, NoEagerToOneAssociationRule.DEFINITION, EXAMPLES);
     }
 
     @Test

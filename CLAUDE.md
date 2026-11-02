@@ -117,7 +117,7 @@ replace the real jar (`CONTRIBUTING.md § Version-bound rules`). The contract is
 |---|---|
 | Rule class | `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` |
 | Test | same package under `src/test/java/...` (`DEFINITION` is package-private) |
-| Examples | always a per-rule `fixtures/` sub-package, never nested in the test — Sonar lints nested ones as real tests |
+| Examples | always a per-rule `fixtures/` sub-package, never nested in the test — Sonar lints nested ones as real tests. A production-scoped rule's examples go in `fixtures/production/`, imported with `ProductionLayout.importFixtures` |
 | Committed freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>` + its `stored.rules` line |
 | Group wiring | `.../groups/<Topic>RulesGroup.java`, plus a field on `EveryPublishedGroup` |
 | Expected id set | `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` |
@@ -136,6 +136,10 @@ Check a rule against the committed store with `CommittedStore.freeze(TheRule.rul
 `persistIn(new EmptyOmittingViolationStore())`, never by setting `freeze.store` in a test body:
 `FreezingArchRule` captures its store at *construction*, which happens during class init at
 whichever test touches the rule first.
+
+Every fixture's type Javadoc opens with `MUST FLAG`, `MUST IGNORE` or `SUPPORT`.
+`FixtureVerdicts.assertMatch` checks those against the raw `DEFINITION`'s report and that every
+fixture is imported; `FixtureVerdictsTest` makes every rule test keep a `fixtures/` package and call it.
 
 `NoJUnit4Rule` is the worked example (per-rule `fixtures/`, committed store).
 

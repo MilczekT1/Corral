@@ -3,6 +3,7 @@ package io.github.milczekt1.corral.rules.shedlock.nolocknameover64chars.fixtures
 import net.javacrumbs.shedlock.spring.annotation.SchedulerLock;
 import org.springframework.scheduling.annotation.Scheduled;
 
+/** MUST FLAG: ShedLock's Spring annotation. */
 public class SpringInvoiceJobs {
 
     private static final String DUNNING_LOCK = "com.acme.billing.invoicing.InvoiceReminderJobs.closeStaleDunningRuns";

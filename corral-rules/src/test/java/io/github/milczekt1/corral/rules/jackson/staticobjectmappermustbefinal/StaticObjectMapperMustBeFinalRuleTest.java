@@ -6,9 +6,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.JsonUtils;
 import io.github.milczekt1.corral.rules.jackson.staticobjectmappermustbefinal.fixtures.TestOutputJson;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -17,18 +17,11 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * fixture class files are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputJson} alone is imported from where it compiled.
- */
 class StaticObjectMapperMustBeFinalRuleTest {
 
     private static final String ID = "corral.jackson.static-object-mapper-must-be-final";
 
     private static final String NOT_FINAL = "> does not have modifier FINAL in (";
-
-    private static final int FIXTURE_CLASS_FILES = 8;
 
     @TempDir
     static Path outputRoot;
@@ -37,13 +30,7 @@ class StaticObjectMapperMustBeFinalRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(JsonUtils.class, outputRoot.resolve("examples"),
-                List.of(TestOutputJson.class));
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputJson.class));
-
-        assertEquals(FIXTURE_CLASS_FILES, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(StaticObjectMapperMustBeFinalRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
@@ -150,6 +137,11 @@ class StaticObjectMapperMustBeFinalRuleTest {
 
         assertTrue(violations.stream().anyMatch(line -> line.contains(".TestOutputJson.overrideMapper" + NOT_FINAL)),
                 String.join("\n", violations));
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(StaticObjectMapperMustBeFinalRuleTest.class, StaticObjectMapperMustBeFinalRule.DEFINITION, examples);
     }
 
     @Test

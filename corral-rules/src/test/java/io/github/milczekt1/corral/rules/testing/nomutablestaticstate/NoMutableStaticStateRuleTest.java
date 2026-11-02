@@ -13,6 +13,7 @@ import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.fixtures.Or
 import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.fixtures.PriceCapturing;
 import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.fixtures.TemporaryDirectoryHolder;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.Locale;
@@ -85,6 +86,11 @@ class NoMutableStaticStateRuleTest {
 
         assertFalse(report().contains("Locale"),
                 "this rule is scoped to test classes, and Locale is not one: " + report());
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoMutableStaticStateRuleTest.class, NoMutableStaticStateRule.DEFINITION, EXAMPLES);
     }
 
     @Test

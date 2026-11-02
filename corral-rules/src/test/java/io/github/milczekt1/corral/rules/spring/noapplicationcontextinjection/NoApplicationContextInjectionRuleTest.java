@@ -5,24 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
-import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.AuditJob;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.Basket;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.CatalogService;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ContextAwareRegistry;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ContextWiringTest;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.FactoryAwareRegistry;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.HolderClient;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.InvoiceService;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.LookupSupport;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.OrderService;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.PricingStrategy;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ReportJob;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ShippingService;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.ShopApplication;
-import io.github.milczekt1.corral.rules.spring.noapplicationcontextinjection.fixtures.SpringContextHolder;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -31,19 +15,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there.
- */
 class NoApplicationContextInjectionRuleTest {
 
     private static final String ID = "corral.spring.no-application-context-injection";
-
-    private static final List<Class<?>> EXAMPLES = List.of(
-            OrderService.class, InvoiceService.class, CatalogService.class, ContextAwareRegistry.class,
-            FactoryAwareRegistry.class, SpringContextHolder.class, HolderClient.class, LookupSupport.class,
-            ReportJob.class, AuditJob.class, PaymentService.class, ShippingService.class,
-            ShopApplication.class, ContextWiringTest.class, PricingStrategy.class, Basket.class);
 
     @TempDir
     static Path outputRoot;
@@ -52,10 +26,7 @@ class NoApplicationContextInjectionRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        examples = new ClassFileImporter().importPath(ProductionLayout.copy(outputRoot, EXAMPLES));
-
-        assertEquals(EXAMPLES.size(), examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoApplicationContextInjectionRuleTest.class, outputRoot);
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
@@ -183,6 +154,11 @@ class NoApplicationContextInjectionRuleTest {
     @Test
     void ignoresATestClassAutowiringTheContext() {
         assertNotReported("ContextWiringTest");
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoApplicationContextInjectionRuleTest.class, NoApplicationContextInjectionRule.DEFINITION, examples);
     }
 
     @Test

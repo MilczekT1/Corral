@@ -12,6 +12,7 @@ import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.Javax
 import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.ViolationRethrower;
 import io.github.milczekt1.corral.rules.jakarta.nojavaxvalidation.fixtures.ViolationSwallower;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
+import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import java.io.IOException;
 import org.junit.jupiter.api.Test;
 
@@ -78,6 +79,11 @@ class NoJavaxValidationRuleTest {
         String report = report();
 
         assertFalse(report.contains("HandCheckedRefund"), report);
+    }
+
+    @Test
+    void everyFixtureMatchesItsVerdict() {
+        FixtureVerdicts.assertMatch(NoJavaxValidationRuleTest.class, NoJavaxValidationRule.DEFINITION, EXAMPLES);
     }
 
     @Test
