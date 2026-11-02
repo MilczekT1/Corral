@@ -2,16 +2,12 @@ package io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargcon
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.JavaModifier;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.AbstractAccount;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.BaseEntity;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Coupon;
@@ -34,10 +30,9 @@ import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargcons
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Ticket;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Warehouse;
 import io.github.milczekt1.corral.rules.jakarta.persistentclassmusthavenoargconstructor.fixtures.Weight;
-import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
+import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import jakarta.persistence.Entity;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import net.bytebuddy.ByteBuddy;
@@ -52,9 +47,6 @@ import org.junit.jupiter.api.io.TempDir;
 class PersistentClassMustHaveNoArgConstructorRuleTest {
 
     private static final String ID = "corral.jakarta.persistent-class-must-have-no-arg-constructor";
-
-    /** Resolved against the JVM working directory, which under Surefire is the module. */
-    private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter().importPackagesOf(Invoice.class);
 
@@ -243,34 +235,12 @@ class PersistentClassMustHaveNoArgConstructorRuleTest {
         assertEquals(List.of(), violations(generated));
     }
 
-    /**
-     * {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a frozen rule captures its store
-     * when constructed, which is class initialisation, so naming one here races class loading. Only
-     * the path goes on the process-wide {@link ArchConfiguration}.
-     *
-     * <p>Reseed with {@code -Darchunit.freeze.store.default.allowStoreCreation=true}, then commit.
-     */
     @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
-        ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
-        try {
-            ArchRule frozen = assertInstanceOf(FreezingArchRule.class,
-                    PersistentClassMustHaveNoArgConstructorRule.rule,
-                    "the published field must be frozen — an unfrozen rule fails on adoption")
-                    .persistIn(new EmptyOmittingViolationStore());
+        String debt = CommittedStore.freeze(PersistentClassMustHaveNoArgConstructorRule.rule, ID, EXAMPLES);
 
-            frozen.check(EXAMPLES);
-
-            String index = Files.readString(Path.of(STORE_PATH, "stored.rules"));
-            assertTrue(index.contains(ID + "=" + ID),
-                    "the index must file this rule's debt under its id: " + index);
-
-            String debt = Files.readString(Path.of(STORE_PATH, ID));
-            assertTrue(debt.contains("<" + Invoice.class.getName() + ">"), debt);
-            assertTrue(debt.contains("<" + Money.class.getName() + ">"), debt);
-            assertTrue(debt.contains("<" + LegacyAddress.class.getName() + ">"), debt);
-        } finally {
-            ArchConfiguration.get().reset();
-        }
+        assertTrue(debt.contains("<" + Invoice.class.getName() + ">"), debt);
+        assertTrue(debt.contains("<" + Money.class.getName() + ">"), debt);
+        assertTrue(debt.contains("<" + LegacyAddress.class.getName() + ">"), debt);
     }
 }

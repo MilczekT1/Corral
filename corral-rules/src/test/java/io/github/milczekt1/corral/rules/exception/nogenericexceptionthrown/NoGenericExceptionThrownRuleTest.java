@@ -2,14 +2,10 @@ package io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.CallerTrace;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.FailingGatewayStub;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.LeakTracker;
@@ -19,10 +15,9 @@ import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtu
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.PaymentDeclinedException;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.PaymentService;
 import io.github.milczekt1.corral.rules.exception.nogenericexceptionthrown.fixtures.SchemaVersions;
+import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
-import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -37,9 +32,6 @@ import org.junit.jupiter.api.io.TempDir;
 class NoGenericExceptionThrownRuleTest {
 
     private static final String ID = "corral.exception.no-generic-exception-thrown";
-
-    /** Resolved against the JVM working directory, which under Surefire is the module. */
-    private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             OrderService.class, LedgerImporter.class, SchemaVersions.class, LeakTracker.class,
@@ -189,38 +181,17 @@ class NoGenericExceptionThrownRuleTest {
                 String.join("\n", violations));
     }
 
-    /**
-     * {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a frozen rule captures its store
-     * when constructed, which is class initialisation, so naming one here races class loading. Only
-     * the path goes on the process-wide {@link ArchConfiguration}.
-     *
-     * <p>Reseed with {@code -Darchunit.freeze.store.default.allowStoreCreation=true}, then commit.
-     */
     @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
-        ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
-        try {
-            ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoGenericExceptionThrownRule.rule,
-                    "the published field must be frozen — an unfrozen rule fails on adoption")
-                    .persistIn(new EmptyOmittingViolationStore());
+        String debt = CommittedStore.freeze(NoGenericExceptionThrownRule.rule, ID, examples);
 
-            frozen.check(examples);
-
-            String index = Files.readString(Path.of(STORE_PATH, "stored.rules"));
-            assertTrue(index.contains(ID + "=" + ID),
-                    "the index must file this rule's debt under its id: " + index);
-
-            String debt = Files.readString(Path.of(STORE_PATH, ID));
-            assertTrue(debt.contains("OrderService.byId("), debt);
-            assertTrue(debt.contains("OrderService.firstLine("), debt);
-            assertTrue(debt.contains("OrderService$1.<init>("), debt);
-            assertTrue(debt.contains("LedgerImporter.importFile("), debt);
-            assertTrue(debt.contains("SchemaVersions.migrate("), debt);
-            assertTrue(debt.contains("LeakTracker.<init>()> calls"), debt);
-            assertTrue(debt.contains("PaymentDeclinedException.wrapping("), debt);
-            assertTrue(debt.contains("PaymentDeclinedException.<init>(java.util.Optional)> references"), debt);
-        } finally {
-            ArchConfiguration.get().reset();
-        }
+        assertTrue(debt.contains("OrderService.byId("), debt);
+        assertTrue(debt.contains("OrderService.firstLine("), debt);
+        assertTrue(debt.contains("OrderService$1.<init>("), debt);
+        assertTrue(debt.contains("LedgerImporter.importFile("), debt);
+        assertTrue(debt.contains("SchemaVersions.migrate("), debt);
+        assertTrue(debt.contains("LeakTracker.<init>()> calls"), debt);
+        assertTrue(debt.contains("PaymentDeclinedException.wrapping("), debt);
+        assertTrue(debt.contains("PaymentDeclinedException.<init>(java.util.Optional)> references"), debt);
     }
 }

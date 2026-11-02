@@ -2,14 +2,10 @@ package io.github.milczekt1.corral.rules.spring.nosetterinjection;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import com.tngtech.archunit.lang.ArchRule;
-import com.tngtech.archunit.library.freeze.FreezingArchRule;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.InvoiceService;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.LegacyAuditService;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.LegacyBillingService;
@@ -20,10 +16,9 @@ import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.Report
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.RepositoryConfiguration;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.ShippingService;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.TestOutputWiredHelper;
+import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
-import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.junit.jupiter.api.BeforeAll;
@@ -41,9 +36,6 @@ import org.junit.jupiter.api.io.TempDir;
 class NoSetterInjectionRuleTest {
 
     private static final String ID = "corral.spring.no-setter-injection";
-
-    /** Resolved against the JVM working directory, which under Surefire is the module. */
-    private static final String STORE_PATH = "src/test/resources/archunit/frozen";
 
     private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
             OrderService.class, InvoiceService.class, ShippingService.class,
@@ -156,36 +148,15 @@ class NoSetterInjectionRuleTest {
                 String.join("\n", violations));
     }
 
-    /**
-     * {@link FreezingArchRule#persistIn}, not {@code freeze.store}: a frozen rule captures its store
-     * when constructed, which is class initialisation, so naming one here races class loading. Only
-     * the path goes on the process-wide {@link ArchConfiguration}.
-     *
-     * <p>Reseed with {@code -Darchunit.freeze.store.default.allowStoreCreation=true}, then commit.
-     */
     @Test
     void freezesWhatItFindsIntoTheCommittedStore() throws IOException {
-        ArchConfiguration.get().setProperty("freeze.store.default.path", STORE_PATH);
-        try {
-            ArchRule frozen = assertInstanceOf(FreezingArchRule.class, NoSetterInjectionRule.rule,
-                    "the published field must be frozen — an unfrozen rule fails on adoption")
-                    .persistIn(new EmptyOmittingViolationStore());
+        String debt = CommittedStore.freeze(NoSetterInjectionRule.rule, ID, examples);
 
-            frozen.check(examples);
-
-            String index = Files.readString(Path.of(STORE_PATH, "stored.rules"));
-            assertTrue(index.contains(ID + "=" + ID),
-                    "the index must file this rule's debt under its id: " + index);
-
-            String debt = Files.readString(Path.of(STORE_PATH, ID));
-            assertTrue(debt.contains("OrderService.setRepository"), debt);
-            assertTrue(debt.contains("InvoiceService.setRepository"), debt);
-            assertTrue(debt.contains("ShippingService.setRepository"), debt);
-            assertTrue(debt.contains("LegacyAuditService.setRepository"), debt);
-            assertTrue(debt.contains("LegacyBillingService.setRepository"), debt);
-            assertTrue(debt.contains("ReportScheduler.wire"), debt);
-        } finally {
-            ArchConfiguration.get().reset();
-        }
+        assertTrue(debt.contains("OrderService.setRepository"), debt);
+        assertTrue(debt.contains("InvoiceService.setRepository"), debt);
+        assertTrue(debt.contains("ShippingService.setRepository"), debt);
+        assertTrue(debt.contains("LegacyAuditService.setRepository"), debt);
+        assertTrue(debt.contains("LegacyBillingService.setRepository"), debt);
+        assertTrue(debt.contains("ReportScheduler.wire"), debt);
     }
 }
