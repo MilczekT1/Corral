@@ -2,7 +2,6 @@ package io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertInstanceOf;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.params.provider.Arguments.arguments;
 
@@ -17,12 +16,13 @@ import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtu
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.RepeatedSpyBeanCase;
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.ResetPolicyHelper;
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.fixtures.SpyBeanFieldHolder;
+import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import io.github.milczekt1.corral.scope.TestScope;
 import io.github.milczekt1.corral.store.EmptyOmittingViolationStore;
 import java.io.IOException;
-import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
 import java.util.stream.Stream;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
@@ -36,9 +36,6 @@ class NoLegacyMockBeanAndSpyBeanRuleTest {
 
     /** Resolved against the JVM working directory, which under Surefire is the module. */
     private static final String STORE_PATH = "src/test/resources/archunit/frozen";
-
-    /** Matched by none of {@code TestScope}'s test-output patterns. */
-    private static final String PRODUCTION_LAYOUT = "build/classes/java/main";
 
     private static final JavaClasses EXAMPLES = new ClassFileImporter().importClasses(
             MockBeanFieldHolder.class, SpyBeanFieldHolder.class, ClassLevelMockBeanCase.class,
@@ -89,7 +86,7 @@ class NoLegacyMockBeanAndSpyBeanRuleTest {
     @Test
     void flagsAClassInProductionOutputToo() throws IOException {
         JavaClasses moved = new ClassFileImporter().importPath(
-                copyIntoProductionLayout(MockBeanFieldHolder.class));
+                ProductionLayout.copy(outputRoot, List.of(MockBeanFieldHolder.class)));
 
         assertFalse(TestScope.TEST_CLASSES.test(moved.get(MockBeanFieldHolder.class)),
                 "premise: outside test output and declaring no test, the class is production-scoped");
@@ -127,16 +124,5 @@ class NoLegacyMockBeanAndSpyBeanRuleTest {
         } finally {
             ArchConfiguration.get().reset();
         }
-    }
-
-    private Path copyIntoProductionLayout(Class<?> type) throws IOException {
-        Path output = outputRoot.resolve(PRODUCTION_LAYOUT);
-        Path destination = output.resolve(type.getName().replace('.', '/') + ".class");
-        Files.createDirectories(destination.getParent());
-        try (InputStream compiled = type.getResourceAsStream(type.getSimpleName() + ".class")) {
-            assertNotNull(compiled, () -> "no compiled class file on the classpath for " + type.getName());
-            Files.copy(compiled, destination);
-        }
-        return output;
     }
 }
