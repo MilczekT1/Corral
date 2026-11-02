@@ -65,8 +65,8 @@ sequences and cross-references them for *this* catalog, it does not restate them
    any flagged member opens with `MUST FLAG`. Add a test calling
    `FixtureVerdicts.assertMatch(TheRuleTest.class, TheRule.DEFINITION, EXAMPLES)`: it fails a
    `MUST FLAG` fixture that is not reported, a `MUST IGNORE` one that is, and either one that
-   `EXAMPLES` never imports. `FixtureVerdictsTest` fails a fixture with no verdict and a rule test
-   that skips the call.
+   `EXAMPLES` never imports. `FixtureVerdictsTest` fails a fixture with no verdict, and
+   `CatalogArchitectureTest` fails a rule test that skips the call.
 
    **A production-scoped rule needs its examples in production output**, but every fixture compiles
    into test output. Put those examples in `fixtures/production/`, keep the ones that must stay in

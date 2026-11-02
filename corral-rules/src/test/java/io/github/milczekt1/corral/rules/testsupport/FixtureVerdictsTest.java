@@ -36,12 +36,6 @@ class FixtureVerdictsTest {
                 "a rule test's examples go in a fixtures package beside it, never nested in the test");
     }
 
-    @Test
-    void everyRuleTestChecksItsFixtureVerdicts() throws IOException {
-        assertEquals(List.of(), ruleTests().stream().filter(source -> !callsAssertMatch(source)).toList(),
-                "a rule test must call FixtureVerdicts.assertMatch");
-    }
-
     private static List<Path> ruleTests() throws IOException {
         List<Path> ruleTests = sourcesUnder(RULE_TESTS).stream()
                 .filter(source -> source.getFileName().toString().endsWith("RuleTest.java"))
@@ -71,14 +65,6 @@ class FixtureVerdictsTest {
                 """);
 
         assertEquals(Optional.empty(), FixtureVerdicts.verdictOf(source));
-    }
-
-    private static boolean callsAssertMatch(Path source) {
-        try {
-            return Files.readString(source).contains("FixtureVerdicts.assertMatch(");
-        } catch (IOException e) {
-            throw new IllegalStateException(e);
-        }
     }
 
     private static List<Path> sourcesUnder(Path directory) throws IOException {

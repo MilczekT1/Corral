@@ -139,7 +139,8 @@ whichever test touches the rule first.
 
 Every fixture's type Javadoc opens with `MUST FLAG`, `MUST IGNORE` or `SUPPORT`.
 `FixtureVerdicts.assertMatch` checks those against the raw `DEFINITION`'s report and that every
-fixture is imported; `FixtureVerdictsTest` makes every rule test keep a `fixtures/` package and call it.
+fixture is imported. `FixtureVerdictsTest` makes every rule test keep a `fixtures/` package, and
+`CatalogArchitectureTest` makes it call both `assertMatch` and `CommittedStore.freeze`.
 
 `NoJUnit4Rule` is the worked example (per-rule `fixtures/`, committed store).
 
