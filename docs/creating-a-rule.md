@@ -153,9 +153,8 @@ plain code and annotated code alike, never a `static` nested class in the test. 
 reads a nested class in a test file as a test of that file, so it flags the deliberate violation
 under test and asks you to delete it. Corral excludes `**/fixtures/**` from Surefire, from Failsafe
 and from Sonar (`sonar.test.exclusions`); nothing excludes a nested class from analysis.
-`NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are that shape; `NoThreadSleepRule`'s nested
-`ThreadSleeper` predates it. Give example methods real bodies; an empty method is a smell wherever
-it sits.
+`NoJUnit4Rule` and `NoDisabledWithoutReasonRule` are that shape. Give example methods real bodies;
+an empty method is a smell wherever it sits.
 
 Never name a top-level example `*IT` outside `fixtures` — Failsafe *includes*
 `**/*IT.java`, so it runs as a real integration test.
@@ -247,9 +246,9 @@ Contributing a rule *here* adds these project-specific steps:
 
 | | |
 |---|---|
-| One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test, plus a `fixtures/` sub-package when the examples are annotation-shaped — so everything about a rule is one directory name. `NoThreadSleepRule` and `NoJUnit4Rule` are the worked examples; the three older rules still sit flat under `rules/<topic>/` sharing one `fixtures/<topic>/` package, with no committed store, and move as they are next touched |
+| One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test, plus a `fixtures/` sub-package when the examples are annotation-shaped — so everything about a rule is one directory name. `NoThreadSleepRule` and `NoJUnit4Rule` are the worked examples |
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
-| Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true`, then commit. Nothing in the build sets that flag, so a missing store fails loudly |
+| Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`, checked through `testsupport.CommittedStore.freeze`, which returns the recorded debt to assert on. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true`, then commit. Nothing in the build sets that flag, so a missing store fails loudly |
 | Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | Grouped rules only — it asserts `EveryPublishedGroup`'s ids exactly, so an id change shows as a diff in review, and a standalone id listed there can never be yielded |
 | Add a row to the [rules catalog](rules.md) | `RulesCatalogDocTest` checks the id set and the second column — the group, or the wiring line for a rule that ships outside one. The prose column is not checked |
 | List it on a root in test sources | `EveryPublishedGroup` for a grouped rule, `EveryStandaloneRule` for one that ships without a group. That root is what the grammar, doc and id-uniqueness tests walk |

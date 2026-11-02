@@ -82,8 +82,8 @@ Check each item. Record a pass or a finding for every one — silence is not cov
    `MUST IGNORE` and why. Example methods have real bodies.
 5. **Committed store.** `corral-rules/src/test/resources/archunit/frozen/<id>` exists, its
    `stored.rules` line exists. Every recorded line traces to a `MUST FLAG` member (one member may
-   produce several lines), and no `MUST IGNORE` class or member appears. The test hands the store over with `persistIn(...)`, sets only the
-   store *path* on `ArchConfiguration`, and resets it in a `finally`.
+   produce several lines), and no `MUST IGNORE` class or member appears. The test checks the store through `CommittedStore.freeze`, not a
+   hand-rolled `ArchConfiguration` / `persistIn` block.
 6. **Wiring.** Either an `@ArchTest ArchTests` field on a `groups/*RulesGroup` (plus that group
    reachable from `EveryPublishedGroup` and the id in
    `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups`), or standalone: listed on
