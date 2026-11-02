@@ -15,7 +15,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -47,7 +46,8 @@ public class FixtureVerdicts {
     public static final Path TEST_SOURCES = Path.of("src/test/java");
 
     private static final Pattern TYPE_DECLARATION = Pattern.compile(
-            "^(?:public |protected |abstract |final |sealed |non-sealed |static |strictfp )*"
+            "^(?:@[\\w.]+(?:\\([^)\\n]*\\))?\\s+)*"
+                    + "(?:public |protected |abstract |final |sealed |non-sealed |static |strictfp )*"
                     + "(?:class|interface|enum|record|@interface) ",
             Pattern.MULTILINE);
     private static final Pattern JAVADOC = Pattern.compile("/\\*\\*(.*?)\\*/", Pattern.DOTALL);
@@ -64,8 +64,10 @@ public class FixtureVerdicts {
         assertFalse(verdicts.isEmpty(), () -> "no fixtures found for " + ruleTest.getName());
 
         List<String> violations = definition.allowEmptyShould(true).evaluate(examples).getFailureReport().getDetails();
+        Map<String, Pattern> mentions = verdicts.keySet().stream()
+                .collect(Collectors.toMap(fixture -> fixture, FixtureVerdicts::mentionOf));
         Map<String, List<String>> reported = violations.stream()
-                .flatMap(violation -> reportedFixture(violation, verdicts.keySet())
+                .flatMap(violation -> reportedFixture(violation, mentions)
                         .map(fixture -> Map.entry(fixture, violation)).stream())
                 .collect(Collectors.groupingBy(Map.Entry::getKey,
                         Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
@@ -88,11 +90,17 @@ public class FixtureVerdicts {
                 () -> String.join("\n", mismatches) + "\n\nFull report:\n" + String.join("\n", violations));
     }
 
-    /** The verdict {@code source}'s type Javadoc opens with, if any. */
+    /**
+     * The verdict {@code source}'s type Javadoc opens with; empty when there is none, or no type
+     * declaration to anchor it, since the file's last Javadoc may then be a member's.
+     */
     public static Optional<Verdict> verdictOf(Path source) {
         String text = read(source);
         Matcher type = TYPE_DECLARATION.matcher(text);
-        Matcher javadoc = JAVADOC.matcher(type.find() ? text.substring(0, type.start()) : text);
+        if (!type.find()) {
+            return Optional.empty();
+        }
+        Matcher javadoc = JAVADOC.matcher(text.substring(0, type.start()));
         String last = null;
         while (javadoc.find()) {
             last = javadoc.group(1);
@@ -132,18 +140,22 @@ public class FixtureVerdicts {
         return verdicts;
     }
 
-    private static Optional<String> reportedFixture(String violation, Set<String> fixtures) {
-        return fixtures.stream()
-                .flatMap(fixture -> firstMention(violation, fixture).stream().mapToObj(at -> Map.entry(at, fixture)))
-                .min(Comparator.<Map.Entry<Integer, String>>comparingInt(Map.Entry::getKey)
-                        .thenComparing(mention -> -mention.getValue().length()))
+    private static Optional<String> reportedFixture(String violation, Map<String, Pattern> mentions) {
+        return mentions.entrySet().stream()
+                .flatMap(fixture -> firstMention(violation, fixture.getValue()).stream()
+                        .mapToObj(at -> Map.entry(at, fixture.getKey())))
+                .min(Comparator.comparingInt(Map.Entry::getKey))
                 .map(Map.Entry::getValue);
     }
 
-    /** Where {@code fixture} is first named as a whole name, or as the owner of a member or nested class. */
-    private static OptionalInt firstMention(String violation, String fixture) {
-        Matcher mention = Pattern.compile("(?<![\\w.$])" + Pattern.quote(fixture) + "(?![\\w])").matcher(violation);
-        return mention.find() ? OptionalInt.of(mention.start()) : OptionalInt.empty();
+    /** Matches {@code fixture} as a whole name, or as the owner of a member or nested class. */
+    private static Pattern mentionOf(String fixture) {
+        return Pattern.compile("(?<![\\w.$])" + Pattern.quote(fixture) + "(?!\\w)");
+    }
+
+    private static OptionalInt firstMention(String violation, Pattern mention) {
+        Matcher matcher = mention.matcher(violation);
+        return matcher.find() ? OptionalInt.of(matcher.start()) : OptionalInt.empty();
     }
 
     private static String qualifiedNameOf(Path source) {
