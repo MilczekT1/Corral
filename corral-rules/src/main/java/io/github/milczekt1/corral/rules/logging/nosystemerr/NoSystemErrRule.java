@@ -12,8 +12,7 @@ import lombok.NoArgsConstructor;
 /**
  * No class may write to {@code System.err}.
  *
- * <p>Separate from {@code NoSystemOutRule} so stdout and stderr debt freeze independently. Matches
- * the field access, so every method on the stream counts.
+ * <p>Matches the field access, so every method on the stream counts.
  *
  * <p>Blind to {@code throwable.printStackTrace()}: it reaches System.err from inside
  * {@code java.lang.Throwable}, so the calling class never touches the field.
@@ -35,8 +34,8 @@ public final class NoSystemErrRule implements DocumentedRule {
                     printStackTrace() or printing the exception by hand. If the failure is recoverable and \
                     routine, log.warn says so more accurately than a stack trace on stderr ever did.""")
             .howNotToFix("""
-                    Do NOT swap System.err for System.out to satisfy this rule — the sibling rule \
-                    corral.logging.no-system-out catches that too, and it only makes the failure harder to find. \
+                    Do NOT swap System.err for System.out to satisfy this rule — stdout is just as far \
+                    outside the log pipeline, and it only makes the failure harder to find. \
                     Do NOT swallow the exception, or narrow the catch until it disappears, just to remove \
                     the print: the print is the wrong destination, not the wrong intent.""")
             .build();
