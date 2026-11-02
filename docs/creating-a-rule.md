@@ -34,7 +34,9 @@ static final ArchRule DEFINITION = noClasses()...;      // raw, package-private
 public static final ArchRule rule = new NoStdoutInServicesRule().guard();   // last
 ```
 
-`guard()` registers the doc, renames the rule to the id, freezes it, and applies exclusions.
+`guard()` registers the doc, renames the rule to the id, freezes it, and applies exclusions. It runs
+at class init and dereferences `DOC` and `DEFINITION`, so an `@ArchTest` field declared above either
+fails class initialisation.
 
 ### Targeting a library you don't depend on
 
@@ -229,12 +231,11 @@ One shaping decision makes all four easier: **one id, one mistake**. An id is a 
 two problems sharing one can never be adopted, frozen or retired separately — and a predicate
 covering both is harder to pin clause by clause than two predicates covering one each.
 
-## ⚠️ Four ways to ship a rule that enforces nothing
+## ⚠️ Three ways to ship a rule that enforces nothing
 
 | Mistake | Why it's silent |
 |---|---|
 | A **typo in a fully-qualified string**, or a library the consumer does not use | Both look identical: the predicate matches nothing. Only a fixture built from the real type tells them apart |
-| `@ArchTest` declared **above** `DOC`/`DEFINITION` | `guard()` runs at class init and reads them — they're still `null`. Only *fields* initialise in order; method order is irrelevant |
 | Testing the **predicate** through the published field instead of `DEFINITION` | The published field is frozen. Against a store with no entry for the rule it seeds on first run and passes; the test proves nothing. Freezing it against a *committed* store, as in step 4, is a different thing and is fine |
 | Consumers setting `ImportOption.DoNotIncludeTests` | Every test-scope rule passes vacuously |
 

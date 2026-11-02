@@ -7,9 +7,9 @@ description: Use when adding a new ArchUnit rule to Corral's central catalog (co
 
 ## Overview
 
-Adding a rule to Corral's catalog touches 7+ files and has three failure modes that produce a
+Adding a rule to Corral's catalog touches 7+ files and has two failure modes that produce a
 **green build with zero enforcement** — no test catches them structurally; you have to build in the
-right order. This skill is that order, the three traps named explicitly, and a checklist for
+right order. This skill is that order, the two traps named explicitly, and a checklist for
 proving the rule checks something before you call it done.
 
 Read [docs/creating-a-rule.md](../../../docs/creating-a-rule.md), which is the contract every rule
@@ -33,7 +33,8 @@ sequences and cross-references them for *this* catalog, it does not restate them
    `corral-rules/src/main/java/io/github/milczekt1/corral/rules/<topic>/<rule>/<Name>Rule.java` — a
    `final class implements DocumentedRule` with a private constructor and a name ending in `Rule`
    (see `TestClassNamingConventionRule`). **Field order is `DOC`, then `DEFINITION`, then the
-   `@ArchTest` field** — see Trap 1 below for why this order is load-bearing, not stylistic.
+   `@ArchTest` field**: `guard()` runs at class init and dereferences both, so the field declared
+   above either throws `ExceptionInInitializerError` in every test that touches the rule.
 
    **If the rule targets another library's type, name it as a fully-qualified string, never a class
    literal**, and add no dependency for it. A class literal is resolved when the field initialises,
@@ -44,7 +45,7 @@ sequences and cross-references them for *this* catalog, it does not restate them
    [Targeting a library you don't depend on](../../../docs/creating-a-rule.md#targeting-a-library-you-dont-depend-on).
 
 3. **Write the rule test** at `.../rules/<topic>/<rule>/<Name>RuleTest.java`, covering **both
-   directions** against the raw `DEFINITION` field — see Trap 2 below for why the published field
+   directions** against the raw `DEFINITION` field — see Trap 1 below for why the published field
    cannot carry these assertions. The test shares the rule's package deliberately: `DEFINITION` is
    package-private, so a test anywhere else cannot reach it without widening the published surface.
 
@@ -165,14 +166,13 @@ writes its own text (`SimpleConditionEvent`, a custom `describe(...)`):
   (`NoAsyncOnUnproxyableMethodRuleTest.reportsAFinalMethodInAFinalClassAsFinal`). Never join a
   hash-ordered collection into the text.
 
-## Three silent failure modes
+## Two silent failure modes
 
 Each of these leaves the build green while enforcing nothing. None is caught by a structural check;
 catching them is why the steps above are ordered the way they are.
 
 | Trap | Why it's silent |
 |---|---|
-| **`@ArchTest` field declared above `DOC`/`DEFINITION`** | `guard()` runs during static class initialisation, at the moment the `@ArchTest` field's initialiser executes. Static fields initialise in **declaration order**, so a field declared before `DOC`/`DEFINITION` reads them as `null` — method order is irrelevant, only field order matters. The class still compiles; the rule freezes against `null`. |
 | **Predicate tested against the published field, not `DEFINITION`** | The published field is wrapped in `FreezingArchRule`. Against a store with no entry for the rule, it seeds every violation as accepted debt and reports zero — the test passes on the very run that should have shown a failure, and every run after. Assert the predicate against the raw `DEFINITION`, which is unfrozen. Step 5 does check the published field, and is *not* this trap: its store is committed, so the run compares against recorded lines instead of seeding. |
 | **Consumer sets `ImportOption.DoNotIncludeTests`** | Any rule scoped to test classes (see `TestScope`) then has no test classes to evaluate, so it passes vacuously for that consumer. This one binds *consumers*, not catalog authors — call it out in a rule's Javadoc whenever the rule inspects test-scope code, the way `TestClassNamingConventionRule` does. |
 
