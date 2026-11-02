@@ -78,8 +78,10 @@ Check each item. Record a pass or a finding for every one — silence is not cov
 4. **Fixtures.** Every example is a top-level class in the rule's own `fixtures/` package — none
    nested in the test, none shared across rules. Stand-ins for a library's types, declared under
    that library's own package in test sources, are allowed outside `fixtures/`. No fixture or top-level test class outside
-   `fixtures/` ends in `IT`. Each example opens with a one-line Javadoc saying `MUST FLAG` or
-   `MUST IGNORE` and why. Example methods have real bodies.
+   `fixtures/` ends in `IT`. Each fixture's type Javadoc opens with `MUST FLAG`, `MUST IGNORE` or
+   `SUPPORT` and why, and the test calls `FixtureVerdicts.assertMatch`. A production-scoped rule keeps
+   its production-output examples in `fixtures/production/` and imports them with
+   `ProductionLayout.importFixtures`. Example methods have real bodies.
 5. **Committed store.** `corral-rules/src/test/resources/archunit/frozen/<id>` exists, its
    `stored.rules` line exists. Every recorded line traces to a `MUST FLAG` member (one member may
    produce several lines), and no `MUST IGNORE` class or member appears. The test checks the store through `CommittedStore.freeze`, not a

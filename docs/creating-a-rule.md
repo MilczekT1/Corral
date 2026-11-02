@@ -247,6 +247,7 @@ Contributing a rule *here* adds these project-specific steps:
 | | |
 |---|---|
 | One rule, one package | `rules/<topic>/<rule>/` in main sources, mirrored in test sources by the rule's test, plus a `fixtures/` sub-package when the examples are annotation-shaped — so everything about a rule is one directory name. `NoThreadSleepRule` and `NoJUnit4Rule` are the worked examples |
+| A verdict on every fixture | Each fixture's type Javadoc opens with `MUST FLAG`, `MUST IGNORE` or `SUPPORT` (not an example), and the test calls `FixtureVerdicts.assertMatch` to check them against the report. A production-scoped rule's examples go in `fixtures/production/`, imported with `ProductionLayout.importFixtures` |
 | The id follows Corral's grammar | `corral.<concern>.<slug>` — see [Rule ids](../CONTRIBUTING.md#rule-ids). Pinned by `RuleIdGrammarTest` |
 | Commit the freeze store | `corral-rules/src/test/resources/archunit/frozen/<id>`, checked through `testsupport.CommittedStore.freeze`, which returns the recorded debt to assert on. Seed it once with `./mvnw test -pl corral-rules -Darchunit.freeze.store.default.allowStoreCreation=true -Darchunit.freeze.store.default.allowStoreUpdate=true`, then commit. The helper otherwise forbids store updates, so a missing entry or a stale recorded line fails loudly |
 | Extend `PublishedCatalogTest.ruleDiscoveryDescendsThroughNestedGroups` | Grouped rules only — it asserts `EveryPublishedGroup`'s ids exactly, so an id change shows as a diff in review, and a standalone id listed there can never be yielded |
