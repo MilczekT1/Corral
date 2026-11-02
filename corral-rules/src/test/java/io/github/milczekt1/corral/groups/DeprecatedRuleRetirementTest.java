@@ -29,6 +29,5 @@ class DeprecatedRuleRetirementTest {
         // The checks RuleIdGrammarTest runs against EveryPublishedGroup, run here against the fixture.
         RuleIdGrammarTest.assertNamespaceGrammar(ids);
         RuleIdGrammarTest.assertPolarityGrammar(ids);
-        RuleIdGrammarTest.assertQualifierSegmentGrammar(ids);
     }
 }

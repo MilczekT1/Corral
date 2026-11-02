@@ -15,7 +15,7 @@ body:
       label: Proposed rule id
       description: >
         `corral.<concern>.<slug>`, or `corral.<concern>.<library>.<slug>` for a rule specific to one
-        library. Segment 2 is a closed vocabulary and the slug carries a polarity marker — it starts
+        library. The id starts with `corral.` and the slug carries a polarity marker — it starts
         with `no-` or contains `-must-`. Both are enforced by `RuleIdGrammarTest`; see
         [Rule ids](https://github.com/MilczekT1/Corral/blob/main/CONTRIBUTING.md#rule-ids). An id is
         a freeze-store key in every consumer's repo and is never renamed, so it is worth getting

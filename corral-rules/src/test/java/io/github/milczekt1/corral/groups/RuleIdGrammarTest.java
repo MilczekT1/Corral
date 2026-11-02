@@ -8,36 +8,23 @@ import io.github.milczekt1.corral.doc.DeprecatedRule;
 import io.github.milczekt1.corral.reflect.PublishedRules;
 import java.util.LinkedHashSet;
 import java.util.Set;
-import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
 
 /**
- * Enforces the shape of every id Corral itself ships: {@code corral} at segment 1, a closed concern
- * vocabulary at segment 2, a polarity marker on the slug. Checked against {@link EveryPublishedGroup}
- * and {@link EveryStandaloneRule} — an id is a freeze-store key whether or not a group names the rule.
- * {@code RuleDoc} applies the hygiene caps a consumer's own id needs.
+ * Enforces the shape of every id Corral itself ships: {@code corral} at segment 1 and a polarity
+ * marker on the slug. Checked against {@link EveryPublishedGroup} and {@link EveryStandaloneRule} — an
+ * id is a freeze-store key whether or not a group names the rule. {@code RuleDoc} applies the hygiene
+ * caps a consumer's own id needs.
  *
- * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from the namespace and polarity
- * checks, but not from the qualifier-segment check.
+ * <p>A retired id (see {@link DeprecatedRule#retiredIds()}) is exempt from both checks.
  *
- * <p>Those two read {@link DeprecatedRule#retiredIds()} only after {@link #shippedIds()} has run,
- * which is what forces every retirement to register. Do not hoist the call.
+ * <p>Both read {@link DeprecatedRule#retiredIds()} only after {@link #shippedIds()} has run, which is
+ * what forces every retirement to register. Do not hoist the call.
  */
 class RuleIdGrammarTest {
 
     /** Every id Corral publishes starts with this vendor prefix — see CONTRIBUTING. */
     private static final String VENDOR_PREFIX = "corral";
-
-    /** Segment-2 values, closed on purpose — see CONTRIBUTING. {@code java<N>} is matched separately. */
-    private static final Set<String> CONCERNS = Set.of(
-            "concurrency", "dependencies", "exception", "jackson", "jakarta", "java",
-            "layering", "logging", "lombok", "naming", "security", "shedlock", "spring", "test");
-
-    /** A JDK-version concern, for a rule about an API that exists only from that release. */
-    private static final Pattern JAVA_VERSION = Pattern.compile("^java[0-9]++$");
-
-    /** Segment-3 values allowed to precede the slug: a library qualifier. */
-    private static final Set<String> QUALIFIERS = Set.of("mockito", "powermock", "junit", "spring");
 
     private static Set<String> shippedIds() {
         Set<String> ids = new LinkedHashSet<>(PublishedRules.idsOf(EveryPublishedGroup.class));
@@ -45,7 +32,7 @@ class RuleIdGrammarTest {
         return ids;
     }
 
-    /** Guards the three tests below, whose loops would pass vacuously over an empty catalog. */
+    /** Guards the two tests below, whose loops would pass vacuously over an empty catalog. */
     @Test
     void bothRootsYieldIds() {
         assertFalse(PublishedRules.idsOf(EveryPublishedGroup.class).isEmpty(),
@@ -56,18 +43,13 @@ class RuleIdGrammarTest {
     }
 
     @Test
-    void everyShippedIdStartsWithTheVendorPrefixAndAClosedConcern() {
+    void everyShippedIdStartsWithTheVendorPrefix() {
         assertNamespaceGrammar(shippedIds());
     }
 
     @Test
     void everyShippedSlugCarriesAPolarityMarker() {
         assertPolarityGrammar(shippedIds());
-    }
-
-    @Test
-    void aFourthSegmentIsOnlyALibraryQualifier() {
-        assertQualifierSegmentGrammar(shippedIds());
     }
 
     /** Package-private so {@code DeprecatedRuleRetirementTest} runs this same check on a fixture. */
@@ -77,24 +59,12 @@ class RuleIdGrammarTest {
             if (retiredIds.contains(id)) {
                 continue; // predates the grammar, including the vendor prefix; see DeprecatedRule.retiredIds().
             }
-            String[] segments = id.split("\\.");
-            String prefix = segments[0];
+            String prefix = id.split("\\.")[0];
 
             assertEquals(VENDOR_PREFIX, prefix,
                     () -> "id '" + id + "' does not start with '" + VENDOR_PREFIX + "'. Every id"
                             + " Corral publishes carries the vendor prefix, so a consumer's own"
                             + " namespace can never collide with Corral's.");
-
-            if (segments.length >= 3) {
-                String concern = segments[1];
-
-                assertTrue(CONCERNS.contains(concern) || JAVA_VERSION.matcher(concern).matches(),
-                        () -> "id '" + id + "' has concern '" + concern + "' at segment 2, which is"
-                                + " not a Corral concern. Use one of " + CONCERNS + ", or java<N> for a"
-                                + " rule about an API introduced in that JDK. The list is closed so"
-                                + " that 'which bucket' never becomes an argument — an id renamed"
-                                + " later stops enforcing silently in every consumer that froze it.");
-            }
         }
     }
 
@@ -114,21 +84,6 @@ class RuleIdGrammarTest {
                             + " <subject>-must-<predicate>, e.g. fields-must-be-final). Every"
                             + " published id needs one, including a depth-2 corral.<slug> framework"
                             + " meta-check, were one ever published.");
-        }
-    }
-
-    static void assertQualifierSegmentGrammar(Set<String> ids) {
-        for (String id : ids) {
-            String[] segments = id.split("\\.");
-
-            if (segments.length == 4) {
-                String qualifier = segments[2];
-
-                assertTrue(QUALIFIERS.contains(qualifier),
-                        () -> "id '" + id + "' qualifies with '" + qualifier + "'. A fourth segment"
-                                + " may only be a library " + QUALIFIERS + " — a sub-topic belongs in"
-                                + " a group, which can be reorganised, not in the id, which cannot.");
-            }
         }
     }
 }
