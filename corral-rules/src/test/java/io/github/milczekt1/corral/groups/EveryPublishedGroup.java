@@ -2,6 +2,9 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.groups.experimental.ExceptionRulesGroup;
+import io.github.milczekt1.corral.groups.experimental.JacksonRulesGroup;
+import io.github.milczekt1.corral.groups.experimental.JakartaPersistenceRulesGroup;
 import lombok.experimental.UtilityClass;
 
 /**

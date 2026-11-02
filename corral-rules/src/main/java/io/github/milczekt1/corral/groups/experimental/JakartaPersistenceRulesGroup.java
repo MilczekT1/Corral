@@ -1,4 +1,4 @@
-package io.github.milczekt1.corral.groups;
+package io.github.milczekt1.corral.groups.experimental;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;

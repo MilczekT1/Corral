@@ -93,7 +93,6 @@ class PublishedCatalogTest {
         Set<String> ids = PublishedRules.idsOf(EveryPublishedGroup.class);
 
         assertEquals(Set.of(
-                "corral.test.class-names-must-end-with-test-or-it",
                 "corral.test.junit.no-disabled-without-reason",
                 "corral.test.mockito.no-construction-mocking",
                 "corral.test.mockito.no-static-mocking",
