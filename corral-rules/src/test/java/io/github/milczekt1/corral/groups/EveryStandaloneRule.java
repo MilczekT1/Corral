@@ -22,6 +22,7 @@ import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.NoTra
 import io.github.milczekt1.corral.rules.spring.novalueonfield.NoValueOnFieldRule;
 import io.github.milczekt1.corral.rules.testing.nolegacymockbeanandspybean.NoLegacyMockBeanAndSpyBeanRule;
 import io.github.milczekt1.corral.rules.testing.nomutablestaticstate.NoMutableStaticStateRule;
+import io.github.milczekt1.corral.rules.testing.testclassnamingconvention.TestClassNamingConventionRule;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -107,4 +108,8 @@ public class EveryStandaloneRule {
     @ArchTest
     public static final ArchTests configurationPropertiesMustUseProjectPrefix =
             ArchTests.in(ConfigurationPropertiesMustUseProjectPrefixRule.class);
+
+    @ArchTest
+    public static final ArchTests testClassNamingConvention =
+            ArchTests.in(TestClassNamingConventionRule.class);
 }

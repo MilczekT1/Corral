@@ -7,7 +7,8 @@ import io.github.milczekt1.corral.rules.testing.nostaticmocking.NoStaticMockingR
 import lombok.experimental.UtilityClass;
 
 /**
- * Testing rules that only mean something to a suite using Mockito.
+ * Testing rules that only mean something to a suite using Mockito. Included in
+ * {@code TestingRulesGroup}; wire this group on its own only when not wiring that one.
  */
 @UtilityClass
 public class TestingMockitoRulesGroup {

@@ -4,7 +4,6 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.NoMockedRepositoryInIntegrationTestRule;
 import io.github.milczekt1.corral.rules.testing.nothreadsleep.NoThreadSleepRule;
-import io.github.milczekt1.corral.rules.testing.testclassnamingconvention.TestClassNamingConventionRule;
 import lombok.experimental.UtilityClass;
 
 @UtilityClass
@@ -19,6 +18,10 @@ public class TestingRulesGroup {
             ArchTests.in(NoThreadSleepRule.class);
 
     @ArchTest
-    public static final ArchTests testClassNamingConvention =
-            ArchTests.in(TestClassNamingConventionRule.class);
+    public static final ArchTests junit =
+            ArchTests.in(TestingJunitRulesGroup.class);
+
+    @ArchTest
+    public static final ArchTests mockito =
+            ArchTests.in(TestingMockitoRulesGroup.class);
 }

@@ -2,6 +2,9 @@ package io.github.milczekt1.corral.groups;
 
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.groups.experimental.ExceptionRulesGroup;
+import io.github.milczekt1.corral.groups.experimental.JacksonRulesGroup;
+import io.github.milczekt1.corral.groups.experimental.JakartaPersistenceRulesGroup;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -22,12 +25,6 @@ public class EveryPublishedGroup {
 
     @ArchTest
     public static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
-
-    @ArchTest
-    public static final ArchTests testingJunit = ArchTests.in(TestingJunitRulesGroup.class);
-
-    @ArchTest
-    public static final ArchTests testingMockito = ArchTests.in(TestingMockitoRulesGroup.class);
 
     @ArchTest
     public static final ArchTests logging = ArchTests.in(LoggingRulesGroup.class);
