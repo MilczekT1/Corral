@@ -1,1 +1,1 @@
-Method <io.github.milczekt1.corral.rules.testing.nothreadsleep.NoThreadSleepRuleTest$ThreadSleeper.awaitTheCharge()> calls method <java.lang.Thread.sleep(long)> in (NoThreadSleepRuleTest.java:36)
+Method <io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures.ThreadSleeper.awaitTheCharge()> calls method <java.lang.Thread.sleep(long)> in (ThreadSleeper.java:10)

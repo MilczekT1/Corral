@@ -6,29 +6,14 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import io.github.milczekt1.corral.rules.testing.nothreadsleep.fixtures.ThreadSleeper;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import org.junit.jupiter.api.Test;
 
-/**
- * The examples are nested and static, so no runner selects them — a top-level {@code *IT} outside a
- * {@code fixtures} package is run by Failsafe for real.
- */
 class NoThreadSleepRuleTest {
-
-    /** {@code currentThread} is deliberate: same owner, not a sleep, so an over-broad predicate fails. */
-    static class ThreadSleeper {
-
-        void awaitTheCharge() throws InterruptedException {
-            Thread.sleep(500);
-        }
-
-        String waitingThread() {
-            return Thread.currentThread().getName();
-        }
-    }
 
     private static final String ID = "corral.test.no-thread-sleep";
 
