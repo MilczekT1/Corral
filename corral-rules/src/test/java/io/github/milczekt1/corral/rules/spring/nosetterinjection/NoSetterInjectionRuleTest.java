@@ -6,16 +6,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.InvoiceService;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.LegacyAuditService;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.LegacyBillingService;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.OrderRepository;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.OrderService;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.ReportScheduler;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.RepositoryConfiguration;
-import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.ShippingService;
 import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.TestOutputWiredHelper;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.InvoiceService;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.LegacyAuditService;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.LegacyBillingService;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.OrderService;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.PaymentService;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.ReportScheduler;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.RepositoryConfiguration;
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.ShippingService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -28,19 +27,10 @@ import org.junit.jupiter.api.io.TempDir;
 /**
  * ArchUnit reports an annotation by simple name, so {@code jakarta} and {@code javax} read the same:
  * each example carries exactly one of the matched annotations, and the flagged method names which.
- *
- * <p>The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputWiredHelper} alone is imported from where it compiled.
  */
 class NoSetterInjectionRuleTest {
 
     private static final String ID = "corral.spring.no-setter-injection";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderService.class, InvoiceService.class, ShippingService.class,
-            LegacyAuditService.class, LegacyBillingService.class, ReportScheduler.class,
-            PaymentService.class, RepositoryConfiguration.class, OrderRepository.class);
 
     @TempDir
     static Path outputRoot;
@@ -49,12 +39,7 @@ class NoSetterInjectionRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputWiredHelper.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoSetterInjectionRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

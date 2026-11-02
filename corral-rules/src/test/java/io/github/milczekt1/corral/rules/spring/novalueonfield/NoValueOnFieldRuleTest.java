@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.OrderService;
 import io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.TestOutputPortHolder;
+import io.github.milczekt1.corral.rules.spring.novalueonfield.fixtures.production.OrderService;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -18,18 +18,14 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
 /**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * fixture class files are copied into a Gradle main-output layout and imported from there; the two
- * JUnit test classes among them are then test classes only by their declared test methods.
- * {@link TestOutputPortHolder} alone is imported from where it compiled.
+ * The two JUnit test classes among the production fixtures are test classes only by their declared
+ * test methods.
  */
 class NoValueOnFieldRuleTest {
 
     private static final String ID = "corral.spring.no-value-on-field";
 
     private static final String META_ANNOTATED = "> is meta-annotated with @Value";
-
-    private static final int FIXTURE_CLASS_FILES = 12;
 
     @TempDir
     static Path outputRoot;
@@ -38,13 +34,7 @@ class NoValueOnFieldRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copyPackageOf(OrderService.class, outputRoot.resolve("examples"),
-                List.of(TestOutputPortHolder.class));
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputPortHolder.class));
-
-        assertEquals(FIXTURE_CLASS_FILES, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoValueOnFieldRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

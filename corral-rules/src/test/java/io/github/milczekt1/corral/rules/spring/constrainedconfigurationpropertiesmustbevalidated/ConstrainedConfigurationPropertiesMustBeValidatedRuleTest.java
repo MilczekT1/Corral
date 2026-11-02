@@ -7,33 +7,33 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.ArchConfiguration;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CacheProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.CatalogProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ChannelProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ClientConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ClientSettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ConsistencyProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.Datasource;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.IgnoredMembersProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.JavaxCascadeProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.JavaxProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.LegacyCodeProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.PaymentProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.PoolProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.QuorumProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.RetryPolicy;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.RetryProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ScheduleProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SearchIndex;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SearchProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SettingsHolder;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.SmsChannelProperties;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TestOutputConfiguration;
 import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TestOutputProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TlsClientConfiguration;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TlsClientSettings;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.TreeProperties;
-import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.ValidatedSettings;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.CacheProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.CatalogProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ChannelProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ClientConfiguration;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ClientSettings;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ConsistencyProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.Datasource;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.IgnoredMembersProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.JavaxCascadeProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.JavaxProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.LegacyCodeProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.PaymentProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.PoolProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.QuorumProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.RetryPolicy;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.RetryProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ScheduleProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.SearchIndex;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.SearchProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.SettingsHolder;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.SmsChannelProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.TlsClientConfiguration;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.TlsClientSettings;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.TreeProperties;
+import io.github.milczekt1.corral.rules.spring.constrainedconfigurationpropertiesmustbevalidated.fixtures.production.ValidatedSettings;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -47,34 +47,19 @@ import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * fixture class files are copied into a Gradle main-output layout and imported from there; the
- * {@code TestOutput*} fixtures alone are imported from where they compiled.
- */
 class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
 
     private static final String ID = "corral.spring.constrained-configuration-properties-must-be-validated";
 
-    private static final int FIXTURE_CLASS_FILES = 33;
-
     @TempDir
     static Path outputRoot;
-
-    private static Path productionOutput;
 
     private static JavaClasses examples;
 
     @BeforeAll
     static void importExamples() throws IOException {
-        productionOutput = ProductionLayout.copyPackageOf(PaymentProperties.class, outputRoot.resolve("examples"),
-                List.of(TestOutputProperties.class, TestOutputConfiguration.class));
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput,
-                        TestOutputProperties.class, TestOutputConfiguration.class));
-
-        assertEquals(FIXTURE_CLASS_FILES, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(ConstrainedConfigurationPropertiesMustBeValidatedRuleTest.class,
+                outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */
@@ -140,7 +125,8 @@ class ConstrainedConfigurationPropertiesMustBeValidatedRuleTest {
     /** Without resolution every Validation API type is a stub carrying no annotations: only the package names it. */
     @ParameterizedTest
     @ValueSource(classes = {PaymentProperties.class, JavaxProperties.class, ScheduleProperties.class})
-    void flagsABuiltInConstraintByPackageWhenItsTypeIsNotResolved(Class<?> type) {
+    void flagsABuiltInConstraintByPackageWhenItsTypeIsNotResolved(Class<?> type) throws IOException {
+        Path productionOutput = ProductionLayout.copyPackageOf(PaymentProperties.class, outputRoot.resolve("unresolved"));
         ArchConfiguration.get().setResolveMissingDependenciesFromClassPath(false);
         try {
             List<String> violations = violationsIn(new ClassFileImporter().importPath(productionOutput));

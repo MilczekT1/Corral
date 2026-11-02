@@ -6,16 +6,16 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.DelegatingThreadFactory;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.ExpiryScheduler;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.ForkJoinCounterThread;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.HandRolledThreadFactory;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.OrderDispatcher;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.PollingWorker;
 import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.RaceProvoker;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.SweepTimer;
-import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.WorkerPool;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.DelegatingThreadFactory;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.ExpiryScheduler;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.ForkJoinCounterThread;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.HandRolledThreadFactory;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.OrderDispatcher;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.PaymentService;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.PollingWorker;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.SweepTimer;
+import io.github.milczekt1.corral.rules.concurrency.nomanualthreadcreation.fixtures.production.WorkerPool;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -25,19 +25,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link RaceProvoker} alone is imported from where it compiled.
- */
 class NoManualThreadCreationRuleTest {
 
     private static final String ID = "corral.concurrency.no-manual-thread-creation";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderDispatcher.class, ExpiryScheduler.class, PollingWorker.class, WorkerPool.class,
-            HandRolledThreadFactory.class, ForkJoinCounterThread.class, SweepTimer.class,
-            PaymentService.class, DelegatingThreadFactory.class);
 
     /** {@link ExpiryScheduler}'s anonymous {@code TimerTask} and {@link WorkerPool}'s anonymous {@code Thread}. */
     private static final int ANONYMOUS_EXAMPLES = 2;
@@ -49,12 +39,7 @@ class NoManualThreadCreationRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, RaceProvoker.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + ANONYMOUS_EXAMPLES + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoManualThreadCreationRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

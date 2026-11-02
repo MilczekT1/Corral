@@ -6,33 +6,31 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.AbstractClaimEndpoint;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.AbstractJournalEndpoint;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ArchiveController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ArchiveOperations;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.AuditController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.BillingController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.CatalogController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.CustomerController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.DigestController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.DigestOperations;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.EntityWriter;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ExportController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ExportOperations;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.InvoiceController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.JournalController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.LedgerController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.NotificationController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.OrderController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.PaymentController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.PriceCalculator;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ReadOnlyTransaction;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.RefundController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.ReturnController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.StockController;
 import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.TestOutputController;
-import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.TransactionalAuditBase;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.AbstractClaimEndpoint;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.AbstractJournalEndpoint;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.ArchiveController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.ArchiveOperations;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.AuditController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.BillingController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.CatalogController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.CustomerController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.DigestController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.DigestOperations;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.ExportController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.ExportOperations;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.InvoiceController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.JournalController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.LedgerController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.NotificationController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.OrderController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.PaymentController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.PaymentService;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.PriceCalculator;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.RefundController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.ReturnController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.StockController;
+import io.github.milczekt1.corral.rules.spring.notransactionalincontroller.fixtures.production.TransactionalAuditBase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -42,23 +40,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputController} alone is imported from where it compiled.
- */
 class NoTransactionalInControllerRuleTest {
 
     private static final String ID = "corral.spring.no-transactional-in-controller";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderController.class, LedgerController.class, InvoiceController.class, BillingController.class,
-            CatalogController.class, ReadOnlyTransaction.class, StockController.class, RefundController.class,
-            ReturnController.class, AbstractClaimEndpoint.class, AuditController.class,
-            TransactionalAuditBase.class, ArchiveController.class, ArchiveOperations.class,
-            ExportController.class, ExportOperations.class, CustomerController.class, EntityWriter.class,
-            PaymentController.class, PaymentService.class, PriceCalculator.class, NotificationController.class,
-            JournalController.class, AbstractJournalEndpoint.class, DigestController.class, DigestOperations.class);
 
     @TempDir
     static Path outputRoot;
@@ -67,12 +51,7 @@ class NoTransactionalInControllerRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputController.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoTransactionalInControllerRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

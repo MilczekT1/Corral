@@ -6,18 +6,18 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.CheckoutController;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.CustomerRepository;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.IndexedLookup;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.Money;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.OrderService;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.PaymentConfig;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.PricingPolicy;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.RefundHandler;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.ShippingConfig;
 import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.TestOutputFinalBean;
-import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.UseCase;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.CheckoutController;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.CustomerRepository;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.IndexedLookup;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.Money;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.OrderService;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.PaymentConfig;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.PaymentService;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.PricingPolicy;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.RefundHandler;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.ShippingConfig;
+import io.github.milczekt1.corral.rules.spring.nofinalcomponent.fixtures.production.UseCase;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -27,19 +27,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputFinalBean} alone is imported from where it compiled.
- */
 class NoFinalComponentRuleTest {
 
     private static final String ID = "corral.spring.no-final-component";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderService.class, CustomerRepository.class, CheckoutController.class, PricingPolicy.class,
-            PaymentConfig.class, ShippingConfig.class, UseCase.class, RefundHandler.class,
-            PaymentService.class, Money.class, IndexedLookup.class);
 
     @TempDir
     static Path outputRoot;
@@ -48,12 +38,7 @@ class NoFinalComponentRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputFinalBean.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoFinalComponentRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

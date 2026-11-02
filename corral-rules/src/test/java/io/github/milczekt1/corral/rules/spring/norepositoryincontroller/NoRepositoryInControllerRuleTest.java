@@ -6,29 +6,26 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.AbstractRefundEndpoint;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.ArchiveController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.ArchiveDao;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.AuditController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.AuditTrailRepository;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.CatalogController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.CatalogRepository;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.InvoiceController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.InvoiceRepository;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.LedgerController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.LedgerDao;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.OrderController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.OrderRepository;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.OrderSummary;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.PaymentController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.PaymentService;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.PersistenceAdapter;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.PricingService;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.RefundController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.ReportController;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.ReportDao;
-import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.StockController;
 import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.TestOutputController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.AbstractRefundEndpoint;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.ArchiveController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.ArchiveDao;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.AuditController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.CatalogController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.CatalogRepository;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.InvoiceController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.InvoiceRepository;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.LedgerController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.LedgerDao;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.OrderController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.OrderRepository;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.OrderSummary;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.PaymentController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.PaymentService;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.PricingService;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.RefundController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.ReportController;
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.StockController;
 import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
@@ -38,22 +35,9 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 
-/**
- * The rule is scoped to production classes, and every fixture compiles into test output. So the
- * examples are copied into a Gradle main-output layout and imported from there;
- * {@link TestOutputController} alone is imported from where it compiled.
- */
 class NoRepositoryInControllerRuleTest {
 
     private static final String ID = "corral.spring.no-repository-in-controller";
-
-    private static final List<Class<?>> PRODUCTION_EXAMPLES = List.of(
-            OrderController.class, LedgerController.class, CatalogController.class, StockController.class,
-            PaymentController.class, RefundController.class, AuditController.class, ReportController.class,
-            PaymentService.class, PricingService.class, AbstractRefundEndpoint.class, OrderRepository.class,
-            CatalogRepository.class, LedgerDao.class, ReportDao.class, AuditTrailRepository.class,
-            OrderSummary.class, InvoiceController.class, InvoiceRepository.class, ArchiveController.class,
-            ArchiveDao.class, PersistenceAdapter.class);
 
     @TempDir
     static Path outputRoot;
@@ -62,12 +46,7 @@ class NoRepositoryInControllerRuleTest {
 
     @BeforeAll
     static void importExamples() throws IOException {
-        Path productionOutput = ProductionLayout.copy(outputRoot.resolve("examples"), PRODUCTION_EXAMPLES);
-        examples = new ClassFileImporter().importLocations(
-                ProductionLayout.withTestOutput(productionOutput, TestOutputController.class));
-
-        assertEquals(PRODUCTION_EXAMPLES.size() + 1, examples.size(),
-                "every example must be imported, or the ignore assertions below are vacuous");
+        examples = ProductionLayout.importFixtures(NoRepositoryInControllerRuleTest.class, outputRoot.resolve("examples"));
     }
 
     /** The raw {@code DEFINITION}: the published field is frozen, so it would seed and pass. */

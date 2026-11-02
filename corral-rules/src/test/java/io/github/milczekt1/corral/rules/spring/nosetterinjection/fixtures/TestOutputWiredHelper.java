@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures;
 
+import io.github.milczekt1.corral.rules.spring.nosetterinjection.fixtures.production.OrderRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 /**

@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures;
 
+import io.github.milczekt1.corral.rules.spring.norepositoryincontroller.fixtures.production.OrderRepository;
 import org.springframework.web.bind.annotation.RestController;
 
 /**

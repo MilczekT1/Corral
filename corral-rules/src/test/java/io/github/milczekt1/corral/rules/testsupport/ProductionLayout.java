@@ -3,6 +3,8 @@ package io.github.milczekt1.corral.rules.testsupport;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 
+import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.core.importer.Location;
 import io.github.milczekt1.corral.scope.TestScope;
 import java.io.IOException;
@@ -28,6 +30,25 @@ public class ProductionLayout {
     public static final String MAIN_OUTPUT = "build/classes/java/main";
 
     /**
+     * Imports every example of {@code ruleTest}: {@code fixtures/production} copied into
+     * {@code root/}{@value #MAIN_OUTPUT}, and the rest of {@code fixtures}, sub-packages excluded, from
+     * test output where it compiled.
+     */
+    public static JavaClasses importFixtures(Class<?> ruleTest, Path root) throws IOException {
+        Path fixtures = packageDirectoryOf(ruleTest, "fixtures");
+        String productionPackage = ruleTest.getPackageName() + ".fixtures.production";
+        Path output = root.resolve(MAIN_OUTPUT);
+        copyMatching(fixtures.resolve("production"), output.resolve(productionPackage.replace('.', '/')),
+                name -> name.endsWith(".class"));
+
+        List<Location> locations = new ArrayList<>(List.of(Location.of(output)));
+        for (Path classFile : classFilesIn(fixtures, name -> name.endsWith(".class"))) {
+            locations.add(Location.of(classFile));
+        }
+        return new ClassFileImporter().importLocations(locations);
+    }
+
+    /**
      * Copies each class file, with its nested and anonymous classes, into
      * {@code root/}{@value #MAIN_OUTPUT}, keeping package directories.
      *
@@ -43,38 +64,19 @@ public class ProductionLayout {
 
     /**
      * Copies every class file in {@code anchor}'s package directory into
-     * {@code root/}{@value #MAIN_OUTPUT}, except {@code excluded} and their nested and anonymous
-     * classes. Sub-packages are not copied.
+     * {@code root/}{@value #MAIN_OUTPUT}. Sub-packages are not copied.
      *
      * @return the copy's output root, to import from
      */
-    public static Path copyPackageOf(Class<?> anchor, Path root, List<Class<?>> excluded) throws IOException {
-        return copyPackageOf(anchor, root, MAIN_OUTPUT, excluded);
+    public static Path copyPackageOf(Class<?> anchor, Path root) throws IOException {
+        return copyPackageOf(anchor, root, MAIN_OUTPUT);
     }
 
-    /** As {@link #copyPackageOf(Class, Path, List)}, into {@code root/layout} instead. */
-    public static Path copyPackageOf(Class<?> anchor, Path root, String layout, List<Class<?>> excluded)
-            throws IOException {
+    /** As {@link #copyPackageOf(Class, Path)}, into {@code root/layout} instead. */
+    public static Path copyPackageOf(Class<?> anchor, Path root, String layout) throws IOException {
         Path output = root.resolve(layout);
-        Predicate<String> isExcluded = excluded.stream().map(ProductionLayout::belongsTo)
-                .reduce(name -> false, Predicate::or);
-        copyMatching(directoryOf(anchor), destinationFor(output, anchor), isExcluded.negate());
+        copyMatching(directoryOf(anchor), destinationFor(output, anchor), name -> name.endsWith(".class"));
         return output;
-    }
-
-    /**
-     * {@code productionOutput}, plus each test-output type's class file and its nested and anonymous
-     * classes where they compiled.
-     */
-    public static List<Location> withTestOutput(Path productionOutput, Class<?>... testOutputTypes)
-            throws IOException {
-        List<Location> locations = new ArrayList<>(List.of(Location.of(productionOutput)));
-        for (Class<?> type : testOutputTypes) {
-            for (Path classFile : classFilesIn(directoryOf(type), belongsTo(type))) {
-                locations.add(Location.of(classFile));
-            }
-        }
-        return locations;
     }
 
     /** Every class file in {@code anchor}'s package directory, sub-packages excluded. */
@@ -91,6 +93,18 @@ public class ProductionLayout {
             return Path.of(classFile.toURI()).getParent();
         } catch (URISyntaxException e) {
             throw new IllegalStateException(classFile.toString(), e);
+        }
+    }
+
+    private static Path packageDirectoryOf(Class<?> anchor, String relativePackage) {
+        URL directory = anchor.getResource(relativePackage);
+        assertNotNull(directory, () -> "no compiled package " + relativePackage + " beside " + anchor.getName());
+        assertEquals("file", directory.getProtocol(),
+                () -> "fixtures are copied by listing their directory, so they must load from one: " + directory);
+        try {
+            return Path.of(directory.toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException(directory.toString(), e);
         }
     }
 
