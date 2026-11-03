@@ -33,6 +33,14 @@ jobs:
       - name: Build with Maven
         run: ./mvnw clean install ${{ env.MVN_CONFIG }}
 
+  scripts_test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Test release scripts
+        run: node --test .github/scripts/*.test.js
+
   sonar_scan:
     if: >-
       github.event_name == 'push' ||
