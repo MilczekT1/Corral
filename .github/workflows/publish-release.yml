@@ -179,6 +179,29 @@ jobs:
           git tag "v$RELEASE_VERSION" "$RELEASE_SHA"
           git push origin "refs/tags/v$RELEASE_VERSION"
 
+      # compile: a reactor module resolves its sibling only from target/classes or the local repository.
+      # No -DappendOutput: dependency:list overwrites per module, so each module writes its own file.
+      - name: Generate release notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if ! previous=$(git describe --tags --abbrev=0 "$RELEASE_SHA^" 2>/dev/null); then
+            echo "::error::No tag precedes $RELEASE_SHA, so there is no range to write release notes for." >&2
+            exit 1
+          fi
+          ./mvnw -q -pl corral-sdk,corral-rules compile dependency:list -DincludeScope=runtime -DexcludeTransitive=true -DoutputFile='${project.build.directory}/deps.txt' ${{ env.MVN_CONFIG }}
+          consumer_args=()
+          while read -r artifact; do
+            consumer_args+=(--consumer-artifact "$artifact")
+          done < <(cat corral-sdk/target/deps.txt corral-rules/target/deps.txt \
+            | sed -nE 's/^ +([^: ]+):([^: ]+):jar:[^: ]+:[a-z]+.*/\1:\2/p' \
+            | grep -v '^io\.github\.milczekt1:' | sort -u)
+          if [[ ${#consumer_args[@]} -eq 0 ]]; then
+            echo "::error::Found no consumer-facing dependencies in corral-sdk and corral-rules." >&2
+            exit 1
+          fi
+          node .github/scripts/release-notes-cli.js --from "$previous" --to "$RELEASE_SHA" --repo "$GITHUB_REPOSITORY" "${consumer_args[@]}" > "$RUNNER_TEMP/release-notes.md"
+
       - name: Create GitHub Release
         env:
           GH_TOKEN: ${{ github.token }}
@@ -186,5 +209,5 @@ jobs:
           if gh release view "v$RELEASE_VERSION" >/dev/null 2>&1; then
             echo "GitHub Release v$RELEASE_VERSION already exists."
           else
-            gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" --generate-notes --verify-tag
+            gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
           fi

@@ -16,7 +16,7 @@ PR's commits land on `main`, uploads to **Maven Central**, and tags. Only allowl
    landed on `main`**, checks its project version, runs `./mvnw clean verify` on it, then signs and
    uploads `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
    resolve the managed dependency versions — tags that commit `v<version>`, and creates the GitHub
-   Release.
+   Release with [generated notes](#release-notes).
 5. **Press Publish.** The upload stops at *VALIDATED*. Open
    [central.sonatype.com/publishing/deployments](https://central.sonatype.com/publishing/deployments),
    inspect the deployment, and press **Publish**. It reaches `repo1.maven.org` within about
@@ -47,6 +47,15 @@ same flag.
 The trigger allowlist is hardcoded in `.github/workflows/release.yml`,
 `.github/workflows/publish-release.yml` and `.github/workflows/publish-java.yml` as
 `RELEASE_ALLOWED_ACTORS` (space-separated GitHub usernames); edit all three via a normal PR.
+
+## Release notes
+
+**Publish release** writes the GitHub Release notes from the pull requests merged since the previous
+tag, sorted by their Conventional Commit type, with new rules and catalog moves taken from the diff
+of `docs/rules.md` between the two tags. The `pr_title_and_notes` check requires every PR title to be
+a Conventional Commit and, for a `!` title, an `## Upgrade notes` section in the PR body, which the
+notes print under Breaking Changes. Nesting a group in another group and moving a rule's package are
+not detected, so mark such a PR with `!`.
 
 ## Snapshots
 
