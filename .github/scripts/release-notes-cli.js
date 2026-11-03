@@ -53,15 +53,19 @@ function main(args) {
   const numbers = [...new Set(subjects.map(prNumberOf).filter((n) => n !== null))];
   const prs = numbers.map((n) => {
     const pr = JSON.parse(run('gh', ['api', `repos/${repo}/pulls/${n}`]));
-    return { number: pr.number, title: pr.title, body: pr.body || '', author: pr.user.login, bot: pr.user.type === 'Bot' };
+    return { number: pr.number, title: pr.title, body: pr.body || '', author: pr.user ? pr.user.login : 'ghost', bot: pr.user ? pr.user.type === 'Bot' : false };
   });
 
   const catalogAt = (ref) => parseCatalog(git('show', `${ref}:docs/rules.md`));
   const diff = diffCatalog(catalogAt(from), catalogAt(to));
   const firstAdding = (id) =>
     prOf(lines(git('log', '--reverse', '--format=%s', `-S\`${id}\``, range, '--', 'docs/rules.md'))[0]);
-  const lastTouching = (id) =>
-    prOf(lines(git('log', '--format=%s', `-G^\\| \`${escapeRegex(id)}\` \\|`, range, '--', 'docs/rules.md'))[0]);
+  const introducingPlacement = (id, placement) =>
+    prOf(
+      lines(
+        git('log', '--reverse', '--format=%s', `-G^\\| \`${escapeRegex(id)}\` \\| \`${escapeRegex(placement)}\` \\|`, range, '--', 'docs/rules.md'),
+      )[0],
+    );
   const lastRemoving = (id) =>
     prOf(lines(git('log', '--format=%s', `-S\`${id}\``, range, '--', 'docs/rules.md'))[0]);
 
@@ -80,13 +84,13 @@ function main(args) {
     .map(([oldId, { newId, file }]) => ({
       oldId,
       newId,
-      pr: prOf(lines(git('log', '--reverse', '--format=%s', '-GsupersededBy', range, '--', file))[0]),
+      pr: prOf(lines(git('log', '--reverse', '--format=%s', '--follow', '-GsupersededBy', range, '--', file))[0]),
     }));
 
   return renderNotes({
     prs,
     added: diff.added.map((r) => ({ ...r, pr: firstAdding(r.id) })),
-    moved: diff.moved.map((r) => ({ ...r, pr: lastTouching(r.id) })),
+    moved: diff.moved.map((r) => ({ ...r, pr: introducingPlacement(r.id, r.to) })),
     removed: diff.removed.map((id) => ({ id, pr: lastRemoving(id) })),
     deprecations,
     consumerKeys: consumerKeys(git('show', `${to}:pom.xml`), args.consumerArtifacts),

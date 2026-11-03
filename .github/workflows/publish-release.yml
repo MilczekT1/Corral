@@ -36,6 +36,7 @@ jobs:
       cancel-in-progress: false
     permissions:
       contents: write
+      pull-requests: read
     steps:
       - name: Authorize triggerer
         if: github.event_name == 'workflow_dispatch'
@@ -180,7 +181,7 @@ jobs:
           git push origin "refs/tags/v$RELEASE_VERSION"
 
       # compile: a reactor module resolves its sibling only from target/classes or the local repository.
-      # No -DappendOutput: dependency:list overwrites per module, so each module writes its own file.
+      # Do not use -DappendOutput: dependency:list rewrites the file per module.
       - name: Generate release notes
         env:
           GH_TOKEN: ${{ github.token }}
@@ -190,6 +191,12 @@ jobs:
             exit 1
           fi
           ./mvnw -q -pl corral-sdk,corral-rules compile dependency:list -DincludeScope=runtime -DexcludeTransitive=true -DoutputFile='${project.build.directory}/deps.txt' ${{ env.MVN_CONFIG }}
+          for deps in corral-sdk/target/deps.txt corral-rules/target/deps.txt; do
+            if [[ ! -s "$deps" ]]; then
+              echo "::error::$deps is missing or empty; the consumer dependency list would be incomplete." >&2
+              exit 1
+            fi
+          done
           consumer_args=()
           while read -r artifact; do
             consumer_args+=(--consumer-artifact "$artifact")
@@ -200,7 +207,10 @@ jobs:
             echo "::error::Found no consumer-facing dependencies in corral-sdk and corral-rules." >&2
             exit 1
           fi
-          node .github/scripts/release-notes-cli.js --from "$previous" --to "$RELEASE_SHA" --repo "$GITHUB_REPOSITORY" "${consumer_args[@]}" > "$RUNNER_TEMP/release-notes.md"
+          if ! node .github/scripts/release-notes-cli.js --from "$previous" --to "$RELEASE_SHA" --repo "$GITHUB_REPOSITORY" "${consumer_args[@]}" > "$RUNNER_TEMP/release-notes.md"; then
+            echo "::warning::Release notes generation failed; falling back to --generate-notes" >&2
+            rm -f "$RUNNER_TEMP/release-notes.md"
+          fi
 
       - name: Create GitHub Release
         env:
@@ -209,5 +219,10 @@ jobs:
           if gh release view "v$RELEASE_VERSION" >/dev/null 2>&1; then
             echo "GitHub Release v$RELEASE_VERSION already exists."
           else
-            gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" --notes-file "$RUNNER_TEMP/release-notes.md" --verify-tag
+            if [[ -s "$RUNNER_TEMP/release-notes.md" ]]; then
+              notes_args=(--notes-file "$RUNNER_TEMP/release-notes.md")
+            else
+              notes_args=(--generate-notes)
+            fi
+            gh release create "v$RELEASE_VERSION" --title "v$RELEASE_VERSION" "${notes_args[@]}" --verify-tag
           fi
