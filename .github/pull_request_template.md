@@ -14,8 +14,11 @@
 - [ ] Examples cover **both** directions: something the rule must flag, and something it must leave
       alone — the same class may carry both
 - [ ] The [rules catalog](../docs/rules.md) matches `RuleRegistry` (maintained by hand)
+- [ ] Group membership, nesting or package changed → the title carries `!`
 
-If you did break either of the first two, describe the migration for existing consumers here:
+## Upgrade notes
+
+<!-- Required when the title has "!". What a consumer must change on upgrade. Delete this section otherwise. -->
 
 ## Checks
 
