@@ -100,7 +100,7 @@ test('New Rules splits grouped and standalone under their prefaces, marks (new)'
   const out = renderNotes(input({ added }));
   const g = 'Arrive in a group — they run on your next build if you wire that group. Existing violations are frozen as debt; commit the store change.';
   const s = 'Standalone — nothing changes until you wire them.';
-  assert.ok(out.includes(`${g}\n\n- \`corral.a.no-x\` — \`FooRulesGroup\` (new) #5\n- \`corral.a.no-y\` — \`BarRulesGroup\`\n\n${s}\n\n- \`corral.a.no-z\` — \`ZRule\` #6\n`));
+  assert.ok(out.includes(`${g}\n\n- \`corral.a.no-x\` — \`FooRulesGroup\` (new) #5\n- \`corral.a.no-y\` — \`BarRulesGroup\`\n\n${s}\n\n- \`corral.a.no-z\` #6\n`));
   const only = renderNotes(input({ added: [added[2]] }));
   assert.ok(!only.includes('Arrive in a group'));
 });

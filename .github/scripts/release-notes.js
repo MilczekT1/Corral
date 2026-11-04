@@ -44,10 +44,11 @@ function renderNotes({ prs, added, moved, removed, deprecations, consumerKeys })
     breaking.push(parts.join('\n\n'));
   }
 
-  const ruleLine = (a) => `- \`${a.id}\` — \`${a.placement}\`${a.newGroup ? ' (new)' : ''}${ref(a.pr)}`;
+  const groupedLine = (a) => `- \`${a.id}\` — \`${a.placement}\`${a.newGroup ? ' (new)' : ''}${ref(a.pr)}`;
+  const standaloneLine = (a) => `- \`${a.id}\`${ref(a.pr)}`;
   const newRules = [];
-  const grouped = added.filter((a) => !a.standalone).map(ruleLine);
-  const standalone = added.filter((a) => a.standalone).map(ruleLine);
+  const grouped = added.filter((a) => !a.standalone).map(groupedLine);
+  const standalone = added.filter((a) => a.standalone).map(standaloneLine);
   if (grouped.length) newRules.push(`${GROUPED_PREFACE}\n\n${grouped.join('\n')}`);
   if (standalone.length) newRules.push(`${STANDALONE_PREFACE}\n\n${standalone.join('\n')}`);
 
