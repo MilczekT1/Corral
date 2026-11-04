@@ -39,7 +39,7 @@ function grepFiles(ref, pattern, path) {
   }
 }
 
-const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const escapeRegex = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, String.raw`\$&`);
 
 function prOf(subject) {
   return subject === undefined ? null : prNumberOf(subject);
@@ -56,9 +56,9 @@ function main(args) {
       const pr = JSON.parse(run('gh', ['api', `repos/${repo}/pulls/${n}`]));
       return { number: pr.number, title: pr.title, body: pr.body || '', author: pr.user ? pr.user.login : 'ghost', bot: pr.user ? pr.user.type === 'Bot' : false };
     } catch (e) {
-      process.stderr.write(`::warning::Could not fetch PR #${n}; listing it by its commit subject under Internal\n`);
+      process.stderr.write(`::warning::Could not fetch PR #${n} (${e.message.split('\n')[0]}); listing it by its commit subject under Internal\n`);
       const subject = subjects.find((s) => prNumberOf(s) === n);
-      return { number: n, title: subject.replace(/\s*\(#\d+\)\s*$/, ''), body: '', author: null, bot: true };
+      return { number: n, title: subject.replace(/ \(#\d+\)$/, ''), body: '', author: null, bot: true };
     }
   });
 

@@ -1,5 +1,5 @@
 const ROW = /^\| `([^`]+)` \| `([^`]+)` \|/gm;
-const DEPRECATION = /supersededBy\(\s*"([^"]+)"\s*,(?:\s|\/\/[^\n]*)*"([^"]+)"/g;
+const DEPRECATION = /supersededBy\(\s*"([^"]+)"\s*,(?:\s|\/\/[^\n]*\n)*"([^"]+)"/g;
 
 function parseCatalog(rulesMd) {
   const rows = new Map();
@@ -11,7 +11,12 @@ function isStandalone(placement) {
   return placement.startsWith('ArchTests.in(');
 }
 
-const byId = (a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0);
+function codeUnitOrder(a, b) {
+  if (a < b) return -1;
+  return a > b ? 1 : 0;
+}
+
+const byId = (a, b) => codeUnitOrder(a.id, b.id);
 
 function diffCatalog(before, after) {
   const knownPlacements = new Set(before.values());
@@ -25,8 +30,8 @@ function diffCatalog(before, after) {
       moved.push({ id, from: before.get(id), to: placement });
     }
   }
-  const removed = [...before.keys()].filter((id) => !after.has(id)).sort();
-  return { added: added.sort(byId), moved: moved.sort(byId), removed };
+  const removed = [...before.keys()].filter((id) => !after.has(id)).toSorted(codeUnitOrder);
+  return { added: added.toSorted(byId), moved: moved.toSorted(byId), removed };
 }
 
 function parseDeprecations(javaSources) {

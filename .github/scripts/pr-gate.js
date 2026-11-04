@@ -1,11 +1,10 @@
 const fs = require('node:fs');
 const { parseTitle, upgradeNotes } = require('./pr-text');
 
-const RELEASE_BRANCH = /^release\//;
 const DEPENDABOT = 'dependabot[bot]';
 
 function gateErrors({ title, body, headRef, author }) {
-  if (RELEASE_BRANCH.test(headRef || '') || author === DEPENDABOT) return [];
+  if ((headRef || '').startsWith('release/') || author === DEPENDABOT) return [];
   const parsed = parseTitle(title);
   if (!parsed) {
     return [`PR title is not a Conventional Commit (type(scope)!: Subject): "${title}"`];

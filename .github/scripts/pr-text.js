@@ -8,7 +8,7 @@ function parseTitle(title) {
 
 function upgradeNotes(body) {
   if (!body) return null;
-  const lines = body.replace(/\r\n/g, '\n').split('\n');
+  const lines = body.replaceAll('\r\n', '\n').split('\n');
   const start = lines.findIndex((l) => /^##\s+upgrade notes\s*$/i.test(l));
   if (start < 0) return null;
   let fenced = false;
