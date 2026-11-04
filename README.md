@@ -200,7 +200,8 @@ that, depend on the SDK alone:
   <groupId>io.github.milczekt1</groupId>
   <artifactId>corral-sdk</artifactId>
   <version>0.3.0</version>
-  <scope>test</scope>
+  <scope>compile</scope>
+  <!-- <scope>test</scope> when the rules live in this project's tests, not in an artifact of rules -->
 </dependency>
 ```
 
