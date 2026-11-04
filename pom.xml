@@ -101,6 +101,7 @@
       ${project.build.directory}/coverage-reports/merged-test-coverage-report/jacoco.xml
     </sonar.coverage.jacoco.xmlReportPaths>
     <sonar.test.exclusions>**/fixtures/**</sonar.test.exclusions>
+    <sonar.coverage.exclusions>.github/scripts/**</sonar.coverage.exclusions>
 
     <jacoco.lineCoverage.minimum>0.75</jacoco.lineCoverage.minimum>
     <jacoco.branches.minimum>0.70</jacoco.branches.minimum>
