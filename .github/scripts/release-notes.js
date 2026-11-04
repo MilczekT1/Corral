@@ -1,5 +1,5 @@
 const { parseTitle, upgradeNotes } = require('./pr-text');
-const { bumpedKey } = require('./catalog');
+const { bumpedKey, isStandalone } = require('./catalog');
 
 const NO_NOTES = 'No upgrade notes were written for this change.';
 const BREAKING_OPENING = 'Corral is pre-1.0: a minor version may break. Each change below says what to do.';
@@ -7,6 +7,7 @@ const GROUPED_PREFACE = 'Arrive in a group — they run on your next build if yo
 const STANDALONE_PREFACE = 'Standalone — nothing changes until you wire them.';
 
 const ref = (pr) => (pr == null ? '' : ` #${pr}`);
+const placementName = (placement) => (isStandalone(placement) ? 'standalone' : `\`${placement}\``);
 
 function section(heading, body) {
   return body.length ? `${heading}\n\n${body.join('\n')}` : null;
@@ -37,7 +38,7 @@ function renderNotes({ prs, added, moved, removed, deprecations, consumerKeys })
       parts.push(`### ${p.subject} (#${p.pr.number})\n\n${upgradeNotes(p.pr.body) ?? NO_NOTES}`);
     }
     const moves = [
-      ...moved.map((m) => `- \`${m.id}\`: \`${m.from}\` → \`${m.to}\`${ref(m.pr)}`),
+      ...moved.map((m) => `- \`${m.id}\`: ${placementName(m.from)} → ${placementName(m.to)}${ref(m.pr)}`),
       ...removed.map((r) => `- \`${r.id}\` was removed from the catalog${ref(r.pr)}`),
     ];
     if (moves.length) parts.push(`### Catalog moves\n\n${moves.join('\n')}`);

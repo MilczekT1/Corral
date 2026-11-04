@@ -117,3 +117,14 @@ test('moves and removals open Breaking Changes without a ! PR and suppress their
   assert.ok(!out.includes('Regroup rules'));
   assert.ok(out.includes('- Other #10'));
 });
+
+test('a move to or from standalone names it standalone, not its wiring', () => {
+  const out = renderNotes(input({
+    moved: [
+      { id: 'corral.a.no-x', from: 'OldRulesGroup', to: 'ArchTests.in(NoXRule.class)', pr: 9 },
+      { id: 'corral.a.no-y', from: 'ArchTests.in(NoYRule.class)', to: 'NewRulesGroup', pr: null },
+    ],
+  }));
+  assert.ok(out.includes('- `corral.a.no-x`: `OldRulesGroup` → standalone #9\n'));
+  assert.ok(out.includes('- `corral.a.no-y`: standalone → `NewRulesGroup`\n'));
+});
