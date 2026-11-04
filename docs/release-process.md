@@ -54,8 +54,12 @@ The trigger allowlist is hardcoded in `.github/workflows/release.yml`,
 tag, sorted by their Conventional Commit type, with new rules and catalog moves taken from the diff
 of `docs/rules.md` between the two tags. The `pr_title_and_notes` check requires every PR title to be
 a Conventional Commit and, for a `!` title, an `## Upgrade notes` section in the PR body, which the
-notes print under Breaking Changes. Nesting a group in another group and moving a rule's package are
-not detected, so mark such a PR with `!`.
+notes print under Breaking Changes. Deprecations are read from `DeprecatedRule.supersededBy` in the
+sources. Nesting a group in another group and moving a group's or rule class's package are not
+detected, so mark such a PR with `!`.
+
+A GitHub-default notes page means the generator failed. Delete the GitHub Release and re-dispatch
+**Publish release** with the version.
 
 ## Snapshots
 

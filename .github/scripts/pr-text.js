@@ -11,7 +11,12 @@ function upgradeNotes(body) {
   const lines = body.replace(/\r\n/g, '\n').split('\n');
   const start = lines.findIndex((l) => /^##\s+upgrade notes\s*$/i.test(l));
   if (start < 0) return null;
-  const end = lines.findIndex((l, i) => i > start && l.startsWith('## '));
+  let fenced = false;
+  let end = -1;
+  for (let i = start + 1; i < lines.length; i++) {
+    if (/^(```|~~~)/.test(lines[i])) fenced = !fenced;
+    else if (!fenced && lines[i].startsWith('## ')) { end = i; break; }
+  }
   const section = lines.slice(start + 1, end < 0 ? undefined : end).join('\n');
   return section.replace(/<!--[\s\S]*?-->/g, '').trim() || null;
 }

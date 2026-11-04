@@ -52,14 +52,18 @@ function main(args) {
   const subjects = lines(git('log', '--reverse', '--format=%s', range));
   const numbers = [...new Set(subjects.map(prNumberOf).filter((n) => n !== null))];
   const prs = numbers.map((n) => {
-    const pr = JSON.parse(run('gh', ['api', `repos/${repo}/pulls/${n}`]));
-    return { number: pr.number, title: pr.title, body: pr.body || '', author: pr.user ? pr.user.login : 'ghost', bot: pr.user ? pr.user.type === 'Bot' : false };
+    try {
+      const pr = JSON.parse(run('gh', ['api', `repos/${repo}/pulls/${n}`]));
+      return { number: pr.number, title: pr.title, body: pr.body || '', author: pr.user ? pr.user.login : 'ghost', bot: pr.user ? pr.user.type === 'Bot' : false };
+    } catch (e) {
+      process.stderr.write(`::warning::Could not fetch PR #${n}; listing it by its commit subject under Internal\n`);
+      const subject = subjects.find((s) => prNumberOf(s) === n);
+      return { number: n, title: subject.replace(/\s*\(#\d+\)\s*$/, ''), body: '', author: null, bot: true };
+    }
   });
 
   const catalogAt = (ref) => parseCatalog(git('show', `${ref}:docs/rules.md`));
   const diff = diffCatalog(catalogAt(from), catalogAt(to));
-  const firstAdding = (id) =>
-    prOf(lines(git('log', '--reverse', '--format=%s', `-S\`${id}\``, range, '--', 'docs/rules.md'))[0]);
   const introducingPlacement = (id, placement) =>
     prOf(
       lines(
@@ -89,7 +93,7 @@ function main(args) {
 
   return renderNotes({
     prs,
-    added: diff.added.map((r) => ({ ...r, pr: firstAdding(r.id) })),
+    added: diff.added.map((r) => ({ ...r, pr: introducingPlacement(r.id, r.placement) })),
     moved: diff.moved.map((r) => ({ ...r, pr: introducingPlacement(r.id, r.to) })),
     removed: diff.removed.map((id) => ({ id, pr: lastRemoving(id) })),
     deprecations,

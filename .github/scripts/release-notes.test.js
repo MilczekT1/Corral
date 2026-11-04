@@ -72,7 +72,7 @@ test('bots are not contributors', () => {
   assert.ok(!out.includes('@dependabot'));
 });
 
-test('empty sections are omitted and order matches the Global Constraints list', () => {
+test('empty sections are omitted and the rest keep page order', () => {
   const out = renderNotes(input({
     prs: [
       pr(1, 'chore: Tidy'), pr(2, 'build: Bump x.version from 1 to 2'), pr(3, 'docs: Words'),
@@ -103,4 +103,17 @@ test('New Rules splits grouped and standalone under their prefaces, marks (new)'
   assert.ok(out.includes(`${g}\n\n- \`corral.a.no-x\` — \`FooRulesGroup\` (new) #5\n- \`corral.a.no-y\` — \`BarRulesGroup\`\n\n${s}\n\n- \`corral.a.no-z\` — \`ZRule\` #6\n`));
   const only = renderNotes(input({ added: [added[2]] }));
   assert.ok(!only.includes('Arrive in a group'));
+});
+
+test('moves and removals open Breaking Changes without a ! PR and suppress their PR elsewhere', () => {
+  const out = renderNotes(input({
+    prs: [pr(9, 'feat: Regroup rules'), pr(10, 'fix: Other')],
+    moved: [{ id: 'corral.a.no-x', from: 'OldRulesGroup', to: 'NewRulesGroup', pr: 9 }],
+    removed: [{ id: 'corral.a.no-gone', pr: null }],
+  }));
+  assert.ok(out.startsWith('## ⚠️ Breaking Changes\n\nCorral is pre-1.0: a minor version may break. Each change below says what to do.\n\n### Catalog moves\n\n'));
+  assert.ok(out.includes('- `corral.a.no-x`: `OldRulesGroup` → `NewRulesGroup` #9\n'));
+  assert.ok(out.includes('- `corral.a.no-gone` was removed from the catalog\n'));
+  assert.ok(!out.includes('Regroup rules'));
+  assert.ok(out.includes('- Other #10'));
 });

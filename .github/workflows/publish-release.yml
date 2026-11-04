@@ -157,29 +157,6 @@ jobs:
           done
           echo "skip=$all_exist" >> "$GITHUB_OUTPUT"
 
-      # The tree about to be uploaded has never been built on its own: the release PR's checks ran on
-      # the snapshot-bump commit above it.
-      - name: Verify release tree before publishing
-        if: steps.check_deployed.outputs.skip != 'true'
-        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
-
-      - name: Upload to Maven Central
-        if: steps.check_deployed.outputs.skip != 'true'
-        env:
-          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
-          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
-          MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
-          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
-          echo "Corral $RELEASE_VERSION is VALIDATED, not published. Press **Publish** at https://central.sonatype.com/publishing/deployments" >> "$GITHUB_STEP_SUMMARY"
-
-      - name: Tag release commit
-        if: steps.tag.outputs.exists != 'true'
-        run: |
-          git tag "v$RELEASE_VERSION" "$RELEASE_SHA"
-          git push origin "refs/tags/v$RELEASE_VERSION"
-
       # compile: a reactor module resolves its sibling only from target/classes or the local repository.
       # Do not use -DappendOutput: dependency:list rewrites the file per module.
       - name: Generate release notes
@@ -211,6 +188,29 @@ jobs:
             echo "::warning::Release notes generation failed; falling back to --generate-notes" >&2
             rm -f "$RUNNER_TEMP/release-notes.md"
           fi
+
+      # The tree about to be uploaded has never been built on its own: the release PR's checks ran on
+      # the snapshot-bump commit above it.
+      - name: Verify release tree before publishing
+        if: steps.check_deployed.outputs.skip != 'true'
+        run: ./mvnw clean verify ${{ env.MVN_CONFIG }}
+
+      - name: Upload to Maven Central
+        if: steps.check_deployed.outputs.skip != 'true'
+        env:
+          CENTRAL_TOKEN_USERNAME: ${{ secrets.CENTRAL_TOKEN_USERNAME }}
+          CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
+          MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
+        run: |
+          ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
+          echo "Corral $RELEASE_VERSION is VALIDATED, not published. Press **Publish** at https://central.sonatype.com/publishing/deployments" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Tag release commit
+        if: steps.tag.outputs.exists != 'true'
+        run: |
+          git tag "v$RELEASE_VERSION" "$RELEASE_SHA"
+          git push origin "refs/tags/v$RELEASE_VERSION"
 
       - name: Create GitHub Release
         env:

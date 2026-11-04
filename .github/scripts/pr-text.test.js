@@ -19,3 +19,6 @@ test('comment-only section is empty', () => assert.equal(
 test('null body', () => assert.equal(upgradeNotes(null), null));
 test('pr number from squash subject', () => assert.equal(prNumberOf('docs: Serve the badge (#198)'), 198));
 test('no pr number on release commit', () => assert.equal(prNumberOf('Release Corral 0.3.0'), null));
+
+test('a ## line inside a fenced block does not end the section', () =>
+  assert.equal(upgradeNotes('## Upgrade notes\n```\n## x\n```\nafter'), '```\n## x\n```\nafter'));
