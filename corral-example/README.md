@@ -137,7 +137,7 @@ HOW NOT TO FIX (always):
   - Do NOT set corral.ignore-patterns.fail=false to make that check go away. It exists to report the file above, so disarming it restores the silence rather than resolving it. That property is for a file you put there deliberately, for your own rules.
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.
   - Do NOT rename a class, field, or package solely to dodge a name-based rule (e.g. renaming FooIT so the integration-test rule stops matching).
-  - Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.
+  - Do NOT narrow @AnalyzeClasses packages or locations, or add ImportOptions, to remove code from the scan that no other architecture test checks.
   - Do NOT downgrade, remove, reword, or otherwise weaken the rule.
   - A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding one in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.
