@@ -37,6 +37,10 @@ public class AntiFixPolicy {
                     Do NOT narrow @AnalyzeClasses packages or locations, or add ImportOptions, to remove code\
                      from the scan, unless another architecture test runs the same rules on that code — as each\
                      module's own test does under CurrentModuleLocations.""",
+            """
+                    Do NOT move hand-written code under target/, build/ or out/, or list its directory in\
+                     corral.generated-sources, to take it out of the rules' scope. Only code a tool generates\
+                     belongs there.""",
             "Do NOT downgrade, remove, reword, or otherwise weaken the rule.",
             """
                     A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build\

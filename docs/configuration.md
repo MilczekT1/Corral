@@ -11,6 +11,7 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 | `corral.exclude.<rule-id>` | optional | In `corral.properties`, not `archunit.properties`. Removes the named rule from your build permanently; the value is the mandatory reason. See [Excluding a rule](excluding-a-rule.md). |
 | `corral.ignore-patterns.fail` | optional, defaults to `true` | In `corral.properties`, not `archunit.properties`; there is no system-property override. Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
+| `corral.generated-sources` | optional | In `corral.properties`. Comma-separated directories, relative to the module root, holding generated sources committed to the project. Classes compiled from them are not checked. See [Generated code](#generated-code). |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from
@@ -116,3 +117,28 @@ output — and nothing else, however the test is launched:
   `testFixtures` source set needs your own `com.tngtech.archunit.junit.LocationProvider`.
 - Switching an existing build to it narrows each module's scan to its own classes, so on the next
   run the store drops the sibling modules' violations it had recorded. Review that diff once.
+
+## Generated code
+
+Every Corral rule checks only the code you maintain. A class is checked when the source file it was
+compiled from is in its module's own directory tree. It is skipped when that file is only under
+`target/`, `build/` or `out/`, or in a directory listed in `corral.generated-sources`, or when the
+class records no source file at all. That covers the output of OpenAPI, protobuf, jOOQ, MapStruct
+and other generators in their default locations, with no configuration. The first rule that skips
+anything prints how many classes it skipped.
+
+- **Generated code committed under `src/`** looks hand-written. List its directories:
+
+  ```properties
+  corral.generated-sources=src/main/java/com/acme/jooq,\
+    src/main/generated
+  ```
+
+  A whole source root (`src`, `src/main`, `src/main/java`) is refused: it would skip everything.
+  Every listed directory is printed on every failure, as exclusions are.
+- **Members generated inside your own classes** — Lombok getters, record accessors, Kotlin
+  `data class` methods — are checked. They come from declarations you maintain.
+- **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.
+- **Hand-written sources outside the module directory** — a `build-helper` source root pointing at
+  `../shared/src` — are skipped as generated. Check the skipped count after adding one.
+- Upgrading drops the violations a store had recorded in generated code. Commit that diff.
