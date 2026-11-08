@@ -210,19 +210,32 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
 
     private static Optional<String> problemWithGeneratedSource(String entry) {
         List<String> segments = List.of(entry.split("/", -1));
-        if (entry.isEmpty() || entry.startsWith("/") || WINDOWS_DRIVE.matcher(entry).lookingAt()
-                || segments.contains("..") || segments.contains(".")
-                || segments.contains("")) {
+        int parents = 0;
+        while (parents < segments.size() && segments.get(parents).equals("..")) {
+            parents++;
+        }
+        List<String> below = segments.subList(parents, segments.size());
+        if (entry.isEmpty() || entry.startsWith("/") || WINDOWS_DRIVE.matcher(entry).lookingAt() || below.isEmpty()
+                || below.contains("..") || below.contains(".") || below.contains("")) {
             return Optional.of("'" + entry + "' is not a directory relative to the module root");
         }
-        // Case-insensitive: Windows and macOS file systems resolve SRC/Main/Java to src/main/java.
-        String language = segments.size() == 3 ? segments.get(2).toLowerCase(Locale.ROOT) : "";
-        boolean coversSourceRoot = segments.get(0).equalsIgnoreCase("src")
-                && (segments.size() < 3 || SOURCE_LANGUAGES.contains(language));
+        boolean coversSourceRoot = isSourceRoot(below) || (parents > 0 && isSourceRoot(below.subList(1, below.size())));
         return coversSourceRoot
                 ? Optional.of("'" + entry + "' would skip every hand-written class under it; list the directory"
                         + " the generator writes to")
                 : Optional.empty();
+    }
+
+    /**
+     * {@code src}, {@code src/<set>} or {@code src/<set>/<language>}, case-insensitive: Windows and macOS
+     * file systems resolve {@code SRC/Main/Java} to {@code src/main/java}.
+     */
+    private static boolean isSourceRoot(List<String> segments) {
+        if (segments.isEmpty() || !segments.get(0).equalsIgnoreCase("src")) {
+            return false;
+        }
+        return segments.size() < 3
+                || (segments.size() == 3 && SOURCE_LANGUAGES.contains(segments.get(2).toLowerCase(Locale.ROOT)));
     }
 
     /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */

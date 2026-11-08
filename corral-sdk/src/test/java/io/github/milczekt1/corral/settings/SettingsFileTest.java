@@ -144,15 +144,24 @@ class SettingsFileTest {
         assertEquals(List.of("src/main/generated"), settings.generatedSources(), settings::problem);
     }
 
+    @ParameterizedTest(name = "[{0}]")
+    @ValueSource(strings = {"../proto/build/generated", "../../shared/generated", "../gen/openapi/src/main/java"})
+    void aGeneratedSourceOutsideTheModuleIsAccepted(String entry) {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
+
+        assertFalse(settings.isBroken(), settings::problem);
+        assertEquals(List.of(entry), settings.generatedSources());
+    }
+
     @Test
     void noGeneratedSourcesWhenTheKeyIsAbsent() {
         assertEquals(List.of(), SettingsFile.parse("", SOURCE).generatedSources());
     }
 
     @ParameterizedTest(name = "[{0}]")
-    @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "../shared",
-            "gen/../src", ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java",
-            "C:/work/gen"})
+    @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "gen/../src",
+            ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java", "C:/work/gen",
+            "../src", "../shared/src", "../shared/src/main/java", "../../shared/SRC/Main/Java"})
     void aGeneratedSourceThatWouldSkipHandWrittenCodeBreaksTheFile(String entry) {
         SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
 

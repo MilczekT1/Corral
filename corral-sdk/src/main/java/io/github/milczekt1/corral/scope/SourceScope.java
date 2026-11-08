@@ -33,15 +33,15 @@ import lombok.experimental.UtilityClass;
 
 /**
  * Separates the code a consumer maintains from the code a tool generated for them. A class is
- * hand-written when the source file it was compiled from lies in its module's own tree; generated when
- * that file lies only under {@code target/}, {@code build/}, {@code out/} or a directory listed in
- * {@value CorralSettings#GENERATED_SOURCES}, or is found nowhere in that tree.
+ * generated when the source file it was compiled from lies only under its module's {@code target/},
+ * {@code build/} or {@code out/}, or in a directory listed in {@value CorralSettings#GENERATED_SOURCES};
+ * every other class is hand-written, including one whose source file is found nowhere.
  *
- * <p>A class whose module cannot be located — one from a jar, or from an output layout
- * {@link OutputLayout} does not recognise — counts as hand-written, and so does every class of a module
- * with no file in its tree. A class compiled without the {@code SourceFile} attribute is looked up by its
- * top-level name. Hand-written sources outside the module's directory, inside a nested module or under
- * a dot-directory are not seen, and their classes count as generated.
+ * <p>A class compiled without the {@code SourceFile} attribute is looked up by its top-level name, and
+ * counts as generated when no such file exists either. That is the one way a hand-written class drops
+ * out of scope: compiled without debug info, from sources outside the module or sharing another class's
+ * file. Classes from a jar, or from an output layout {@link OutputLayout} does not recognise, are
+ * hand-written.
  */
 @UtilityClass
 public class SourceScope {
@@ -93,16 +93,24 @@ public class SourceScope {
         if (sources.maintained().isEmpty()) {
             return true;
         }
-        List<String> fileNames = source.get().getFileName().map(List::of).orElseGet(() -> sourceNamesOf(javaClass));
+        Optional<String> recorded = source.get().getFileName();
+        List<String> fileNames = recorded.map(List::of).orElseGet(() -> sourceNamesOf(javaClass));
         List<Path> maintained = filesNamed(sources.maintained(), fileNames);
+        List<Path> generated = filesNamed(sources.generated(), fileNames);
         Path packageDirectory = packageDirectoryOf(javaClass);
         if (maintained.stream().anyMatch(file -> isIn(file, packageDirectory))) {
             return true;
         }
-        if (filesNamed(sources.generated(), fileNames).stream().anyMatch(file -> isIn(file, packageDirectory))) {
+        if (generated.stream().anyMatch(file -> isIn(file, packageDirectory))) {
             return false;
         }
-        return !maintained.isEmpty();
+        if (!maintained.isEmpty()) {
+            return true;
+        }
+        if (!generated.isEmpty()) {
+            return false;
+        }
+        return recorded.isPresent();
     }
 
     /** For a class compiled without the {@code SourceFile} attribute: the files its top-level name implies. */
@@ -168,8 +176,8 @@ public class SourceScope {
             if (skipped > 0 && printedThisRun.compareAndSet(false, true)) {
                 sink.accept("checking hand-written code only; skipped " + skipped + " generated class"
                         + (skipped == 1 ? "" : "es") + " in this scan: compiled from sources under target/,"
-                        + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or whose source file is not"
-                        + " in the module's own tree.");
+                        + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or recording no source file"
+                        + " that could be found.");
             }
             return handWritten;
         }
@@ -204,8 +212,14 @@ public class SourceScope {
             Map<String, List<Path>> generated = new ConcurrentHashMap<>();
             Set<Path> generatedRoots = new HashSet<>();
             BUILD_DIRECTORIES.forEach(name -> generatedRoots.add(key.root().resolve(name)));
-            key.generatedSources().forEach(directory -> generatedRoots.add(key.root().resolve(directory)));
+            List<Path> outsideTheModule = new ArrayList<>();
+            for (String directory : key.generatedSources()) {
+                Path configured = key.root().resolve(directory).normalize();
+                (configured.startsWith(key.root()) ? generatedRoots : outsideTheModule).add(configured);
+            }
             walk(key.root(), generatedRoots, maintained, generated);
+            outsideTheModule.forEach(directory -> walk(directory, Set.of(directory), new ConcurrentHashMap<>(),
+                    generated));
             return new ModuleSources(maintained, generated);
         }
 
@@ -220,15 +234,15 @@ public class SourceScope {
 
                     @Override
                     public FileVisitResult preVisitDirectory(Path directory, BasicFileAttributes attributes) {
+                        if (generatedRoot == null && generatedRoots.contains(directory)) {
+                            generatedRoot = directory;
+                            into = generated;
+                        }
                         if (directory.equals(root)) {
                             return FileVisitResult.CONTINUE;
                         }
                         if (directory.getFileName().toString().startsWith(".") || isNestedModule(directory)) {
                             return FileVisitResult.SKIP_SUBTREE;
-                        }
-                        if (generatedRoot == null && generatedRoots.contains(directory)) {
-                            generatedRoot = directory;
-                            into = generated;
                         }
                         return FileVisitResult.CONTINUE;
                     }

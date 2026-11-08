@@ -139,7 +139,7 @@ HOW NOT TO FIX (always):
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.
   - Do NOT rename a class, field, or package solely to dodge a name-based rule (e.g. renaming FooIT so the integration-test rule stops matching).
   - Do NOT narrow @AnalyzeClasses packages or locations, or add ImportOptions, to remove code from the scan, unless another architecture test runs the same rules on that code — as each module's own test does under CurrentModuleLocations.
-  - Do NOT move hand-written code under target/, build/, out/, a dot-directory or outside the module, add a build file beside it, or list its directory in corral.generated-sources, to take it out of the rules' scope. Only code a tool generates belongs there.
+  - Do NOT move hand-written code under target/, build/ or out/, list its directory in corral.generated-sources, or compile it without debug info, to take it out of the rules' scope. Only code a tool generates belongs there.
   - Do NOT downgrade, remove, reword, or otherwise weaken the rule.
   - A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding one in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.

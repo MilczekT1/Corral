@@ -11,7 +11,7 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 | `corral.exclude.<rule-id>` | optional | In `corral.properties`, not `archunit.properties`. Removes the named rule from your build permanently; the value is the mandatory reason. See [Excluding a rule](excluding-a-rule.md). |
 | `corral.ignore-patterns.fail` | optional, defaults to `true` | In `corral.properties`, not `archunit.properties`; there is no system-property override. Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
-| `corral.generated-sources` | optional | In `corral.properties`. Comma-separated directories, relative to the module root, holding generated sources committed to the project. Classes compiled from them are not checked. See [Generated code](#generated-code). |
+| `corral.generated-sources` | optional | In `corral.properties`. Comma-separated directories, relative to the module root (`../` allowed), holding generated sources outside `target/`, `build/` and `out/`. Classes compiled from them are not checked. See [Generated code](#generated-code). |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from
@@ -120,28 +120,29 @@ output — and nothing else, however the test is launched:
 
 ## Generated code
 
-Every Corral rule checks only the code you maintain. A class is checked when the source file it was
-compiled from is in its module's own directory tree. It is skipped when that file is only under the
-module's `target/`, `build/` or `out/` directory or a directory listed in `corral.generated-sources`,
-or is not in the module's tree at all. A package named `build` deeper down is unaffected. That covers the output of OpenAPI, protobuf, jOOQ, MapStruct
-and other generators in their default locations, with no configuration. The first rule that skips
-anything prints how many classes it skipped.
+Every Corral rule checks only the code you maintain. A class is skipped when the source file it was
+compiled from is only under the module's `target/`, `build/` or `out/` directory, or in a directory
+listed in `corral.generated-sources`. Every other class is checked, including one whose source file
+Corral cannot find. A package named `build` deeper down is unaffected. That covers the output of
+OpenAPI, protobuf, jOOQ, MapStruct and other generators in their default locations, with no
+configuration. The first rule that skips anything prints how many classes it skipped.
 
 - **Generated code committed to the module**, anywhere outside those three directories, looks
-  hand-written. List its directories:
+  hand-written. List its directories, relative to the module root; `../` reaches generated sources
+  another module or a shared folder holds:
 
   ```properties
   corral.generated-sources=src/main/java/com/acme/jooq,\
-    src/main/generated
+    ../proto/build/generated
   ```
 
-  A whole source root (`src`, `src/main`, `src/main/java`) is refused: it would skip everything.
-  Every listed directory is printed on every failure, as exclusions are.
+  A source root (`src`, `src/main`, `src/main/java`, or the same below `../<module>/`) is refused: it
+  would skip everything. Every listed directory is printed on every failure, as exclusions are.
 - **Members generated inside your own classes** — Lombok getters, record accessors, Kotlin
   `data class` methods — are checked. They come from declarations you maintain.
 - **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.
-- **Hand-written sources Corral cannot see** are skipped as generated: a source root outside the module
-  directory (a `build-helper` source pointing at `../shared/src`), one under a dot-directory, or one
-  inside a directory holding its own `pom.xml`, `build.gradle` or `build.gradle.kts`. Check the
-  skipped count after adding one.
+- **A class compiled without debug info** (`-g:none`) records no source file. Corral looks for a file
+  named after its top-level class and skips the class when none exists, so a hand-written class
+  compiled that way from sources outside the module, or a second top-level class sharing another
+  class's file, is not checked.
 - Upgrading drops the violations a store had recorded in generated code. Commit that diff.

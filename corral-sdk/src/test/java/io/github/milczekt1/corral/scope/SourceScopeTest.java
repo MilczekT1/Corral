@@ -85,10 +85,37 @@ class SourceScopeTest {
     }
 
     @Test
-    void aClassWithNoSourceFileAnywhereIsGenerated() throws IOException {
+    void aClassWhoseRecordedSourceIsFoundNowhereIsChecked() throws IOException {
         plantOther();
 
+        assertTrue(handWritten("target/classes"));
+    }
+
+    @Test
+    void aClassRecordingNoSourceFileThatMatchesNothingIsGenerated() throws IOException {
+        plantOther();
+        JavaClass compiled = compileWithoutSourceFileAttribute("scratch");
+        Files.delete(module.resolve("scratch/com/acme/NoDebugInfo.java"));
+
+        assertFalse(SourceScope.isHandWritten(compiled, List.of()));
+    }
+
+    @Test
+    void aGeneratedFileInADirectoryNotMatchingItsPackageIsGenerated() throws IOException {
+        plantOther();
+        plant("target/generated-sources/kotlin/flat");
+
         assertFalse(handWritten("target/classes"));
+    }
+
+    @Test
+    void aConfiguredDirectoryOutsideTheModuleHoldsGeneratedSources() throws IOException {
+        Files.createFile(Files.createDirectories(module.resolve("app/src/main/java/com/acme")).resolve("Other.java"));
+        plant("proto/build/generated/source/proto/main/java/" + PACKAGE_DIR);
+        JavaClass fixture = importFrom("app/target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
+
+        assertFalse(SourceScope.isHandWritten(fixture, List.of("../proto/build/generated")));
+        assertTrue(SourceScope.isHandWritten(fixture, List.of()), "found nowhere without the setting, so checked");
     }
 
     @Test
@@ -102,13 +129,13 @@ class SourceScopeTest {
     }
 
     @Test
-    void nestedModulesAndDotDirectoriesAreNotTheModulesSources() throws IOException {
+    void aSourceCorralCannotSeeIsStillChecked() throws IOException {
         plantOther();
         Files.createFile(Files.createDirectories(module.resolve("child")).resolve("pom.xml"));
         plant("child/src/main/java/" + PACKAGE_DIR);
         plant(".history/src/main/java/" + PACKAGE_DIR);
 
-        assertFalse(handWritten("target/classes"));
+        assertTrue(handWritten("target/classes"));
     }
 
     @Test
@@ -163,6 +190,7 @@ class SourceScopeTest {
     @Test
     void theSkippedCountIsPrintedOncePerRun() throws IOException {
         plantOther();
+        plant("target/generated-sources/annotations/" + PACKAGE_DIR);
         JavaClasses imported = importFrom("target/classes", RelocatedFixture.class);
         AtomicBoolean printedThisRun = new AtomicBoolean();
         List<String> printed = new ArrayList<>();
