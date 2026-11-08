@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
@@ -13,11 +14,14 @@ import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.fixtures.source.RelocatedFixture;
 import java.io.IOException;
 import java.io.InputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermissions;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.tools.ToolProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -170,6 +174,47 @@ class SourceScopeTest {
     }
 
     @Test
+    void aClassCompiledWithoutTheSourceFileAttributeIsFoundByItsTopLevelName() throws IOException {
+        JavaClass compiled = compileWithoutSourceFileAttribute("src/main/java");
+
+        assertTrue(compiled.getSource().flatMap(source -> source.getFileName()).isEmpty(),
+                "precondition: -g:lines,vars must drop the SourceFile attribute");
+        assertTrue(SourceScope.isHandWritten(compiled, List.of()));
+    }
+
+    @Test
+    void aClassCompiledWithoutTheSourceFileAttributeFromGeneratedSourcesIsGenerated() throws IOException {
+        plantOther();
+
+        assertFalse(SourceScope.isHandWritten(compileWithoutSourceFileAttribute("target/generated-sources/x"),
+                List.of()));
+    }
+
+    @Test
+    void symlinkedSourcesAreFollowed(@TempDir Path elsewhere) throws IOException {
+        Path realSources = Files.createDirectories(elsewhere.resolve("java/" + PACKAGE_DIR));
+        Files.createFile(realSources.resolve(SOURCE_FILE));
+        Files.createDirectories(module.resolve("src/main"));
+        Files.createSymbolicLink(module.resolve("src/main/java"), elsewhere.resolve("java"));
+        Files.createSymbolicLink(module.resolve("src/main/loop"), module.resolve("src"));
+
+        assertTrue(handWritten("target/classes"));
+    }
+
+    @Test
+    void anUnreadableDirectoryIsSkippedRatherThanFailingEveryRule() throws IOException {
+        assumeTrue(FileSystems.getDefault().supportedFileAttributeViews().contains("posix"));
+        plant("src/main/java/" + PACKAGE_DIR);
+        Path locked = Files.createDirectories(module.resolve("docker-data/pg"));
+        Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("---------"));
+        try {
+            assertTrue(handWritten("target/classes"));
+        } finally {
+            Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("rwx------"));
+        }
+    }
+
+    @Test
     void pinsThePredicateDescription() {
         assertEquals("hand-written classes", SourceScope.HAND_WRITTEN.getDescription());
     }
@@ -186,6 +231,17 @@ class SourceScopeTest {
     private void plantOther() throws IOException {
         Path other = Files.createDirectories(module.resolve("src/main/java/com/acme"));
         Files.createFile(other.resolve("Other.java"));
+    }
+
+    /** {@code com.acme.NoDebugInfo}, its source planted under {@code sourceRoot}. */
+    private JavaClass compileWithoutSourceFileAttribute(String sourceRoot) throws IOException {
+        Path source = Files.createDirectories(module.resolve(sourceRoot + "/com/acme")).resolve("NoDebugInfo.java");
+        Files.writeString(source, "package com.acme; public class NoDebugInfo {}");
+        Path output = Files.createDirectories(module.resolve("target/classes"));
+        int exit = ToolProvider.getSystemJavaCompiler().run(null, null, null,
+                "-g:lines,vars", "-d", output.toString(), source.toString());
+        assertEquals(0, exit, "javac failed");
+        return new ClassFileImporter().importPath(output).get("com.acme.NoDebugInfo");
     }
 
     private JavaClasses importFrom(String output, Class<?>... fixtures) throws IOException {

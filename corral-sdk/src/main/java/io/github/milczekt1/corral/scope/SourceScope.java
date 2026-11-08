@@ -12,12 +12,14 @@ import io.github.milczekt1.corral.settings.CorralSettings;
 import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.nio.file.FileVisitOption;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -33,17 +35,20 @@ import lombok.experimental.UtilityClass;
  * Separates the code a consumer maintains from the code a tool generated for them. A class is
  * hand-written when the source file it was compiled from lies in its module's own tree; generated when
  * that file lies only under {@code target/}, {@code build/}, {@code out/} or a directory listed in
- * {@value CorralSettings#GENERATED_SOURCES}, or when it records no source file at all.
+ * {@value CorralSettings#GENERATED_SOURCES}, or is found nowhere in that tree.
  *
- * <p>A class whose module cannot be located — one from a jar, or from an output layout {@link OutputLayout}
- * does not recognise — counts as hand-written, and so does every class of a module with no source file
- * in its tree. Misjudging a class therefore only ever checks more, except for hand-written sources kept
- * outside the module's directory, which count as generated.
+ * <p>A class whose module cannot be located — one from a jar, or from an output layout
+ * {@link OutputLayout} does not recognise — counts as hand-written, and so does every class of a module
+ * with no file in its tree. A class compiled without the {@code SourceFile} attribute is looked up by its
+ * top-level name. Hand-written sources outside the module's directory, inside a nested module or under
+ * a dot-directory are not seen, and their classes count as generated.
  */
 @UtilityClass
 public class SourceScope {
 
     private static final Set<String> BUILD_DIRECTORIES = Set.of("target", "build", "out");
+
+    private static final List<String> SOURCE_EXTENSIONS = List.of(".java", ".kt", ".groovy", ".scala");
 
     private static final Set<String> BUILD_FILES = Set.of("pom.xml", "build.gradle", "build.gradle.kts");
 
@@ -88,20 +93,33 @@ public class SourceScope {
         if (sources.maintained().isEmpty()) {
             return true;
         }
-        Optional<String> fileName = source.get().getFileName();
-        if (fileName.isEmpty()) {
-            return false;
-        }
-        List<Path> maintained = sources.maintained().getOrDefault(fileName.get(), List.of());
+        List<String> fileNames = source.get().getFileName().map(List::of).orElseGet(() -> sourceNamesOf(javaClass));
+        List<Path> maintained = filesNamed(sources.maintained(), fileNames);
         Path packageDirectory = packageDirectoryOf(javaClass);
         if (maintained.stream().anyMatch(file -> isIn(file, packageDirectory))) {
             return true;
         }
-        if (sources.generated().getOrDefault(fileName.get(), List.of()).stream()
-                .anyMatch(file -> isIn(file, packageDirectory))) {
+        if (filesNamed(sources.generated(), fileNames).stream().anyMatch(file -> isIn(file, packageDirectory))) {
             return false;
         }
         return !maintained.isEmpty();
+    }
+
+    /** For a class compiled without the {@code SourceFile} attribute: the files its top-level name implies. */
+    private static List<String> sourceNamesOf(JavaClass javaClass) {
+        String packageName = javaClass.getPackageName();
+        String binaryName = javaClass.getName().substring(packageName.isEmpty() ? 0 : packageName.length() + 1);
+        String topLevel = binaryName.split("\\$", 2)[0];
+        List<String> names = new ArrayList<>();
+        SOURCE_EXTENSIONS.forEach(extension -> names.add(topLevel + extension));
+        if (topLevel.endsWith("Kt")) {
+            names.add(topLevel.substring(0, topLevel.length() - 2) + ".kt");
+        }
+        return names;
+    }
+
+    private static List<Path> filesNamed(Map<String, List<Path>> index, List<String> fileNames) {
+        return fileNames.stream().flatMap(name -> index.getOrDefault(name, List.of()).stream()).toList();
     }
 
     private static Optional<Path> outputRootOf(Path classFile, JavaClass javaClass) {
@@ -178,7 +196,7 @@ public class SourceScope {
         }
     }
 
-    /** Source files by file name; class files are not indexed. */
+    /** Every file of the module but class files, by file name. */
     private record ModuleSources(Map<String, List<Path>> maintained, Map<String, List<Path>> generated) {
 
         static ModuleSources index(ModuleKey key) {
@@ -194,7 +212,8 @@ public class SourceScope {
         private static void walk(Path root, Set<Path> generatedRoots,
                 Map<String, List<Path>> maintained, Map<String, List<Path>> generated) {
             try {
-                Files.walkFileTree(root, new SimpleFileVisitor<>() {
+                Files.walkFileTree(root, EnumSet.of(FileVisitOption.FOLLOW_LINKS), Integer.MAX_VALUE,
+                        new SimpleFileVisitor<>() {
 
                     private Map<String, List<Path>> into = maintained;
                     private Path generatedRoot;
@@ -220,6 +239,12 @@ public class SourceScope {
                         if (!name.endsWith(".class")) {
                             into.computeIfAbsent(name, ignored -> new ArrayList<>()).add(file);
                         }
+                        return FileVisitResult.CONTINUE;
+                    }
+
+                    /** An unreadable directory or a symlink loop is skipped, never a reason to fail. */
+                    @Override
+                    public FileVisitResult visitFileFailed(Path file, IOException e) {
                         return FileVisitResult.CONTINUE;
                     }
 
