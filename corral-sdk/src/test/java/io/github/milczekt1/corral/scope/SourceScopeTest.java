@@ -288,8 +288,10 @@ class SourceScopeTest {
         JavaClass fixture =
                 importFrom("parent/child/target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
 
+        List<String> backOntoItsOwnSources = List.of("../../parent/child/src/main/java");
+
         IllegalStateException thrown = assertThrows(IllegalStateException.class,
-                () -> SourceScope.isMaintained(fixture, List.of("../../parent/child/src/main/java")));
+                () -> SourceScope.isMaintained(fixture, backOntoItsOwnSources));
 
         assertTrue(thrown.getMessage().contains("../../parent/child/src/main/java"), thrown.getMessage());
     }
