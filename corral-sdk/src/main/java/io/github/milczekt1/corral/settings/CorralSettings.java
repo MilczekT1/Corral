@@ -22,6 +22,12 @@ public class CorralSettings {
 
     public static final String IGNORE_PATTERNS_FAIL = "corral.ignore-patterns.fail";
 
+    /**
+     * Comma-separated directories, relative to the module root, holding generated sources a rule must
+     * not check.
+     */
+    public static final String GENERATED_SOURCES = "corral.generated-sources";
+
     /** Followed by a rule id; the value is the reason the rule does not apply here. */
     public static final String EXCLUDE_PREFIX = "corral.exclude.";
 

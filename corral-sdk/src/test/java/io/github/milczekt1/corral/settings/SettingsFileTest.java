@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.settings;
 
 import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
 import static io.github.milczekt1.corral.settings.CorralSettings.FILE;
+import static io.github.milczekt1.corral.settings.CorralSettings.GENERATED_SOURCES;
 import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -17,6 +18,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarEntry;
@@ -121,6 +123,33 @@ class SettingsFileTest {
 
         assertTrue(settings.isBroken(), () -> prefix + " was accepted");
         assertTrue(settings.problem().contains(PROPERTY_PREFIX), settings::problem);
+    }
+
+    @Test
+    void generatedSourcesAreACommaSeparatedList() {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + """
+                = src/main/generated, gen/openapi/ ,\
+                  src/main/java/com/acme/jooq
+                """, SOURCE);
+
+        assertFalse(settings.isBroken(), settings::problem);
+        assertEquals(List.of("src/main/generated", "gen/openapi", "src/main/java/com/acme/jooq"),
+                settings.generatedSources());
+    }
+
+    @Test
+    void noGeneratedSourcesWhenTheKeyIsAbsent() {
+        assertEquals(List.of(), SettingsFile.parse("", SOURCE).generatedSources());
+    }
+
+    @ParameterizedTest(name = "[{0}]")
+    @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "../shared",
+            "gen/../src", ".", "gen,,other"})
+    void aGeneratedSourceThatWouldSkipHandWrittenCodeBreaksTheFile(String entry) {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
+
+        assertTrue(settings.isBroken(), () -> "[" + entry + "] was accepted");
+        assertTrue(settings.problem().contains(GENERATED_SOURCES), settings::problem);
     }
 
     @Test
