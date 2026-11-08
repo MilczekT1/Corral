@@ -16,6 +16,8 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("rename"), "must forbid renaming to dodge name-based rules");
         assertTrue(all.contains("@analyzeclasses"), "must forbid narrowing the scan");
         assertTrue(all.contains("locations"), "must forbid narrowing the scan's locations");
+        assertTrue(all.contains("same rules"),
+                "narrowing is legitimate only when another test runs the same rules on that code");
         assertTrue(all.contains("importoption"), "must forbid hiding code with ImportOptions");
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
     }
