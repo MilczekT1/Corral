@@ -41,10 +41,10 @@ class SourceScopeTest {
     @ParameterizedTest(name = "{0}")
     @ValueSource(strings = {"target/classes", "target/test-classes", "build/classes/java/main", "build/classes/test",
             "out/production/app"})
-    void aClassWhoseSourceIsInTheModulesTreeIsHandWritten(String output) throws IOException {
+    void aClassWhoseSourceIsInTheModulesTreeIsMaintained(String output) throws IOException {
         plant("src/main/java/" + PACKAGE_DIR);
 
-        assertTrue(handWritten(output));
+        assertTrue(fixtureIsMaintained(output));
     }
 
     @ParameterizedTest(name = "{0}")
@@ -56,7 +56,7 @@ class SourceScopeTest {
         plantOther();
         plant(generatedRoot + "/" + PACKAGE_DIR);
 
-        assertFalse(handWritten("target/classes"));
+        assertFalse(fixtureIsMaintained("target/classes"));
     }
 
     @Test
@@ -66,29 +66,29 @@ class SourceScopeTest {
 
         JavaClasses imported = importFrom("target/classes", RelocatedFixture.class, RelocatedFixture.Inner.class);
 
-        assertFalse(SourceScope.isHandWritten(imported.get(RelocatedFixture.Inner.class), List.of()));
+        assertFalse(SourceScope.isMaintained(imported.get(RelocatedFixture.Inner.class), List.of()));
     }
 
     @Test
-    void aGeneratedFileAtThePackagePathWinsOverAHandWrittenNamesakeElsewhere() throws IOException {
+    void aGeneratedFileAtThePackagePathWinsOverAMaintainedNamesakeElsewhere() throws IOException {
         plant("src/main/java/com/acme/domain");
         plant("target/generated-sources/openapi/src/main/java/" + PACKAGE_DIR);
 
-        assertFalse(handWritten("target/classes"));
+        assertFalse(fixtureIsMaintained("target/classes"));
     }
 
     @Test
-    void aHandWrittenFileInADirectoryNotMatchingItsPackageIsStillHandWritten() throws IOException {
+    void aMaintainedFileInADirectoryNotMatchingItsPackageIsStillMaintained() throws IOException {
         plant("src/main/kotlin/source");
 
-        assertTrue(handWritten("target/classes"));
+        assertTrue(fixtureIsMaintained("target/classes"));
     }
 
     @Test
     void aClassWhoseRecordedSourceIsFoundNowhereIsChecked() throws IOException {
         plantOther();
 
-        assertTrue(handWritten("target/classes"));
+        assertTrue(fixtureIsMaintained("target/classes"));
     }
 
     @Test
@@ -97,7 +97,7 @@ class SourceScopeTest {
         JavaClass compiled = compileWithoutSourceFileAttribute("scratch");
         Files.delete(module.resolve("scratch/com/acme/NoDebugInfo.java"));
 
-        assertFalse(SourceScope.isHandWritten(compiled, List.of()));
+        assertFalse(SourceScope.isMaintained(compiled, List.of()));
     }
 
     @Test
@@ -105,7 +105,7 @@ class SourceScopeTest {
         plantOther();
         plant("target/generated-sources/kotlin/flat");
 
-        assertFalse(handWritten("target/classes"));
+        assertFalse(fixtureIsMaintained("target/classes"));
     }
 
     @Test
@@ -114,8 +114,8 @@ class SourceScopeTest {
         plant("proto/build/generated/source/proto/main/java/" + PACKAGE_DIR);
         JavaClass fixture = importFrom("app/target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
 
-        assertFalse(SourceScope.isHandWritten(fixture, List.of("../proto/build/generated")));
-        assertTrue(SourceScope.isHandWritten(fixture, List.of()), "found nowhere without the setting, so checked");
+        assertFalse(SourceScope.isMaintained(fixture, List.of("../proto/build/generated")));
+        assertTrue(SourceScope.isMaintained(fixture, List.of()), "found nowhere without the setting, so checked");
     }
 
     @Test
@@ -124,8 +124,8 @@ class SourceScopeTest {
         plant("src/main/generated/" + PACKAGE_DIR);
         JavaClass fixture = importFrom("target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
 
-        assertFalse(SourceScope.isHandWritten(fixture, List.of("src/main/generated")));
-        assertTrue(SourceScope.isHandWritten(fixture, List.of("src/main/other")));
+        assertFalse(SourceScope.isMaintained(fixture, List.of("src/main/generated")));
+        assertTrue(SourceScope.isMaintained(fixture, List.of("src/main/other")));
     }
 
     @Test
@@ -135,37 +135,37 @@ class SourceScopeTest {
         plant("child/src/main/java/" + PACKAGE_DIR);
         plant(".history/src/main/java/" + PACKAGE_DIR);
 
-        assertTrue(handWritten("target/classes"));
+        assertTrue(fixtureIsMaintained("target/classes"));
     }
 
     @Test
     void aModuleWithoutAnySourceFileIsCheckedWhole() throws IOException {
-        assertTrue(handWritten("build/classes/java/main"));
+        assertTrue(fixtureIsMaintained("build/classes/java/main"));
     }
 
     @Test
     void aClassOutsideARecognisedOutputIsChecked() throws IOException {
         plantOther();
 
-        assertTrue(handWritten("lib/classes"));
+        assertTrue(fixtureIsMaintained("lib/classes"));
     }
 
     @Test
     void aClassFromAJarIsChecked() {
         JavaClass fromJar = new ClassFileImporter().importClass(Test.class);
 
-        assertTrue(SourceScope.isHandWritten(fromJar, List.of()), fromJar.getSource()::toString);
+        assertTrue(SourceScope.isMaintained(fromJar, List.of()), fromJar.getSource()::toString);
     }
 
     @Test
-    void aFilteredRuleSeesOnlyHandWrittenClasses() throws IOException {
+    void aFilteredRuleSeesOnlyMaintainedClasses() throws IOException {
         plantOther();
         plant("target/generated-sources/openapi/" + PACKAGE_DIR);
         JavaClasses imported = importFrom("target/classes", RelocatedFixture.class);
         List<String> printed = new ArrayList<>();
 
         ArchRule filtered =
-                SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add);
+                SourceScope.maintainedOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add);
 
         assertFalse(filtered.evaluate(imported).hasViolation());
         assertTrue(NAMING_THE_FIXTURE.evaluate(imported).hasViolation(), "the unfiltered rule must flag the fixture");
@@ -174,12 +174,12 @@ class SourceScopeTest {
     }
 
     @Test
-    void aFilteredRuleStillFlagsHandWrittenClasses() throws IOException {
+    void aFilteredRuleStillFlagsMaintainedClasses() throws IOException {
         plant("src/main/java/" + PACKAGE_DIR);
         List<String> printed = new ArrayList<>();
 
         ArchRule filtered =
-                SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add)
+                SourceScope.maintainedOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add)
                         .as("renamed").because("kept");
 
         assertTrue(filtered.evaluate(importFrom("target/classes", RelocatedFixture.class)).hasViolation());
@@ -195,8 +195,8 @@ class SourceScopeTest {
         AtomicBoolean printedThisRun = new AtomicBoolean();
         List<String> printed = new ArrayList<>();
 
-        SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
-        SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
+        SourceScope.maintainedOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
+        SourceScope.maintainedOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
 
         assertEquals(1, printed.size(), printed::toString);
     }
@@ -207,14 +207,14 @@ class SourceScopeTest {
 
         assertTrue(compiled.getSource().flatMap(source -> source.getFileName()).isEmpty(),
                 "precondition: -g:lines,vars must drop the SourceFile attribute");
-        assertTrue(SourceScope.isHandWritten(compiled, List.of()));
+        assertTrue(SourceScope.isMaintained(compiled, List.of()));
     }
 
     @Test
     void aClassCompiledWithoutTheSourceFileAttributeFromGeneratedSourcesIsGenerated() throws IOException {
         plantOther();
 
-        assertFalse(SourceScope.isHandWritten(compileWithoutSourceFileAttribute("target/generated-sources/x"),
+        assertFalse(SourceScope.isMaintained(compileWithoutSourceFileAttribute("target/generated-sources/x"),
                 List.of()));
     }
 
@@ -226,7 +226,7 @@ class SourceScopeTest {
         Files.createSymbolicLink(module.resolve("src/main/java"), elsewhere.resolve("java"));
         Files.createSymbolicLink(module.resolve("src/main/loop"), module.resolve("src"));
 
-        assertTrue(handWritten("target/classes"));
+        assertTrue(fixtureIsMaintained("target/classes"));
     }
 
     @Test
@@ -236,7 +236,7 @@ class SourceScopeTest {
         Path locked = Files.createDirectories(module.resolve("docker-data/pg"));
         Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("---------"));
         try {
-            assertTrue(handWritten("target/classes"));
+            assertTrue(fixtureIsMaintained("target/classes"));
         } finally {
             Files.setPosixFilePermissions(locked, PosixFilePermissions.fromString("rwx------"));
         }
@@ -244,11 +244,11 @@ class SourceScopeTest {
 
     @Test
     void pinsThePredicateDescription() {
-        assertEquals("hand-written classes", SourceScope.HAND_WRITTEN.getDescription());
+        assertEquals("maintained classes", SourceScope.MAINTAINED.getDescription());
     }
 
-    private boolean handWritten(String output) throws IOException {
-        return SourceScope.isHandWritten(importFrom(output, RelocatedFixture.class).get(RelocatedFixture.class),
+    private boolean fixtureIsMaintained(String output) throws IOException {
+        return SourceScope.isMaintained(importFrom(output, RelocatedFixture.class).get(RelocatedFixture.class),
                 List.of());
     }
 

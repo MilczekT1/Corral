@@ -50,7 +50,7 @@ public interface DocumentedRule {
      * <p>The one place every rule class reaches, so {@link IgnorePatternsGuard},
      * {@link RuleExclusions} and the run-wide {@link FirstEvaluationWarning}s hook in here.
      *
-     * <p>Order matters. {@link SourceScope#handWrittenOnly} is innermost, so generated classes never
+     * <p>Order matters. {@link SourceScope#maintainedOnly} is innermost, so generated classes never
      * reach the rule or the store. A base package that matches no imported class fails inside the freeze, before
      * the store can record the rule's debt as resolved. The run-wide warnings sit inside the freeze, so the result stays a
      * {@link FreezingArchRule} that a test can hand a store with {@code persistIn}. A missing required
@@ -61,7 +61,7 @@ public interface DocumentedRule {
     default ArchRule guard() {
         RuleRegistry.register(doc());
         ArchRule covered = BasePackage.requireMatchingClasses(
-                SourceScope.handWrittenOnly(definition().as(doc().id()).allowEmptyShould(true)), doc());
+                SourceScope.maintainedOnly(definition().as(doc().id()).allowEmptyShould(true)), doc());
         ArchRule warnedOnce = FirstEvaluationWarning.wrap(
                 covered,
                 List.of(RuleExclusions::unmatchedWarning, UnclaimedStoreEntries::warning,

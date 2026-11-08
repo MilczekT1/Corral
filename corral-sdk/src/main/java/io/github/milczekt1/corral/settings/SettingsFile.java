@@ -221,7 +221,7 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
         }
         boolean coversSourceRoot = isSourceRoot(below) || (parents > 0 && isSourceRoot(below.subList(1, below.size())));
         return coversSourceRoot
-                ? Optional.of("'" + entry + "' would skip every hand-written class under it; list the directory"
+                ? Optional.of("'" + entry + "' would skip every maintained class under it; list the directory"
                         + " the generator writes to")
                 : Optional.empty();
     }

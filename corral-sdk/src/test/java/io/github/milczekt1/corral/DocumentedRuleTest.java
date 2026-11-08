@@ -108,7 +108,7 @@ class DocumentedRuleTest {
 
     /** The wiring, not the mechanism — {@code SourceScopeTest} owns that. Bytecode, as above. */
     @Test
-    void guardChecksHandWrittenClassesOnly() {
+    void guardChecksMaintainedClassesOnly() {
         JavaMethod guard = new ClassFileImporter()
                 .importClasses(DocumentedRule.class)
                 .get(DocumentedRule.class)
@@ -116,7 +116,7 @@ class DocumentedRuleTest {
 
         assertTrue(guard.getMethodCallsFromSelf().stream()
                         .anyMatch(call -> call.getTargetOwner().isEquivalentTo(SourceScope.class)
-                                && call.getName().equals("handWrittenOnly")),
+                                && call.getName().equals("maintainedOnly")),
                 "guard() must leave generated code out of every rule");
     }
 

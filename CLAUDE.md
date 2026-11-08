@@ -74,7 +74,7 @@ public final class NoStdoutRule implements DocumentedRule {
 ```
 
 `guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, narrows
-it to hand-written classes (`SourceScope`), freezes it, applies exclusions, and interposes
+it to maintained classes (`SourceScope`), freezes it, applies exclusions, and interposes
 `IgnorePatternsGuard`.
 
 **Field order is load-bearing.** `guard()` runs during static init and dereferences `DOC` and

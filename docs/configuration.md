@@ -127,8 +127,8 @@ Corral cannot find. A package named `build` deeper down is unaffected. That cove
 OpenAPI, protobuf, jOOQ, MapStruct and other generators in their default locations, with no
 configuration. The first rule that skips anything prints how many classes it skipped.
 
-- **Generated code committed to the module**, anywhere outside those three directories, looks
-  hand-written. List its directories, relative to the module root; `../` reaches generated sources
+- **Generated code committed to the module**, anywhere outside those three directories, cannot be
+  told apart from code you maintain. List its directories, relative to the module root; `../` reaches generated sources
   another module or a shared folder holds:
 
   ```properties
@@ -142,7 +142,7 @@ configuration. The first rule that skips anything prints how many classes it ski
   `data class` methods — are checked. They come from declarations you maintain.
 - **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.
 - **A class compiled without debug info** (`-g:none`) records no source file. Corral looks for a file
-  named after its top-level class and skips the class when none exists, so a hand-written class
+  named after its top-level class and skips the class when none exists, so a maintained class
   compiled that way from sources outside the module, or a second top-level class sharing another
   class's file, is not checked.
 - Upgrading drops the violations a store had recorded in generated code. Commit that diff.

@@ -38,7 +38,7 @@ public class AntiFixPolicy {
                      from the scan, unless another architecture test runs the same rules on that code — as each\
                      module's own test does under CurrentModuleLocations.""",
             """
-                    Do NOT move hand-written code under target/, build/ or out/, list its directory in\
+                    Do NOT move maintained code under target/, build/ or out/, list its directory in\
                      corral.generated-sources, or compile it without debug info, to take it out of the rules'\
                      scope. Only code a tool generates belongs there.""",
             "Do NOT downgrade, remove, reword, or otherwise weaken the rule.",

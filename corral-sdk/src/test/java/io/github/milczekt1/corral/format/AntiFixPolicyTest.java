@@ -22,7 +22,7 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("importoption"), "must forbid hiding code with ImportOptions");
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
         assertTrue(all.contains("corral.generated-sources") && all.contains("target/"),
-                "must forbid passing hand-written code off as generated");
+                "must forbid passing maintained code off as generated");
         assertTrue(all.contains("debug info"),
                 "must name the one dodge SourceScope does not catch: a class recording no source file");
         assertFalse(all.contains("dot-directory") || all.contains("build file beside"),

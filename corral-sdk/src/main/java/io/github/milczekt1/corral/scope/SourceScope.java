@@ -35,13 +35,13 @@ import lombok.experimental.UtilityClass;
  * Separates the code a consumer maintains from the code a tool generated for them. A class is
  * generated when the source file it was compiled from lies only under its module's {@code target/},
  * {@code build/} or {@code out/}, or in a directory listed in {@value CorralSettings#GENERATED_SOURCES};
- * every other class is hand-written, including one whose source file is found nowhere.
+ * every other class is maintained, including one whose source file is found nowhere.
  *
  * <p>A class compiled without the {@code SourceFile} attribute is looked up by its top-level name, and
- * counts as generated when no such file exists either. That is the one way a hand-written class drops
+ * counts as generated when no such file exists either. That is the one way a maintained class drops
  * out of scope: compiled without debug info, from sources outside the module or sharing another class's
  * file. Classes from a jar, or from an output layout {@link OutputLayout} does not recognise, are
- * hand-written.
+ * maintained.
  */
 @UtilityClass
 public class SourceScope {
@@ -60,25 +60,25 @@ public class SourceScope {
      * Classes compiled from a source file the consumer maintains. Rewording the description changes
      * no freeze-store key: it never reaches a violation line.
      */
-    public static final DescribedPredicate<JavaClass> HAND_WRITTEN = describe("hand-written classes",
-            javaClass -> isHandWritten(javaClass, CorralSettings.current().generatedSources()));
+    public static final DescribedPredicate<JavaClass> MAINTAINED = describe("maintained classes",
+            javaClass -> isMaintained(javaClass, CorralSettings.current().generatedSources()));
 
     /**
-     * {@code rule} evaluated on the {@link #HAND_WRITTEN} classes it is given; the first evaluation this
+     * {@code rule} evaluated on the {@link #MAINTAINED} classes it is given; the first evaluation this
      * run that skips any prints how many. Wrap inside {@code FreezingArchRule}, so a generated class
      * never reaches the store.
      */
-    public static ArchRule handWrittenOnly(ArchRule rule) {
-        return handWrittenOnly(rule, CorralSettings.current().generatedSources(), SKIPPED_PRINTED_THIS_RUN,
+    public static ArchRule maintainedOnly(ArchRule rule) {
+        return maintainedOnly(rule, CorralSettings.current().generatedSources(), SKIPPED_PRINTED_THIS_RUN,
                 FirstEvaluationWarning::printWarning);
     }
 
-    static ArchRule handWrittenOnly(
+    static ArchRule maintainedOnly(
             ArchRule rule, List<String> generatedSources, AtomicBoolean printedThisRun, Consumer<String> sink) {
-        return new HandWrittenOnly(rule, List.copyOf(generatedSources), printedThisRun, sink);
+        return new MaintainedOnly(rule, List.copyOf(generatedSources), printedThisRun, sink);
     }
 
-    static boolean isHandWritten(JavaClass javaClass, List<String> generatedSources) {
+    static boolean isMaintained(JavaClass javaClass, List<String> generatedSources) {
         Optional<Source> source = javaClass.getSource();
         if (source.isEmpty() || !"file".equals(source.get().getUri().getScheme())) {
             return true;
@@ -152,7 +152,7 @@ public class SourceScope {
     }
 
     @RequiredArgsConstructor
-    private static final class HandWrittenOnly implements ArchRule {
+    private static final class MaintainedOnly implements ArchRule {
 
         private final ArchRule delegate;
         private final List<String> generatedSources;
@@ -161,25 +161,25 @@ public class SourceScope {
 
         @Override
         public void check(JavaClasses classes) {
-            delegate.check(handWritten(classes));
+            delegate.check(maintainedClasses(classes));
         }
 
         @Override
         public EvaluationResult evaluate(JavaClasses classes) {
-            return delegate.evaluate(handWritten(classes));
+            return delegate.evaluate(maintainedClasses(classes));
         }
 
-        private JavaClasses handWritten(JavaClasses classes) {
-            JavaClasses handWritten = classes.that(describe("hand-written classes",
-                    javaClass -> isHandWritten(javaClass, generatedSources)));
-            int skipped = classes.size() - handWritten.size();
+        private JavaClasses maintainedClasses(JavaClasses classes) {
+            JavaClasses kept = classes.that(describe("maintained classes",
+                    javaClass -> isMaintained(javaClass, generatedSources)));
+            int skipped = classes.size() - kept.size();
             if (skipped > 0 && printedThisRun.compareAndSet(false, true)) {
-                sink.accept("checking hand-written code only; skipped " + skipped + " generated class"
+                sink.accept("checking maintained code only; skipped " + skipped + " generated class"
                         + (skipped == 1 ? "" : "es") + " in this scan: compiled from sources under target/,"
                         + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or recording no source file"
                         + " that could be found.");
             }
-            return handWritten;
+            return kept;
         }
 
         @Override
@@ -189,17 +189,17 @@ public class SourceScope {
 
         @Override
         public ArchRule as(String newDescription) {
-            return new HandWrittenOnly(delegate.as(newDescription), generatedSources, printedThisRun, sink);
+            return new MaintainedOnly(delegate.as(newDescription), generatedSources, printedThisRun, sink);
         }
 
         @Override
         public ArchRule because(String reason) {
-            return new HandWrittenOnly(delegate.because(reason), generatedSources, printedThisRun, sink);
+            return new MaintainedOnly(delegate.because(reason), generatedSources, printedThisRun, sink);
         }
 
         @Override
         public ArchRule allowEmptyShould(boolean allowEmptyShould) {
-            return new HandWrittenOnly(delegate.allowEmptyShould(allowEmptyShould), generatedSources,
+            return new MaintainedOnly(delegate.allowEmptyShould(allowEmptyShould), generatedSources,
                     printedThisRun, sink);
         }
     }

@@ -162,7 +162,7 @@ class SettingsFileTest {
     @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "gen/../src",
             ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java", "C:/work/gen",
             "../src", "../shared/src", "../shared/src/main/java", "../../shared/SRC/Main/Java"})
-    void aGeneratedSourceThatWouldSkipHandWrittenCodeBreaksTheFile(String entry) {
+    void aGeneratedSourceThatWouldSkipMaintainedCodeBreaksTheFile(String entry) {
         SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
 
         assertTrue(settings.isBroken(), () -> "[" + entry + "] was accepted");
