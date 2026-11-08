@@ -189,23 +189,30 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                             + " lower-case letters, digits and '-', none starting with '-'");
         }
         if (key.equals(GENERATED_SOURCES)) {
-            return value.isBlank()
-                    ? Optional.of("lists no directory")
-                    : directories(value).stream().map(SettingsFile::problemWithGeneratedSource)
-                            .flatMap(Optional::stream).findFirst();
+            return problemWithGeneratedSources(value);
         }
         if (key.startsWith(EXCLUDE_PREFIX)) {
-            String ruleId = key.substring(EXCLUDE_PREFIX.length());
-            if (!RuleDoc.isId(ruleId)) {
-                return Optional.of("'" + ruleId + "' is not the shape of a rule id — an exclusion names a"
-                        + " rule by its id, which is also its freeze-store key");
-            }
-            return value.isBlank()
-                    ? Optional.of("excluding '" + ruleId + "' needs a reason as the value — a rule dropped"
-                            + " without one is indistinguishable from a rule silenced")
-                    : Optional.empty();
+            return problemWithExclusion(key.substring(EXCLUDE_PREFIX.length()), value);
         }
         return Optional.of("not a key Corral defines");
+    }
+
+    private static Optional<String> problemWithExclusion(String ruleId, String reason) {
+        if (!RuleDoc.isId(ruleId)) {
+            return Optional.of("'" + ruleId + "' is not the shape of a rule id — an exclusion names a"
+                    + " rule by its id, which is also its freeze-store key");
+        }
+        return reason.isBlank()
+                ? Optional.of("excluding '" + ruleId + "' needs a reason as the value — a rule dropped"
+                        + " without one is indistinguishable from a rule silenced")
+                : Optional.empty();
+    }
+
+    private static Optional<String> problemWithGeneratedSources(String value) {
+        return value.isBlank()
+                ? Optional.of("lists no directory")
+                : directories(value).stream().map(SettingsFile::problemWithGeneratedSource)
+                        .flatMap(Optional::stream).findFirst();
     }
 
     private static Optional<String> problemWithGeneratedSource(String entry) {

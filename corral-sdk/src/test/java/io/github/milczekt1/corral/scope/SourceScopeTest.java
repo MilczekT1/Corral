@@ -9,6 +9,7 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.domain.Source;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
 import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.fixtures.source.RelocatedFixture;
@@ -205,7 +206,7 @@ class SourceScopeTest {
     void aClassCompiledWithoutTheSourceFileAttributeIsFoundByItsTopLevelName() throws IOException {
         JavaClass compiled = compileWithoutSourceFileAttribute("src/main/java");
 
-        assertTrue(compiled.getSource().flatMap(source -> source.getFileName()).isEmpty(),
+        assertTrue(compiled.getSource().flatMap(Source::getFileName).isEmpty(),
                 "precondition: -g:lines,vars must drop the SourceFile attribute");
         assertTrue(SourceScope.isMaintained(compiled, List.of()));
     }

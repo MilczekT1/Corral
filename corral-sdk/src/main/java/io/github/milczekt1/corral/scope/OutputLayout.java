@@ -61,7 +61,10 @@ enum OutputLayout {
         @Override
         Optional<Path> moduleRoot(Path outputRoot) {
             Path parent = outputRoot.getParent();
-            Path classes = isClassesOfBuild(parent) ? parent : parent == null ? null : parent.getParent();
+            if (parent == null) {
+                return Optional.empty();
+            }
+            Path classes = isClassesOfBuild(parent) ? parent : parent.getParent();
             return isClassesOfBuild(classes) ? Optional.ofNullable(classes.getParent().getParent()) : Optional.empty();
         }
     },
