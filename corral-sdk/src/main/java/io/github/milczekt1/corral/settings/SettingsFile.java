@@ -20,6 +20,7 @@ import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -44,6 +45,8 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
     /** Spring Boot's canonical {@code ConfigurationPropertyName} elements, without indexed or empty elements. */
     private static final Pattern PROPERTY_NAME =
             Pattern.compile("^[a-z0-9][a-z0-9-]*+(?:\\.[a-z0-9][a-z0-9-]*+)*+$");
+
+    private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
 
     private static final Set<String> SOURCE_LANGUAGES = Set.of("java", "kotlin", "groovy", "scala");
 
@@ -80,7 +83,10 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
         return Collections.unmodifiableMap(reasons);
     }
 
-    /** In file order, stripped, without a trailing {@code /}; empty when the key is absent. */
+    /**
+     * In file order, stripped, with {@code /} separators and no trailing one; empty when the key is
+     * absent.
+     */
     public List<String> generatedSources() {
         return value(GENERATED_SOURCES).map(SettingsFile::directories).orElse(List.of());
     }
@@ -88,6 +94,7 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
     private static List<String> directories(String value) {
         return Arrays.stream(value.split(",", -1))
                 .map(String::strip)
+                .map(entry -> entry.replace('\\', '/'))
                 .map(entry -> entry.endsWith("/") ? entry.substring(0, entry.length() - 1) : entry)
                 .toList();
     }
@@ -203,12 +210,15 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
 
     private static Optional<String> problemWithGeneratedSource(String entry) {
         List<String> segments = List.of(entry.split("/", -1));
-        if (entry.isEmpty() || entry.startsWith("/") || segments.contains("..") || segments.contains(".")
+        if (entry.isEmpty() || entry.startsWith("/") || WINDOWS_DRIVE.matcher(entry).lookingAt()
+                || segments.contains("..") || segments.contains(".")
                 || segments.contains("")) {
             return Optional.of("'" + entry + "' is not a directory relative to the module root");
         }
-        boolean coversSourceRoot = segments.get(0).equals("src")
-                && (segments.size() < 3 || (segments.size() == 3 && SOURCE_LANGUAGES.contains(segments.get(2))));
+        // Case-insensitive: Windows and macOS file systems resolve SRC/Main/Java to src/main/java.
+        String language = segments.size() == 3 ? segments.get(2).toLowerCase(Locale.ROOT) : "";
+        boolean coversSourceRoot = segments.get(0).equalsIgnoreCase("src")
+                && (segments.size() < 3 || SOURCE_LANGUAGES.contains(language));
         return coversSourceRoot
                 ? Optional.of("'" + entry + "' would skip every hand-written class under it; list the directory"
                         + " the generator writes to")

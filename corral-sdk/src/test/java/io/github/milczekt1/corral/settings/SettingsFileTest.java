@@ -138,13 +138,21 @@ class SettingsFileTest {
     }
 
     @Test
+    void aBackslashSeparatedGeneratedSourceIsReadWithSlashes() {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=src\\\\main\\\\generated", SOURCE);
+
+        assertEquals(List.of("src/main/generated"), settings.generatedSources(), settings::problem);
+    }
+
+    @Test
     void noGeneratedSourcesWhenTheKeyIsAbsent() {
         assertEquals(List.of(), SettingsFile.parse("", SOURCE).generatedSources());
     }
 
     @ParameterizedTest(name = "[{0}]")
     @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "../shared",
-            "gen/../src", ".", "gen,,other"})
+            "gen/../src", ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java",
+            "C:/work/gen"})
     void aGeneratedSourceThatWouldSkipHandWrittenCodeBreaksTheFile(String entry) {
         SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
 
