@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.scope;
 
+import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
@@ -8,12 +9,15 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.importer.ClassFileImporter;
+import com.tngtech.archunit.lang.ArchRule;
 import io.github.milczekt1.corral.fixtures.source.RelocatedFixture;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -23,6 +27,9 @@ class SourceScopeTest {
 
     private static final String PACKAGE_DIR = "io/github/milczekt1/corral/fixtures/source";
     private static final String SOURCE_FILE = "RelocatedFixture.java";
+
+    private static final ArchRule NAMING_THE_FIXTURE =
+            noClasses().should().haveSimpleName("RelocatedFixture").allowEmptyShould(true);
 
     @TempDir
     Path module;
@@ -117,6 +124,49 @@ class SourceScopeTest {
         JavaClass fromJar = new ClassFileImporter().importClass(Test.class);
 
         assertTrue(SourceScope.isHandWritten(fromJar, List.of()), fromJar.getSource()::toString);
+    }
+
+    @Test
+    void aFilteredRuleSeesOnlyHandWrittenClasses() throws IOException {
+        plantOther();
+        plant("target/generated-sources/openapi/" + PACKAGE_DIR);
+        JavaClasses imported = importFrom("target/classes", RelocatedFixture.class);
+        List<String> printed = new ArrayList<>();
+
+        ArchRule filtered =
+                SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add);
+
+        assertFalse(filtered.evaluate(imported).hasViolation());
+        assertTrue(NAMING_THE_FIXTURE.evaluate(imported).hasViolation(), "the unfiltered rule must flag the fixture");
+        assertEquals(1, printed.size(), printed::toString);
+        assertTrue(printed.get(0).contains("1 generated class"), printed::toString);
+    }
+
+    @Test
+    void aFilteredRuleStillFlagsHandWrittenClasses() throws IOException {
+        plant("src/main/java/" + PACKAGE_DIR);
+        List<String> printed = new ArrayList<>();
+
+        ArchRule filtered =
+                SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), new AtomicBoolean(), printed::add)
+                        .as("renamed").because("kept");
+
+        assertTrue(filtered.evaluate(importFrom("target/classes", RelocatedFixture.class)).hasViolation());
+        assertEquals("renamed, because kept", filtered.getDescription());
+        assertEquals(List.of(), printed, "nothing was skipped, so nothing is printed");
+    }
+
+    @Test
+    void theSkippedCountIsPrintedOncePerRun() throws IOException {
+        plantOther();
+        JavaClasses imported = importFrom("target/classes", RelocatedFixture.class);
+        AtomicBoolean printedThisRun = new AtomicBoolean();
+        List<String> printed = new ArrayList<>();
+
+        SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
+        SourceScope.handWrittenOnly(NAMING_THE_FIXTURE, List.of(), printedThisRun, printed::add).evaluate(imported);
+
+        assertEquals(1, printed.size(), printed::toString);
     }
 
     @Test

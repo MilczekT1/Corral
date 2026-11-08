@@ -49,7 +49,7 @@ public final class FirstEvaluationWarning implements ArchRule {
      * prefix stands in for a log level, which Maven and Gradle do not add to a test JVM's stderr.
      */
     @SuppressWarnings("java:S106")
-    static void printWarning(String message) {
+    public static void printWarning(String message) {
         System.err.println(PREFIX + message);
     }
 

@@ -4,8 +4,12 @@ import static com.tngtech.archunit.base.DescribedPredicate.describe;
 
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
+import com.tngtech.archunit.core.domain.JavaClasses;
 import com.tngtech.archunit.core.domain.Source;
+import com.tngtech.archunit.lang.ArchRule;
+import com.tngtech.archunit.lang.EvaluationResult;
 import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.FileVisitResult;
@@ -20,6 +24,9 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Consumer;
+import lombok.RequiredArgsConstructor;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -42,12 +49,29 @@ public class SourceScope {
 
     private static final Map<ModuleKey, ModuleSources> MODULES = new ConcurrentHashMap<>();
 
+    private static final AtomicBoolean SKIPPED_PRINTED_THIS_RUN = new AtomicBoolean(false);
+
     /**
      * Classes compiled from a source file the consumer maintains. Rewording the description changes
      * no freeze-store key: it never reaches a violation line.
      */
     public static final DescribedPredicate<JavaClass> HAND_WRITTEN = describe("hand-written classes",
             javaClass -> isHandWritten(javaClass, CorralSettings.current().generatedSources()));
+
+    /**
+     * {@code rule} evaluated on the {@link #HAND_WRITTEN} classes it is given; the first evaluation this
+     * run that skips any prints how many. Wrap inside {@code FreezingArchRule}, so a generated class
+     * never reaches the store.
+     */
+    public static ArchRule handWrittenOnly(ArchRule rule) {
+        return handWrittenOnly(rule, CorralSettings.current().generatedSources(), SKIPPED_PRINTED_THIS_RUN,
+                FirstEvaluationWarning::printWarning);
+    }
+
+    static ArchRule handWrittenOnly(
+            ArchRule rule, List<String> generatedSources, AtomicBoolean printedThisRun, Consumer<String> sink) {
+        return new HandWrittenOnly(rule, List.copyOf(generatedSources), printedThisRun, sink);
+    }
 
     static boolean isHandWritten(JavaClass javaClass, List<String> generatedSources) {
         Optional<Source> source = javaClass.getSource();
@@ -99,6 +123,59 @@ public class SourceScope {
     }
 
     private record ModuleKey(Path root, List<String> generatedSources) {
+    }
+
+    @RequiredArgsConstructor
+    private static final class HandWrittenOnly implements ArchRule {
+
+        private final ArchRule delegate;
+        private final List<String> generatedSources;
+        private final AtomicBoolean printedThisRun;
+        private final Consumer<String> sink;
+
+        @Override
+        public void check(JavaClasses classes) {
+            delegate.check(handWritten(classes));
+        }
+
+        @Override
+        public EvaluationResult evaluate(JavaClasses classes) {
+            return delegate.evaluate(handWritten(classes));
+        }
+
+        private JavaClasses handWritten(JavaClasses classes) {
+            JavaClasses handWritten = classes.that(describe("hand-written classes",
+                    javaClass -> isHandWritten(javaClass, generatedSources)));
+            int skipped = classes.size() - handWritten.size();
+            if (skipped > 0 && printedThisRun.compareAndSet(false, true)) {
+                sink.accept("checking hand-written code only; skipped " + skipped + " generated class"
+                        + (skipped == 1 ? "" : "es") + " in this scan: compiled from sources under target/,"
+                        + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or recording no source"
+                        + " file.");
+            }
+            return handWritten;
+        }
+
+        @Override
+        public String getDescription() {
+            return delegate.getDescription();
+        }
+
+        @Override
+        public ArchRule as(String newDescription) {
+            return new HandWrittenOnly(delegate.as(newDescription), generatedSources, printedThisRun, sink);
+        }
+
+        @Override
+        public ArchRule because(String reason) {
+            return new HandWrittenOnly(delegate.because(reason), generatedSources, printedThisRun, sink);
+        }
+
+        @Override
+        public ArchRule allowEmptyShould(boolean allowEmptyShould) {
+            return new HandWrittenOnly(delegate.allowEmptyShould(allowEmptyShould), generatedSources,
+                    printedThisRun, sink);
+        }
     }
 
     /** Source files by file name; class files are not indexed. */
