@@ -1,9 +1,9 @@
 package com.example.consumer.wiring;
 
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
+import io.github.milczekt1.corral.scope.CurrentModuleLocations;
 
 /**
  * Runs everything {@link ProjectRulesGroup} composes. No rule logic lives here.
@@ -13,7 +13,7 @@ import com.tngtech.archunit.junit.ArchTests;
  * <p>Note the absence of {@code ImportOption.DoNotIncludeTests}: the testing groups inspect test
  * classes, and excluding them would make those rules pass vacuously.
  */
-@AnalyzeClasses(packages = "com.example.consumer", importOptions = ImportOption.DoNotIncludeJars.class)
+@AnalyzeClasses(locations = CurrentModuleLocations.class)
 class ProjectArchitectureTest {
 
     @ArchTest
