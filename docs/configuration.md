@@ -121,13 +121,14 @@ output — and nothing else, however the test is launched:
 ## Generated code
 
 Every Corral rule checks only the code you maintain. A class is checked when the source file it was
-compiled from is in its module's own directory tree. It is skipped when that file is only under
-`target/`, `build/` or `out/`, or in a directory listed in `corral.generated-sources`, or when the
-class records no source file at all. That covers the output of OpenAPI, protobuf, jOOQ, MapStruct
+compiled from is in its module's own directory tree. It is skipped when that file is only under the
+module's `target/`, `build/` or `out/` directory or a directory listed in `corral.generated-sources`,
+or is not in the module's tree at all. A package named `build` deeper down is unaffected. That covers the output of OpenAPI, protobuf, jOOQ, MapStruct
 and other generators in their default locations, with no configuration. The first rule that skips
 anything prints how many classes it skipped.
 
-- **Generated code committed under `src/`** looks hand-written. List its directories:
+- **Generated code committed to the module**, anywhere outside those three directories, looks
+  hand-written. List its directories:
 
   ```properties
   corral.generated-sources=src/main/java/com/acme/jooq,\
@@ -139,6 +140,8 @@ anything prints how many classes it skipped.
 - **Members generated inside your own classes** — Lombok getters, record accessors, Kotlin
   `data class` methods — are checked. They come from declarations you maintain.
 - **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.
-- **Hand-written sources outside the module directory** — a `build-helper` source root pointing at
-  `../shared/src` — are skipped as generated. Check the skipped count after adding one.
+- **Hand-written sources Corral cannot see** are skipped as generated: a source root outside the module
+  directory (a `build-helper` source pointing at `../shared/src`), one under a dot-directory, or one
+  inside a directory holding its own `pom.xml`, `build.gradle` or `build.gradle.kts`. Check the
+  skipped count after adding one.
 - Upgrading drops the violations a store had recorded in generated code. Commit that diff.

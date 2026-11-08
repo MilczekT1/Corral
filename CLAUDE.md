@@ -73,8 +73,9 @@ public final class NoStdoutRule implements DocumentedRule {
 }
 ```
 
-`guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, freezes
-it, applies exclusions, and interposes `IgnorePatternsGuard`.
+`guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, narrows
+it to hand-written classes (`SourceScope`), freezes it, applies exclusions, and interposes
+`IgnorePatternsGuard`.
 
 **Field order is load-bearing.** `guard()` runs during static init and dereferences `DOC` and
 `DEFINITION`; static fields initialise in declaration order, so an `@ArchTest` field declared above

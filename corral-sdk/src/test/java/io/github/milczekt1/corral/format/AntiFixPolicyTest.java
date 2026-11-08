@@ -22,6 +22,8 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
         assertTrue(all.contains("corral.generated-sources") && all.contains("target/"),
                 "must forbid passing hand-written code off as generated");
+        assertTrue(all.contains("build file") && all.contains("dot-directory") && all.contains("outside the module"),
+                "must name the dodges SourceScope does not catch");
     }
 
     /** The escape hatches a reader can only reach by exact name: a file name and two property keys. */

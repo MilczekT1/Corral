@@ -168,8 +168,8 @@ public class SourceScope {
             if (skipped > 0 && printedThisRun.compareAndSet(false, true)) {
                 sink.accept("checking hand-written code only; skipped " + skipped + " generated class"
                         + (skipped == 1 ? "" : "es") + " in this scan: compiled from sources under target/,"
-                        + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or recording no source"
-                        + " file.");
+                        + " build/, out/ or " + CorralSettings.GENERATED_SOURCES + ", or whose source file is not"
+                        + " in the module's own tree.");
             }
             return handWritten;
         }
