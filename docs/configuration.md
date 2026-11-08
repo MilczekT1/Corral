@@ -136,8 +136,10 @@ configuration. The first rule that skips anything prints how many classes it ski
     ../proto/build/generated
   ```
 
-  A source root (`src`, `src/main`, `src/main/java`, or the same below `../<module>/`) is refused: it
-  would skip everything. Every listed directory is printed on every failure, as exclusions are.
+  A directory holding maintained sources is refused, because it would skip everything: `src`,
+  `src/<set>`, and `src/<set>/<language>` for `main`, `test` and any `*Test` set, also below
+  `../<module>/` and wherever the path resolves. A generator's own root such as `src/gen/java`, and
+  any directory below a source root, is accepted. Every listed directory is printed on every failure, as exclusions are.
 - **Members generated inside your own classes** — Lombok getters, record accessors, Kotlin
   `data class` methods — are checked. They come from declarations you maintain.
 - **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.

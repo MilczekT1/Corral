@@ -9,6 +9,7 @@ import com.tngtech.archunit.core.domain.Source;
 import com.tngtech.archunit.lang.ArchRule;
 import com.tngtech.archunit.lang.EvaluationResult;
 import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.settings.SettingsFile;
 import io.github.milczekt1.corral.warn.FirstEvaluationWarning;
 import java.io.IOException;
 import java.io.UncheckedIOException;
@@ -19,12 +20,14 @@ import java.nio.file.Path;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -54,6 +57,9 @@ public class SourceScope {
 
     private static final Map<ModuleKey, ModuleSources> MODULES = new ConcurrentHashMap<>();
 
+    /** By the setting in effect; {@code JavaClass} has identity equality, so each import is its own key. */
+    private static final Map<List<String>, Map<JavaClass, Boolean>> VERDICTS = new ConcurrentHashMap<>();
+
     private static final AtomicBoolean SKIPPED_PRINTED_THIS_RUN = new AtomicBoolean(false);
 
     /**
@@ -78,22 +84,44 @@ public class SourceScope {
         return new MaintainedOnly(rule, List.copyOf(generatedSources), printedThisRun, sink);
     }
 
-    static boolean isMaintained(JavaClass javaClass, List<String> generatedSources) {
-        Optional<Source> source = javaClass.getSource();
-        if (source.isEmpty() || !"file".equals(source.get().getUri().getScheme())) {
-            return true;
-        }
-        Optional<Path> moduleRoot = outputRootOf(Path.of(source.get().getUri()), javaClass)
+    /**
+     * Whether both classes were compiled into the same module's output, generated or not; false when
+     * either comes from a jar or from an output layout {@link OutputLayout} does not recognise. For a
+     * condition that must tell project types from library types although {@link #maintainedOnly} has
+     * removed generated classes from the set it is given.
+     */
+    public static boolean inSameModule(JavaClass first, JavaClass second) {
+        Optional<Path> module = moduleRootOf(first);
+        return module.isPresent() && module.equals(moduleRootOf(second));
+    }
+
+    private static Optional<Path> moduleRootOf(JavaClass javaClass) {
+        return javaClass.getSource()
+                .filter(source -> "file".equals(source.getUri().getScheme()))
+                .flatMap(source -> outputRootOf(Path.of(source.getUri()), javaClass))
                 .flatMap(OutputLayout::moduleRootOf);
+    }
+
+    static boolean isMaintained(JavaClass javaClass, List<String> generatedSources) {
+        Map<JavaClass, Boolean> verdicts = VERDICTS.computeIfAbsent(List.copyOf(generatedSources),
+                ignored -> Collections.synchronizedMap(new WeakHashMap<>()));
+        Boolean verdict = verdicts.get(javaClass);
+        if (verdict == null) {
+            verdict = decide(javaClass, generatedSources);
+            verdicts.put(javaClass, verdict);
+        }
+        return verdict;
+    }
+
+    private static boolean decide(JavaClass javaClass, List<String> generatedSources) {
+        Optional<Path> moduleRoot = moduleRootOf(javaClass);
         if (moduleRoot.isEmpty()) {
             return true;
         }
+        Source source = javaClass.getSource().orElseThrow();
         ModuleSources sources = MODULES.computeIfAbsent(new ModuleKey(moduleRoot.get(), List.copyOf(generatedSources)),
                 ModuleSources::index);
-        if (sources.maintained().isEmpty()) {
-            return true;
-        }
-        Optional<String> recorded = source.get().getFileName();
+        Optional<String> recorded = source.getFileName();
         List<String> fileNames = recorded.map(List::of).orElseGet(() -> sourceNamesOf(javaClass));
         List<Path> maintained = filesNamed(sources.maintained(), fileNames);
         List<Path> generated = filesNamed(sources.generated(), fileNames);
@@ -132,7 +160,9 @@ public class SourceScope {
 
     private static Optional<Path> outputRootOf(Path classFile, JavaClass javaClass) {
         Path root = classFile.getParent();
-        for (int segment = 0; segment < packageDirectoryOf(javaClass).getNameCount() && root != null; segment++) {
+        String packageName = javaClass.getPackageName();
+        int segments = packageName.isEmpty() ? 0 : packageName.split("\\.").length;
+        for (int segment = 0; segment < segments && root != null; segment++) {
             root = root.getParent();
         }
         return Optional.ofNullable(root);
@@ -142,7 +172,7 @@ public class SourceScope {
         return packageDirectory.toString().isEmpty() || file.getParent().endsWith(packageDirectory);
     }
 
-    /** The empty path for the default package. */
+    /** The empty path, which has one name element, for the default package. */
     private static Path packageDirectoryOf(JavaClass javaClass) {
         String packageName = javaClass.getPackageName();
         return packageName.isEmpty() ? Path.of("") : Path.of("", packageName.split("\\."));
@@ -204,7 +234,7 @@ public class SourceScope {
         }
     }
 
-    /** Every file of the module but class files, by file name. */
+    /** The module's source files, by file name. */
     private record ModuleSources(Map<String, List<Path>> maintained, Map<String, List<Path>> generated) {
 
         static ModuleSources index(ModuleKey key) {
@@ -215,7 +245,13 @@ public class SourceScope {
             List<Path> outsideTheModule = new ArrayList<>();
             for (String directory : key.generatedSources()) {
                 Path configured = key.root().resolve(directory).normalize();
-                (configured.startsWith(key.root()) ? generatedRoots : outsideTheModule).add(configured);
+                boolean insideTheModule = configured.startsWith(key.root());
+                if (insideTheModule && SettingsFile.coversSourceRoot(segmentsOf(key.root().relativize(configured)))) {
+                    throw new IllegalStateException(CorralSettings.GENERATED_SOURCES + " entry '" + directory
+                            + "' resolves to " + configured + ", a source root of this module, and would skip every"
+                            + " maintained class under it. List the directory the generator writes to.");
+                }
+                (insideTheModule ? generatedRoots : outsideTheModule).add(configured);
             }
             walk(key.root(), generatedRoots, maintained, generated);
             outsideTheModule.forEach(directory -> walk(directory, Set.of(directory), new ConcurrentHashMap<>(),
@@ -237,11 +273,13 @@ public class SourceScope {
                         if (generatedRoot == null && generatedRoots.contains(directory)) {
                             generatedRoot = directory;
                             into = generated;
+                            return FileVisitResult.CONTINUE;
                         }
                         if (directory.equals(root)) {
                             return FileVisitResult.CONTINUE;
                         }
-                        if (directory.getFileName().toString().startsWith(".") || isNestedModule(directory)) {
+                        String name = directory.getFileName().toString();
+                        if (name.startsWith(".") || name.equals("node_modules") || isNestedModule(directory)) {
                             return FileVisitResult.SKIP_SUBTREE;
                         }
                         return FileVisitResult.CONTINUE;
@@ -250,7 +288,7 @@ public class SourceScope {
                     @Override
                     public FileVisitResult visitFile(Path file, BasicFileAttributes attributes) {
                         String name = file.getFileName().toString();
-                        if (!name.endsWith(".class")) {
+                        if (SOURCE_EXTENSIONS.stream().anyMatch(name::endsWith)) {
                             into.computeIfAbsent(name, ignored -> new ArrayList<>()).add(file);
                         }
                         return FileVisitResult.CONTINUE;
@@ -274,6 +312,12 @@ public class SourceScope {
             } catch (IOException e) {
                 throw new UncheckedIOException(e);
             }
+        }
+
+        private static List<String> segmentsOf(Path relative) {
+            List<String> segments = new ArrayList<>();
+            relative.forEach(segment -> segments.add(segment.toString()));
+            return segments;
         }
 
         private static boolean isNestedModule(Path directory) {

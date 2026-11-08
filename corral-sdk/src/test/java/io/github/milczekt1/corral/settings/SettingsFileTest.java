@@ -145,8 +145,9 @@ class SettingsFileTest {
     }
 
     @ParameterizedTest(name = "[{0}]")
-    @ValueSource(strings = {"../proto/build/generated", "../../shared/generated", "../gen/openapi/src/main/java"})
-    void aGeneratedSourceOutsideTheModuleIsAccepted(String entry) {
+    @ValueSource(strings = {"../proto/build/generated", "../../shared/generated", "../gen/openapi/src/main/java",
+            "src/gen/java", "src/generated/java", "src/main/java/com/acme/jooq"})
+    void aGeneratedSourceDirectoryIsAccepted(String entry) {
         SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
 
         assertFalse(settings.isBroken(), settings::problem);
@@ -161,7 +162,8 @@ class SettingsFileTest {
     @ParameterizedTest(name = "[{0}]")
     @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "gen/../src",
             ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java", "C:/work/gen",
-            "../src", "../shared/src", "../shared/src/main/java", "../../shared/SRC/Main/Java"})
+            "../src", "../shared/src", "../shared/src/main/java", "../../shared/SRC/Main/Java", "src/generated",
+            "src/integrationTest/java", "src/functionalTest/kotlin"})
     void aGeneratedSourceThatWouldSkipMaintainedCodeBreaksTheFile(String entry) {
         SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
 

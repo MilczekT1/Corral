@@ -226,23 +226,31 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                 || below.contains("..") || below.contains(".") || below.contains("")) {
             return Optional.of("'" + entry + "' is not a directory relative to the module root");
         }
-        boolean coversSourceRoot = isSourceRoot(below) || (parents > 0 && isSourceRoot(below.subList(1, below.size())));
-        return coversSourceRoot
+        boolean refused = coversSourceRoot(below)
+                || (parents > 0 && coversSourceRoot(below.subList(1, below.size())));
+        return refused
                 ? Optional.of("'" + entry + "' would skip every maintained class under it; list the directory"
-                        + " the generator writes to")
+                        + " the generator writes to, or one below it")
                 : Optional.empty();
     }
 
     /**
-     * {@code src}, {@code src/<set>} or {@code src/<set>/<language>}, case-insensitive: Windows and macOS
-     * file systems resolve {@code SRC/Main/Java} to {@code src/main/java}.
+     * Whether a directory, as path segments relative to a module root, would hold maintained sources:
+     * {@code src}, {@code src/<set>}, or {@code src/<set>/<language>} for the {@code main} and {@code test}
+     * sets and any set named {@code *Test}. Case-insensitive: Windows and macOS file systems resolve
+     * {@code SRC/Main/Java} to {@code src/main/java}.
      */
-    private static boolean isSourceRoot(List<String> segments) {
+    public static boolean coversSourceRoot(List<String> segments) {
         if (segments.isEmpty() || !segments.get(0).equalsIgnoreCase("src")) {
             return false;
         }
-        return segments.size() < 3
-                || (segments.size() == 3 && SOURCE_LANGUAGES.contains(segments.get(2).toLowerCase(Locale.ROOT)));
+        if (segments.size() < 3) {
+            return true;
+        }
+        String set = segments.get(1).toLowerCase(Locale.ROOT);
+        boolean maintainedSet = set.equals("main") || set.endsWith("test");
+        return segments.size() == 3 && maintainedSet
+                && SOURCE_LANGUAGES.contains(segments.get(2).toLowerCase(Locale.ROOT));
     }
 
     /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */

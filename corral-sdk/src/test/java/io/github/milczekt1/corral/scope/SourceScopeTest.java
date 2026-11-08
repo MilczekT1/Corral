@@ -4,6 +4,7 @@ import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assumptions.assumeTrue;
 
@@ -244,6 +245,73 @@ class SourceScopeTest {
     }
 
     @Test
+    void aConfiguredDotDirectoryIsIndexedAsGeneratedWithoutSwallowingTheRestOfTheModule() throws IOException {
+        Files.createFile(Files.createDirectories(module.resolve("src/main/java/com/acme")).resolve("Other.java"));
+        plant(".apt_generated/" + PACKAGE_DIR);
+        JavaClass fixture = importFrom("target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
+        JavaClass other = compileInto("src/main/java", "com.acme", "Other");
+
+        assertFalse(SourceScope.isMaintained(fixture, List.of(".apt_generated")));
+        assertTrue(SourceScope.isMaintained(other, List.of(".apt_generated")));
+    }
+
+    @Test
+    void aConfiguredDirectoryHoldingABuildFileIsIndexedAsGenerated() throws IOException {
+        plantOther();
+        plant("generated/" + PACKAGE_DIR);
+        Files.createFile(module.resolve("generated/pom.xml"));
+
+        assertFalse(SourceScope.isMaintained(
+                importFrom("target/classes", RelocatedFixture.class).get(RelocatedFixture.class),
+                List.of("generated")));
+    }
+
+    @Test
+    void aGeneratedClassInTheDefaultPackageIsGenerated() throws IOException {
+        plantOther();
+        JavaClass lexer = compileInto("target/generated-sources/antlr4", "", "GrammarLexer");
+
+        assertFalse(SourceScope.isMaintained(lexer, List.of()));
+    }
+
+    @Test
+    void aMaintainedClassInTheDefaultPackageIsMaintained() throws IOException {
+        JavaClass main = compileInto("src/main/java", "", "Main");
+
+        assertTrue(SourceScope.isMaintained(main, List.of()));
+    }
+
+    @Test
+    void aConfiguredDirectoryResolvingOntoTheModulesSourceRootFailsLoudly() throws IOException {
+        Path child = Files.createDirectories(module.resolve("parent/child"));
+        Files.createFile(Files.createDirectories(child.resolve("src/main/java/com/acme")).resolve("Other.java"));
+        JavaClass fixture =
+                importFrom("parent/child/target/classes", RelocatedFixture.class).get(RelocatedFixture.class);
+
+        IllegalStateException thrown = assertThrows(IllegalStateException.class,
+                () -> SourceScope.isMaintained(fixture, List.of("../../parent/child/src/main/java")));
+
+        assertTrue(thrown.getMessage().contains("../../parent/child/src/main/java"), thrown.getMessage());
+    }
+
+    @Test
+    void aModuleHoldingOnlyGeneratedSourcesSkipsThem() throws IOException {
+        Files.writeString(module.resolve("pom.xml"), "<project/>");
+        plant("target/generated-sources/openapi/" + PACKAGE_DIR);
+
+        assertFalse(fixtureIsMaintained("target/classes"));
+    }
+
+    @Test
+    void nodeModulesIsNotTheModulesSources() throws IOException {
+        plantOther();
+        plant("target/generated-sources/openapi/flat");
+        plant("node_modules/some-package/" + PACKAGE_DIR);
+
+        assertFalse(fixtureIsMaintained("target/classes"));
+    }
+
+    @Test
     void pinsThePredicateDescription() {
         assertEquals("maintained classes", SourceScope.MAINTAINED.getDescription());
     }
@@ -260,6 +328,22 @@ class SourceScopeTest {
     private void plantOther() throws IOException {
         Path other = Files.createDirectories(module.resolve("src/main/java/com/acme"));
         Files.createFile(other.resolve("Other.java"));
+    }
+
+    /**
+     * {@code packageName.simpleName}, its source planted under {@code sourceRoot}, compiled to
+     * {@code target/classes}.
+     */
+    private JavaClass compileInto(String sourceRoot, String packageName, String simpleName) throws IOException {
+        Path directory = Files.createDirectories(module.resolve(sourceRoot).resolve(packageName.replace('.', '/')));
+        Path source = directory.resolve(simpleName + ".java");
+        Files.writeString(source, (packageName.isEmpty() ? "" : "package " + packageName + "; ")
+                + "public class " + simpleName + " {}");
+        Path output = Files.createDirectories(module.resolve("target/classes"));
+        assertEquals(0, ToolProvider.getSystemJavaCompiler().run(null, null, null,
+                "-d", output.toString(), source.toString()), "javac failed");
+        String name = packageName.isEmpty() ? simpleName : packageName + "." + simpleName;
+        return new ClassFileImporter().importPath(output).get(name);
     }
 
     /** {@code com.acme.NoDebugInfo}, its source planted under {@code sourceRoot}. */
