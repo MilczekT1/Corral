@@ -31,6 +31,12 @@ enum OutputLayout {
             }
             return Optional.of(existing(testOutput, Stream.of(target.resolve("classes"))));
         }
+
+        @Override
+        Optional<Path> moduleRoot(Path outputRoot) {
+            Path target = outputRoot.getParent();
+            return isNamed(target, "target") ? Optional.ofNullable(target.getParent()) : Optional.empty();
+        }
     },
 
     GRADLE(".*/build/classes/([^/]+/)?test/.*") {
@@ -51,6 +57,13 @@ enum OutputLayout {
             return Optional.of(existing(testOutput, languages.flatMap(
                     language -> Stream.of(language.resolve("test"), language.resolve("main")))));
         }
+
+        @Override
+        Optional<Path> moduleRoot(Path outputRoot) {
+            Path parent = outputRoot.getParent();
+            Path classes = isClassesOfBuild(parent) ? parent : parent == null ? null : parent.getParent();
+            return isClassesOfBuild(classes) ? Optional.ofNullable(classes.getParent().getParent()) : Optional.empty();
+        }
     },
 
     INTELLIJ(".*/out/test/.*") {
@@ -62,6 +75,15 @@ enum OutputLayout {
             }
             Path production = test.resolveSibling("production").resolve(testOutput.getFileName().toString());
             return Optional.of(existing(testOutput, Stream.of(production)));
+        }
+
+        @Override
+        Optional<Path> moduleRoot(Path outputRoot) {
+            Path kind = outputRoot.getParent();
+            boolean output = isNamed(kind, "production") || isNamed(kind, "test");
+            return output && isNamed(kind.getParent(), "out")
+                    ? Optional.ofNullable(kind.getParent().getParent())
+                    : Optional.empty();
         }
     };
 
@@ -81,6 +103,16 @@ enum OutputLayout {
      * {@code testOutput} is not this layout's test output.
      */
     abstract Optional<List<Path>> moduleOutputs(Path testOutput);
+
+    /** The directory holding this layout's build directory, for any of its output roots. */
+    abstract Optional<Path> moduleRoot(Path outputRoot);
+
+    static Optional<Path> moduleRootOf(Path outputRoot) {
+        return Arrays.stream(values())
+                .map(layout -> layout.moduleRoot(outputRoot))
+                .flatMap(Optional::stream)
+                .findFirst();
+    }
 
     static List<Path> moduleOutputsOf(Path testOutput) {
         return Arrays.stream(values())
