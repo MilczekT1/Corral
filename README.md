@@ -121,14 +121,14 @@ it, use 1.5 or later.
 **2. Wire the groups you want** — `src/test/java/com/acme/arch/ProjectArchitectureTest.java`.
 
 ```java
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.groups.LoggingRulesGroup;
 import io.github.milczekt1.corral.groups.TestingRulesGroup;
+import io.github.milczekt1.corral.scope.CurrentModuleLocations;
 
-@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)
+@AnalyzeClasses(locations = CurrentModuleLocations.class)
 class ProjectArchitectureTest {
 
     @ArchTest static final ArchTests testing = ArchTests.in(TestingRulesGroup.class);
@@ -138,6 +138,10 @@ class ProjectArchitectureTest {
 
 > Do **not** add `ImportOption.DoNotIncludeTests`. The testing rules inspect your test classes;
 > excluding them makes those rules pass vacuously — green build, zero enforcement.
+
+The test scans its own module only — test and production output, no sibling module or jar — so
+the result is the same under `test`, `verify`, Failsafe and the IDE; see
+[Multi-module builds](docs/configuration.md#multi-module-builds).
 
 The result is one JUnit tree: run the class, one group, or a single rule from the IDE gutter. A group
 you do not wire is not enforced. A few rules belong to no group and are wired one at a time, the same

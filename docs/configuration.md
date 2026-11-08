@@ -81,3 +81,38 @@ a commit. This store keeps the entry and drops the file. Three things to know:
   clean never triggers a write. Clear them once with `mvn test -Darchunit.freeze.refreeze=true` (or
   delete them by hand) and review the diff: `refreeze` re-records *every* rule, so anything currently
   failing gets absorbed as debt too.
+
+## Multi-module builds
+
+`@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)` scans
+whatever the classpath holds under that package, and the classpath depends on the command. For a
+module `app` that depends on `core` in the same build:
+
+| Run | `core` on `app`'s classpath as | `app` itself as |
+|---|---|---|
+| `mvn test`, the IDE | `core/target/classes` | `app/target/classes` |
+| `mvn verify`, `mvn install` | `core-<version>.jar` | `app/target/classes` |
+| `mvn test -pl app` | `core-<version>.jar` from `~/.m2` | `app/target/classes` |
+| Failsafe `*IT` tests under `mvn verify` | `core-<version>.jar` | `app-<version>.jar` |
+
+`DoNotIncludeJars` drops only the jars. So `app`'s scan includes `core` under `test` and in the IDE
+but not under `verify`; the freeze store a module records changes with the command that seeded it,
+and one violation in `core` fails in every module downstream of it. An architecture test run by
+Failsafe scans none of its own module's production classes, and its production rules pass with
+nothing to check.
+
+`CurrentModuleLocations` scans the module the test class was compiled in — its test and production
+output — and nothing else, however the test is launched:
+
+```java
+@AnalyzeClasses(locations = CurrentModuleLocations.class)
+```
+
+- Each module's architecture test checks that module. A module without one is not checked.
+- Do not add `packages` or `packagesOf` next to it: `@AnalyzeClasses` imports them as well, and the
+  sibling modules come back.
+- It recognises Maven `target/test-classes`, Gradle `build/classes/<lang>/test` and IntelliJ
+  `out/test/<module>`, and fails the test for any other layout. A Gradle `integrationTest` or
+  `testFixtures` source set needs your own `com.tngtech.archunit.junit.LocationProvider`.
+- Switching an existing build to it narrows each module's scan to its own classes, so on the next
+  run the store drops the sibling modules' violations it had recorded. Review that diff once.
