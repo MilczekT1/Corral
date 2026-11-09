@@ -82,10 +82,15 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
     }
 
     String render(RuleDoc doc, List<String> violationLines, Priority priority) {
-        return render(doc, violationLines, priority, censusSafely());
+        return render(doc, violationLines, priority, censusSafely(), generatedSourcesSafely());
     }
 
     String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census) {
+        return render(doc, violationLines, priority, census, List.of());
+    }
+
+    String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census,
+            List<String> generatedSources) {
         try {
             String nl = System.lineSeparator();
             List<String> lines = violationLines == null ? List.of() : violationLines;
@@ -120,6 +125,16 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
                 out.append(nl);
             }
 
+            List<String> generated = generatedSources == null ? List.of() : generatedSources;
+            if (!generated.isEmpty()) {
+                out.append("SKIPPED AS GENERATED IN THIS BUILD (").append(CorralSettings.GENERATED_SOURCES)
+                        .append(" — classes compiled from these directories are not checked):").append(nl);
+                for (String directory : generated) {
+                    out.append(INDENT).append("- ").append(directory).append(nl);
+                }
+                out.append(nl);
+            }
+
             out.append("Offending locations:").append(nl);
             for (String line : lines) {
                 out.append(INDENT).append(line).append(nl);
@@ -136,6 +151,15 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             return RuleExclusions.census();
         } catch (RuntimeException e) {
             debug("Reading the exclusion census threw; omitting it from this failure", e);
+            return List.of();
+        }
+    }
+
+    private static List<String> generatedSourcesSafely() {
+        try {
+            return CorralSettings.current().generatedSources();
+        } catch (RuntimeException e) {
+            debug("Reading the generated-sources setting threw; omitting it from this failure", e);
             return List.of();
         }
     }

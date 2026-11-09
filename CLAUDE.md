@@ -73,8 +73,9 @@ public final class NoStdoutRule implements DocumentedRule {
 }
 ```
 
-`guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, freezes
-it, applies exclusions, and interposes `IgnorePatternsGuard`.
+`guard()` (default method on `DocumentedRule`) registers the doc, renames the rule to the id, narrows
+it to maintained classes (`SourceScope`), freezes it, applies exclusions, and interposes
+`IgnorePatternsGuard`.
 
 **Field order is load-bearing.** `guard()` runs during static init and dereferences `DOC` and
 `DEFINITION`; static fields initialise in declaration order, so an `@ArchTest` field declared above
@@ -146,7 +147,7 @@ fixture is imported. `FixtureVerdictsTest` makes every rule test keep a `fixture
 ## Failure output
 
 `AgentFriendlyFailureDisplayFormat` (activated by the consumer's `archunit.properties`) prints WHY /
-HOW TO FIX / HOW NOT TO FIX from `RuleDoc`, plus `AntiFixPolicy`'s ten fixed clauses, appended to
+HOW TO FIX / HOW NOT TO FIX from `RuleDoc`, plus `AntiFixPolicy`'s eleven fixed clauses, appended to
 every failure and droppable by no rule. Two are enforced in code: an `archunit_ignore_patterns.txt`
 anywhere on the classpath fails every rule (`IgnorePatternsGuard`), and a `corral.exclude.<rule-id>`
 entry in `corral.properties` requires a written reason that is reprinted on every other rule's failure.

@@ -5,9 +5,9 @@ import static com.tngtech.archunit.base.DescribedPredicate.describe;
 import com.tngtech.archunit.base.DescribedPredicate;
 import com.tngtech.archunit.core.domain.JavaClass;
 import com.tngtech.archunit.core.domain.JavaMethod;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 import lombok.experimental.UtilityClass;
 
 /**
@@ -20,15 +20,8 @@ import lombok.experimental.UtilityClass;
 @UtilityClass
 public class TestScope {
 
-    /**
-     * The patterns {@code ImportOption.DoNotIncludeTests} matches source URIs against. Copied, not
-     * delegated: {@code ImportOption.Predefined} takes a {@code Location}, not a {@link JavaClass}.
-     */
-    private static final List<Pattern> TEST_OUTPUT_LOCATIONS = Stream.of(
-                    ".*/target/test-classes/.*",            // Maven
-                    ".*/build/classes/([^/]+/)?test/.*",    // Gradle
-                    ".*/out/test/.*")                       // IntelliJ
-            .map(Pattern::compile)
+    private static final List<Pattern> TEST_OUTPUT_LOCATIONS = Arrays.stream(OutputLayout.values())
+            .map(OutputLayout::testClassUri)
             .toList();
 
     /**

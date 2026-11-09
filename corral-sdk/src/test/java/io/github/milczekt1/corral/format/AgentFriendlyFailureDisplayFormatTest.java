@@ -95,6 +95,27 @@ class AgentFriendlyFailureDisplayFormatTest {
         assertTrue(policy < census && census < locations, "census out of order:\n" + out);
     }
 
+    @Test
+    void listsEveryGeneratedSourceDirectoryAfterTheExclusions() {
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM,
+                List.of("corral.exclude.x.no-y=reason"), List.of("src/main/generated", "gen/openapi"));
+
+        int exclusions = out.indexOf("EXCLUDED IN THIS BUILD");
+        int generated = out.indexOf("SKIPPED AS GENERATED IN THIS BUILD");
+        int locations = out.indexOf("Offending locations:");
+
+        assertTrue(exclusions < generated && generated < locations, "sections out of order:\n" + out);
+        assertTrue(out.contains("corral.generated-sources"), out);
+        assertTrue(out.contains("- src/main/generated") && out.contains("- gen/openapi"), out);
+    }
+
+    @Test
+    void omitsTheGeneratedSourcesSectionWhenNoneAreConfigured() {
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, List.of(), List.of());
+
+        assertFalse(out.contains("SKIPPED AS GENERATED"), out);
+    }
+
     /** No file is the common case; an empty header would be noise on every failure. */
     @Test
     void omitsTheCensusEntirelyWhenNothingIsExcluded() {

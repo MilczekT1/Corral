@@ -1,10 +1,10 @@
 package com.example.consumer.exclusions;
 
-import com.tngtech.archunit.core.importer.ImportOption;
 import com.tngtech.archunit.junit.AnalyzeClasses;
 import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.junit.ArchTests;
 import io.github.milczekt1.corral.groups.LoggingRulesGroup;
+import io.github.milczekt1.corral.scope.CurrentModuleLocations;
 
 /**
  * The exclusion feature, on its own node: {@code LoggingRulesGroup} holds
@@ -15,7 +15,7 @@ import io.github.milczekt1.corral.groups.LoggingRulesGroup;
  * rule id is the freeze-store key, so evaluating the same group from two nodes would have both
  * writing the same store entry.
  */
-@AnalyzeClasses(packages = "com.example.consumer", importOptions = ImportOption.DoNotIncludeJars.class)
+@AnalyzeClasses(locations = CurrentModuleLocations.class)
 class ExcludedRuleTest {
 
     @ArchTest

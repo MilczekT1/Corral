@@ -13,6 +13,7 @@ import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.milczekt1.corral.DocumentedRule;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.scope.TestScope;
+import io.github.milczekt1.corral.scope.SourceScope;
 import io.github.milczekt1.corral.settings.CorralSettings;
 import java.util.Collection;
 import java.util.Set;
@@ -23,14 +24,16 @@ import lombok.NoArgsConstructor;
 
 /**
  * Every {@code @ConfigurationProperties} prefix a production class declares — on the class itself, or
- * on a method whose raw return type is an imported production class — must equal
+ * on a method whose raw return type is an imported production class or a class of the method's own
+ * module — must equal
  * {@value CorralSettings#PROPERTY_PREFIX} or start with it followed by a dot. One violation per
  * declaration site.
  *
  * <p>Direct annotations only: a subclass is never reported for its parent's prefix, and a custom
  * annotation carrying {@code @ConfigurationProperties} is reported at its own declaration, never at its
  * uses, so a prefix it forwards through {@code @AliasFor} is not seen. A method returning a type outside
- * the imported classes is skipped, so a library type bound to its own namespace passes.
+ * the imported classes and the method's own module is skipped, so a library type bound to its own
+ * namespace passes.
  */
 @NoArgsConstructor(access = AccessLevel.PRIVATE)
 public final class ConfigurationPropertiesMustUseProjectPrefixRule implements DocumentedRule {
@@ -64,7 +67,8 @@ public final class ConfigurationPropertiesMustUseProjectPrefixRule implements Do
                     keys. Leave the violation and report it; this rule has no per-site exception, and \
                     whether it fits this class is a human's call. Only prefixes declared with \
                     @ConfigurationProperties directly on a production class, or on a method whose \
-                    declared return type is one of the imported production classes, are checked. A \
+                    declared return type is one of the imported production classes or a class of the \
+                    method's own module, generated or not, are checked. A \
                     custom annotation carrying @ConfigurationProperties is checked like any class, at \
                     its own declaration; one that forwards the prefix through @AliasFor is reported \
                     with its own prefix, empty by default, and the prefix each use passes is not seen. \
@@ -116,6 +120,11 @@ public final class ConfigurationPropertiesMustUseProjectPrefixRule implements Do
                 classesUnderTest = allObjectsToTest.stream().map(JavaClass::getName).collect(Collectors.toSet());
             }
 
+            /** Generated classes are filtered out of {@code allObjectsToTest}, but are still this project's. */
+            private boolean isProjectType(JavaClass returnType, JavaClass owner) {
+                return classesUnderTest.contains(returnType.getName()) || SourceScope.inSameModule(returnType, owner);
+            }
+
             @Override
             public void check(JavaClass type, ConditionEvents events) {
                 String projectPrefix = PROJECT_PREFIX.get();
@@ -128,7 +137,7 @@ public final class ConfigurationPropertiesMustUseProjectPrefixRule implements Do
                 // javac copies a method's annotations onto its bridge methods.
                 type.getMethods().stream()
                         .filter(method -> !method.getModifiers().contains(JavaModifier.SYNTHETIC))
-                        .filter(method -> classesUnderTest.contains(method.getRawReturnType().getName()))
+                        .filter(method -> isProjectType(method.getRawReturnType(), type))
                         .forEach(method -> method.tryGetAnnotationOfType(CONFIGURATION_PROPERTIES)
                                 .map(ConfigurationPropertiesMustUseProjectPrefixRule::prefixOf)
                                 .filter(prefix -> !isUnder(prefix, projectPrefix))

@@ -79,10 +79,11 @@ public final class NoAnnotationsOnEntityRule implements DocumentedRule {
                     may set and copy them onto the entity by hand. Move every Jackson annotation onto \
                     those records. Entities recorded in the freeze store when the rule was adopted \
                     stay there as debt; a new violation is fixed in code. A codebase that exposes its \
-                    entities on purpose — an internal tool with one consumer, or JPA classes a \
-                    generator annotates, where every entity it generates is a new violation — should \
-                    not wire this rule, or should exclude it with a corral.exclude.<rule-id> entry in \
-                    corral.properties giving that reason. \
+                    entities on purpose — an internal tool with one consumer — should not wire this \
+                    rule, or should exclude it with a corral.exclude.<rule-id> entry in corral.properties \
+                    giving that reason. Entities a generator writes are not checked when their sources \
+                    are built under target/, build/ or out/; generated sources committed to the module \
+                    are left out by listing their directory in corral.generated-sources. \
                     Only classes annotated @Entity or @MappedSuperclass are checked; an @Embeddable is \
                     not, though the entity embedding it is serialised with it. Test \
                     classes — by output location or a declared test method, never by name — are out \

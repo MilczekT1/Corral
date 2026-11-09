@@ -5,6 +5,8 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import com.tngtech.archunit.core.domain.JavaClasses;
+import com.tngtech.archunit.core.importer.ClassFileImporter;
+import io.github.milczekt1.corral.scope.SourceScope;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.TestOutputProperties;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.production.AppProperties;
 import io.github.milczekt1.corral.rules.spring.configurationpropertiesmustuseprojectprefix.fixtures.production.AuditProperties;
@@ -24,6 +26,7 @@ import io.github.milczekt1.corral.rules.testsupport.CommittedStore;
 import io.github.milczekt1.corral.rules.testsupport.FixtureVerdicts;
 import io.github.milczekt1.corral.rules.testsupport.ProductionLayout;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.stream.Stream;
@@ -110,6 +113,29 @@ class ConfigurationPropertiesMustUseProjectPrefixRuleTest {
                 .toList();
 
         assertEquals(List.of(methodLine(ClientConfiguration.class, "clientSettings", "client")), methodLines);
+    }
+
+    /** The maintained-code filter must not hide a generated return type from the condition. */
+    @Test
+    void flagsABindingMethodWhoseReturnTypeIsGenerated() throws IOException {
+        Path module = outputRoot.resolve("generated-return-type");
+        Path output = ProductionLayout.copy(module, List.of(ClientConfiguration.class, ClientSettings.class));
+        String packageDirectory = ClientConfiguration.class.getPackageName().replace('.', '/');
+        plant(module.resolve("src/main/java/" + packageDirectory), "ClientConfiguration.java");
+        plant(module.resolve("build/generated/sources/openapi/" + packageDirectory), "ClientSettings.java");
+        JavaClasses imported = new ClassFileImporter().importPath(output);
+
+        List<String> violations =
+                SourceScope.maintainedOnly(ConfigurationPropertiesMustUseProjectPrefixRule.DEFINITION)
+                        .evaluate(imported).getFailureReport().getDetails();
+
+        assertTrue(violations.stream().anyMatch(line ->
+                        line.startsWith(methodLine(ClientConfiguration.class, "clientSettings", "client"))),
+                String.join("\n", violations));
+    }
+
+    private static void plant(Path directory, String fileName) throws IOException {
+        Files.createFile(Files.createDirectories(directory).resolve(fileName));
     }
 
     @Test

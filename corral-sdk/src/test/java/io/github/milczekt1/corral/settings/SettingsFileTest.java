@@ -2,6 +2,7 @@ package io.github.milczekt1.corral.settings;
 
 import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
 import static io.github.milczekt1.corral.settings.CorralSettings.FILE;
+import static io.github.milczekt1.corral.settings.CorralSettings.GENERATED_SOURCES;
 import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
@@ -17,6 +18,7 @@ import java.net.URLClassLoader;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.jar.JarEntry;
@@ -121,6 +123,52 @@ class SettingsFileTest {
 
         assertTrue(settings.isBroken(), () -> prefix + " was accepted");
         assertTrue(settings.problem().contains(PROPERTY_PREFIX), settings::problem);
+    }
+
+    @Test
+    void generatedSourcesAreACommaSeparatedList() {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + """
+                = src/main/generated, gen/openapi/ ,\
+                  src/main/java/com/acme/jooq
+                """, SOURCE);
+
+        assertFalse(settings.isBroken(), settings::problem);
+        assertEquals(List.of("src/main/generated", "gen/openapi", "src/main/java/com/acme/jooq"),
+                settings.generatedSources());
+    }
+
+    @Test
+    void aBackslashSeparatedGeneratedSourceIsReadWithSlashes() {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=src\\\\main\\\\generated", SOURCE);
+
+        assertEquals(List.of("src/main/generated"), settings.generatedSources(), settings::problem);
+    }
+
+    @ParameterizedTest(name = "[{0}]")
+    @ValueSource(strings = {"../proto/build/generated", "../../shared/generated", "../gen/openapi/src/main/java",
+            "src/gen/java", "src/generated/java", "src/main/java/com/acme/jooq"})
+    void aGeneratedSourceDirectoryIsAccepted(String entry) {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
+
+        assertFalse(settings.isBroken(), settings::problem);
+        assertEquals(List.of(entry), settings.generatedSources());
+    }
+
+    @Test
+    void noGeneratedSourcesWhenTheKeyIsAbsent() {
+        assertEquals(List.of(), SettingsFile.parse("", SOURCE).generatedSources());
+    }
+
+    @ParameterizedTest(name = "[{0}]")
+    @ValueSource(strings = {"", "src", "src/main", "src/main/java", "src/test/kotlin/", "/abs/gen", "gen/../src",
+            ".", "gen,,other", "SRC/main/java", "src/Main/Java", "src\\\\main\\\\java", "C:/work/gen",
+            "../src", "../shared/src", "../shared/src/main/java", "../../shared/SRC/Main/Java", "src/generated",
+            "src/integrationTest/java", "src/functionalTest/kotlin"})
+    void aGeneratedSourceThatWouldSkipMaintainedCodeBreaksTheFile(String entry) {
+        SettingsFile settings = SettingsFile.parse(GENERATED_SOURCES + "=" + entry, SOURCE);
+
+        assertTrue(settings.isBroken(), () -> "[" + entry + "] was accepted");
+        assertTrue(settings.problem().contains(GENERATED_SOURCES), settings::problem);
     }
 
     @Test

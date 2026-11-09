@@ -19,6 +19,7 @@ would have both writing the same entry.
 | `archunit/frozen/` | The committed freeze store. One `stored.rules` entry per wired rule, and a file named after the id only for the rules carrying debt — the clean rules have no file, and the retired id has no entry at all. |
 | `corral.properties` | This project's settings: the base package `ServicesMustLiveInServicePackageRule` reads, the property prefix the catalog's standalone `corral.spring.configuration-properties-must-use-project-prefix` reads, and one rule removed from this build permanently while the rest of the catalog stays. |
 | `InvalidlyNamedTestClass`, `service/NoisyService`, `billing/InvoiceService`, `billing/InvoiceProperties` | Deliberate, permanent violations, frozen as debt. `InvoiceService` is a service outside the service package. `InvoiceProperties` binds keys under `app.invoice` instead of the configured `acme`. `NoisyService` is debt for two rules at once: this project's `acme.no-stdout-in-services` and the library's `corral.logging.no-system-out`. |
+| `src/generator/GeneratedStatusService.java.template` | Stands in for a code generator: the build copies it into `target/generated-sources/example` and compiles it. It calls `System.out` in `..service..`, yet no rule reports it, because Corral checks maintained code only. |
 | `exclusions/StderrWriterAllowedByExclusion` | A violation that is **not** debt — `corral.logging.no-system-err` is frozen clean here, so this would fail the build. The exclusion is what keeps it green, and the class is named after that fact. |
 
 ## Writing your own rule
@@ -137,7 +138,8 @@ HOW NOT TO FIX (always):
   - Do NOT set corral.ignore-patterns.fail=false to make that check go away. It exists to report the file above, so disarming it restores the silence rather than resolving it. That property is for a file you put there deliberately, for your own rules.
   - Do NOT silence the rule with @SuppressWarnings, @ArchIgnore, comments, or by disabling the test.
   - Do NOT rename a class, field, or package solely to dodge a name-based rule (e.g. renaming FooIT so the integration-test rule stops matching).
-  - Do NOT narrow @AnalyzeClasses(packages=...) or add ImportOptions to hide code from the scan.
+  - Do NOT narrow @AnalyzeClasses packages or locations, or add ImportOptions, to remove code from the scan, unless another architecture test runs the same rules on that code — as each module's own test does under CurrentModuleLocations.
+  - Do NOT move maintained code under target/, build/ or out/, list its directory in corral.generated-sources, or compile it without debug info, to take it out of the rules' scope. Only code a tool generates belongs there.
   - Do NOT downgrade, remove, reword, or otherwise weaken the rule.
   - A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding one in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.

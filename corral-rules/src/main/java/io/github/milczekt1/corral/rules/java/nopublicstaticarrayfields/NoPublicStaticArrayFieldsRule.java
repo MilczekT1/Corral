@@ -35,10 +35,10 @@ public final class NoPublicStaticArrayFieldsRule implements DocumentedRule {
                     and needs no copy on read. If callers need an array, make the field private and \
                     return NAMES.clone() from a method. A zero-length array constant is flagged too, \
                     though nothing can be written into it, because only the declared type is read: \
-                    make it private and expose it from a method, or freeze it. Generated code you \
-                    cannot edit, such as an ANTLR lexer's or parser's ruleNames and tokenNames, is not \
-                    fixed by hand: freeze what exists as debt, since its lines name the field, not a \
-                    line number, and survive regeneration.""")
+                    make it private and expose it from a method, or freeze it. An ANTLR \
+                    lexer or parser is not checked when its sources are built under target/, build/ or \
+                    out/; generated sources committed to the module are left out by listing their \
+                    directory in corral.generated-sources in corral.properties.""")
             .howNotToFix("""
                     Do NOT replace the array with new ArrayList<>(...) or Arrays.asList(...): this rule \
                     does not flag either, and any class can still call set. Do NOT make the field \

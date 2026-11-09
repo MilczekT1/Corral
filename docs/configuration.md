@@ -11,6 +11,7 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 | `freeze.store.default.allowStoreCreation` | **never commit as `true`** | See the warning below. |
 | `corral.exclude.<rule-id>` | optional | In `corral.properties`, not `archunit.properties`. Removes the named rule from your build permanently; the value is the mandatory reason. See [Excluding a rule](excluding-a-rule.md). |
 | `corral.ignore-patterns.fail` | optional, defaults to `true` | In `corral.properties`, not `archunit.properties`; there is no system-property override. Every Corral rule fails, naming each copy found, when `archunit_ignore_patterns.txt` is on the classpath. Set it to `false` if that file is yours and deliberate. |
+| `corral.generated-sources` | optional | In `corral.properties`. Comma-separated directories, relative to the module root (`../` allowed), holding generated sources outside `target/`, `build/` and `out/`. Classes compiled from them are not checked. See [Generated code](#generated-code). |
 
 > **Do not put `freeze.store.default.allowStoreCreation=true` in `archunit.properties`.** ArchUnit
 > defaults it to `false`, and that default is the only thing separating "the store is missing" from
@@ -81,3 +82,69 @@ a commit. This store keeps the entry and drops the file. Three things to know:
   clean never triggers a write. Clear them once with `mvn test -Darchunit.freeze.refreeze=true` (or
   delete them by hand) and review the diff: `refreeze` re-records *every* rule, so anything currently
   failing gets absorbed as debt too.
+
+## Multi-module builds
+
+`@AnalyzeClasses(packages = "com.acme", importOptions = ImportOption.DoNotIncludeJars.class)` scans
+whatever the classpath holds under that package, and the classpath depends on the command. For a
+module `app` that depends on `core` in the same build:
+
+| Run | `core` on `app`'s classpath as | `app` itself as |
+|---|---|---|
+| `mvn test`, the IDE | `core/target/classes` | `app/target/classes` |
+| `mvn verify`, `mvn install` | `core-<version>.jar` | `app/target/classes` |
+| `mvn test -pl app` | `core-<version>.jar` from `~/.m2` | `app/target/classes` |
+| Failsafe `*IT` tests under `mvn verify` | `core-<version>.jar` | `app-<version>.jar` |
+
+`DoNotIncludeJars` drops only the jars. So `app`'s scan includes `core` under `test` and in the IDE
+but not under `verify`; the freeze store a module records changes with the command that seeded it,
+and one violation in `core` fails in every module downstream of it. An architecture test run by
+Failsafe scans none of its own module's production classes, and its production rules pass with
+nothing to check.
+
+`CurrentModuleLocations` scans the module the test class was compiled in — its test and production
+output — and nothing else, however the test is launched:
+
+```java
+@AnalyzeClasses(locations = CurrentModuleLocations.class)
+```
+
+- Each module's architecture test checks that module. A module without one is not checked.
+- Do not add `packages` or `packagesOf` next to it: `@AnalyzeClasses` imports them as well, and the
+  sibling modules come back.
+- It recognises Maven `target/test-classes`, Gradle `build/classes/<lang>/test` and IntelliJ
+  `out/test/<module>`, and fails the test for any other layout. A Gradle `integrationTest` or
+  `testFixtures` source set needs your own `com.tngtech.archunit.junit.LocationProvider`.
+- Switching an existing build to it narrows each module's scan to its own classes, so on the next
+  run the store drops the sibling modules' violations it had recorded. Review that diff once.
+
+## Generated code
+
+Every Corral rule checks only the code you maintain. A class is skipped when the source file it was
+compiled from is only under the module's `target/`, `build/` or `out/` directory, or in a directory
+listed in `corral.generated-sources`. Every other class is checked, including one whose source file
+Corral cannot find. A package named `build` deeper down is unaffected. That covers the output of
+OpenAPI, protobuf, jOOQ, MapStruct and other generators in their default locations, with no
+configuration. The first rule that skips anything prints how many classes it skipped.
+
+- **Generated code committed to the module**, anywhere outside those three directories, cannot be
+  told apart from code you maintain. List its directories, relative to the module root; `../` reaches generated sources
+  another module or a shared folder holds:
+
+  ```properties
+  corral.generated-sources=src/main/java/com/acme/jooq,\
+    ../proto/build/generated
+  ```
+
+  A directory holding maintained sources is refused, because it would skip everything: `src`,
+  `src/<set>`, and `src/<set>/<language>` for `main`, `test` and any `*Test` set, also below
+  `../<module>/` and wherever the path resolves. A generator's own root such as `src/gen/java`, and
+  any directory below a source root, is accepted. Every listed directory is printed on every failure, as exclusions are.
+- **Members generated inside your own classes** — Lombok getters, record accessors, Kotlin
+  `data class` methods — are checked. They come from declarations you maintain.
+- **Classes from a jar**, and classes from an output layout Corral does not recognise, are checked.
+- **A class compiled without debug info** (`-g:none`) records no source file. Corral looks for a file
+  named after its top-level class and skips the class when none exists, so a maintained class
+  compiled that way from sources outside the module, or a second top-level class sharing another
+  class's file, is not checked.
+- Upgrading drops the violations a store had recorded in generated code. Commit that diff.

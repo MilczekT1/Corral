@@ -34,7 +34,9 @@ static final ArchRule DEFINITION = noClasses()...;      // raw, package-private
 public static final ArchRule rule = new NoStdoutInServicesRule().guard();   // last
 ```
 
-`guard()` registers the doc, renames the rule to the id, freezes it, and applies exclusions. It runs
+`guard()` registers the doc, renames the rule to the id, checks only maintained classes (see
+[Generated code](configuration.md#generated-code)), freezes it, and applies exclusions. A rule about
+generated classes therefore checks nothing through `guard()`. It runs
 at class init and dereferences `DOC` and `DEFINITION`, so an `@ArchTest` field declared above either
 fails class initialisation.
 

@@ -42,10 +42,12 @@ public final class PublicStaticFieldsMustBeFinalRule implements DocumentedRule {
                     it with List.copyOf(...), Set.of(...) or Map.of(...), so it is immutable as well as \
                     final. A field that is reassigned at runtime — a flag, a clock, a configured \
                     endpoint — is not a constant: make it an instance field of a collaborator and inject \
-                    that collaborator, so a test can set it without leaking into other tests. Generated \
-                    code you cannot edit, such as an ANTLR lexer's modeNames and channelNames or \
-                    Groovy's __$stMC, is not fixed by hand: freeze what exists as debt, since its lines \
-                    name the field, not a line number, and survive regeneration. A codebase that \
+                    that collaborator, so a test can set it without leaking into other tests. Groovy's \
+                    __$stMC, which the compiler adds to your own classes, is not fixed by hand: freeze \
+                    what exists as debt, since its lines name the field, not a line number. An ANTLR \
+                    lexer is not checked when its sources are built under target/, build/ or out/; \
+                    generated sources committed to the module are left out by listing their directory \
+                    in corral.generated-sources in corral.properties. A codebase that \
                     compiles Groovy, or an Android module with generated R classes, adds a violation \
                     with every new class: it excludes this rule with a corral.exclude.<rule-id> entry \
                     in corral.properties, which switches it off for the whole build.""")

@@ -1,5 +1,6 @@
 package io.github.milczekt1.corral.format;
 
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import org.junit.jupiter.api.Test;
@@ -15,8 +16,17 @@ class AntiFixPolicyTest {
         assertTrue(all.contains("@archignore"), "must forbid @ArchIgnore");
         assertTrue(all.contains("rename"), "must forbid renaming to dodge name-based rules");
         assertTrue(all.contains("@analyzeclasses"), "must forbid narrowing the scan");
+        assertTrue(all.contains("locations"), "must forbid narrowing the scan's locations");
+        assertTrue(all.contains("same rules"),
+                "narrowing is legitimate only when another test runs the same rules on that code");
         assertTrue(all.contains("importoption"), "must forbid hiding code with ImportOptions");
         assertTrue(all.contains("weaken"), "must forbid weakening the rule");
+        assertTrue(all.contains("corral.generated-sources") && all.contains("target/"),
+                "must forbid passing maintained code off as generated");
+        assertTrue(all.contains("debug info"),
+                "must name the one dodge SourceScope does not catch: a class recording no source file");
+        assertFalse(all.contains("dot-directory") || all.contains("build file beside"),
+                "a source Corral cannot find is checked, so those are no longer dodges");
     }
 
     /** The escape hatches a reader can only reach by exact name: a file name and two property keys. */

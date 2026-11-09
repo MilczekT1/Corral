@@ -59,9 +59,9 @@ public final class NoGenericExceptionThrownRule implements DocumentedRule {
                     from Java 10, URI.create). Where none exists, as for NoSuchAlgorithmException on "SHA-256", \
                     throw IllegalStateException with the cause. An Error thrown for a state that cannot happen \
                     becomes AssertionError. A Throwable built only to record a stack trace for a log line becomes a \
-                    named subclass (class CallerTrace extends Exception {}). A violation in generated code is fixed \
-                    in the generator's template or configuration, never in the generated file, which the next build \
-                    overwrites.""")
+                    named subclass (class CallerTrace extends Exception {}). Generated classes are not checked when \
+                    their sources are built under target/, build/ or out/; generated sources committed to the module \
+                    are left out by listing their directory in corral.generated-sources in corral.properties.""")
             .howNotToFix("""
                     Do NOT swap in another JDK type that does not name the failure — IllegalStateException, \
                     IllegalArgumentException, UnsupportedOperationException, CompletionException, or \

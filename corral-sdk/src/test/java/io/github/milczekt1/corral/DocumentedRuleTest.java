@@ -19,6 +19,7 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.guard.IgnorePatternsGuard;
+import io.github.milczekt1.corral.scope.SourceScope;
 import io.github.milczekt1.corral.settings.CorralSettings;
 import io.github.milczekt1.corral.settings.RequiredSettings;
 import io.github.milczekt1.corral.store.UnclaimedStoreEntries;
@@ -103,6 +104,20 @@ class DocumentedRuleTest {
                                 && call.getName().equals("interposeOn")),
                 "guard() must run the ignore-patterns check — it is the only place a whole-catalog"
                         + " kill switch cannot hide from");
+    }
+
+    /** The wiring, not the mechanism — {@code SourceScopeTest} owns that. Bytecode, as above. */
+    @Test
+    void guardChecksMaintainedClassesOnly() {
+        JavaMethod guard = new ClassFileImporter()
+                .importClasses(DocumentedRule.class)
+                .get(DocumentedRule.class)
+                .getMethod("guard");
+
+        assertTrue(guard.getMethodCallsFromSelf().stream()
+                        .anyMatch(call -> call.getTargetOwner().isEquivalentTo(SourceScope.class)
+                                && call.getName().equals("maintainedOnly")),
+                "guard() must leave generated code out of every rule");
     }
 
     /** The wiring, not the mechanism — {@code RuleExclusionsGuardTest} owns that. Bytecode, as above. */

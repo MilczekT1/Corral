@@ -44,14 +44,11 @@ public final class LowercasePackagesRule implements DocumentedRule {
                     may not record one that only changes case. If it does not, record it in two steps \
                     through a temporary name: git mv <parent>/orderProcessing <parent>/tmp && git mv \
                     <parent>/tmp <parent>/orderprocessing. Top-level classes and an annotated \
-                    package-info are reported; nested and anonymous classes move with them. Generated \
-                    code is fixed where its package is chosen: an xjc binding file or a jOOQ generator \
-                    strategy in your own build is yours to change. A package copied verbatim from a \
-                    schema you do not control — a .proto file's java_package, or its package when \
-                    java_package is absent, or a <jaxb:package> inside an XSD another team owns — cannot \
-                    be renamed here, and every top-level type that schema adds later is a new violation: \
-                    a codebase compiling such a schema should not wire this rule, or should exclude it \
-                    with a corral.exclude.<rule-id> entry in corral.properties giving that reason.""")
+                    package-info are reported; nested and anonymous classes move with them. Classes \
+                    generated from a .proto file, an XSD or a jOOQ schema are not checked when their \
+                    sources are built under target/, build/ or out/; generated sources committed to the \
+                    module are left out by listing their directory in corral.generated-sources in \
+                    corral.properties.""")
             .howNotToFix("""
                     Do NOT change only the package line and leave the directory in mixed case. Maven \
                     still compiles it, so this rule passes — it reads class files and cannot see \

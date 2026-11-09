@@ -3,6 +3,7 @@ package io.github.milczekt1.corral.settings;
 import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
 import static io.github.milczekt1.corral.settings.CorralSettings.EXCLUDE_PREFIX;
 import static io.github.milczekt1.corral.settings.CorralSettings.FILE;
+import static io.github.milczekt1.corral.settings.CorralSettings.GENERATED_SOURCES;
 import static io.github.milczekt1.corral.settings.CorralSettings.IGNORE_PATTERNS_FAIL;
 import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -14,10 +15,12 @@ import java.io.InputStream;
 import java.io.StringReader;
 import java.net.URL;
 import java.util.Collection;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.LinkedHashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -42,6 +45,10 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
     /** Spring Boot's canonical {@code ConfigurationPropertyName} elements, without indexed or empty elements. */
     private static final Pattern PROPERTY_NAME =
             Pattern.compile("^[a-z0-9][a-z0-9-]*+(?:\\.[a-z0-9][a-z0-9-]*+)*+$");
+
+    private static final Pattern WINDOWS_DRIVE = Pattern.compile("[A-Za-z]:");
+
+    private static final Set<String> SOURCE_LANGUAGES = Set.of("java", "kotlin", "groovy", "scala");
 
     public SettingsFile {
         values = Collections.unmodifiableMap(new LinkedHashMap<>(values));
@@ -74,6 +81,22 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
             }
         });
         return Collections.unmodifiableMap(reasons);
+    }
+
+    /**
+     * In file order, stripped, with {@code /} separators and no trailing one; empty when the key is
+     * absent.
+     */
+    public List<String> generatedSources() {
+        return value(GENERATED_SOURCES).map(SettingsFile::directories).orElse(List.of());
+    }
+
+    private static List<String> directories(String value) {
+        return Arrays.stream(value.split(",", -1))
+                .map(String::strip)
+                .map(entry -> entry.replace('\\', '/'))
+                .map(entry -> entry.endsWith("/") ? entry.substring(0, entry.length() - 1) : entry)
+                .toList();
     }
 
     /** Only the literal {@code false} disarms it — a typo leaves it armed rather than silently open. */
@@ -165,18 +188,69 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                     : Optional.of("'" + value + "' is not a Spring Boot property name: dot-separated elements of"
                             + " lower-case letters, digits and '-', none starting with '-'");
         }
+        if (key.equals(GENERATED_SOURCES)) {
+            return problemWithGeneratedSources(value);
+        }
         if (key.startsWith(EXCLUDE_PREFIX)) {
-            String ruleId = key.substring(EXCLUDE_PREFIX.length());
-            if (!RuleDoc.isId(ruleId)) {
-                return Optional.of("'" + ruleId + "' is not the shape of a rule id — an exclusion names a"
-                        + " rule by its id, which is also its freeze-store key");
-            }
-            return value.isBlank()
-                    ? Optional.of("excluding '" + ruleId + "' needs a reason as the value — a rule dropped"
-                            + " without one is indistinguishable from a rule silenced")
-                    : Optional.empty();
+            return problemWithExclusion(key.substring(EXCLUDE_PREFIX.length()), value);
         }
         return Optional.of("not a key Corral defines");
+    }
+
+    private static Optional<String> problemWithExclusion(String ruleId, String reason) {
+        if (!RuleDoc.isId(ruleId)) {
+            return Optional.of("'" + ruleId + "' is not the shape of a rule id — an exclusion names a"
+                    + " rule by its id, which is also its freeze-store key");
+        }
+        return reason.isBlank()
+                ? Optional.of("excluding '" + ruleId + "' needs a reason as the value — a rule dropped"
+                        + " without one is indistinguishable from a rule silenced")
+                : Optional.empty();
+    }
+
+    private static Optional<String> problemWithGeneratedSources(String value) {
+        return value.isBlank()
+                ? Optional.of("lists no directory")
+                : directories(value).stream().map(SettingsFile::problemWithGeneratedSource)
+                        .flatMap(Optional::stream).findFirst();
+    }
+
+    private static Optional<String> problemWithGeneratedSource(String entry) {
+        List<String> segments = List.of(entry.split("/", -1));
+        int parents = 0;
+        while (parents < segments.size() && segments.get(parents).equals("..")) {
+            parents++;
+        }
+        List<String> below = segments.subList(parents, segments.size());
+        if (entry.isEmpty() || entry.startsWith("/") || WINDOWS_DRIVE.matcher(entry).lookingAt() || below.isEmpty()
+                || below.contains("..") || below.contains(".") || below.contains("")) {
+            return Optional.of("'" + entry + "' is not a directory relative to the module root");
+        }
+        boolean refused = coversSourceRoot(below)
+                || (parents > 0 && coversSourceRoot(below.subList(1, below.size())));
+        return refused
+                ? Optional.of("'" + entry + "' would skip every maintained class under it; list the directory"
+                        + " the generator writes to, or one below it")
+                : Optional.empty();
+    }
+
+    /**
+     * Whether a directory, as path segments relative to a module root, would hold maintained sources:
+     * {@code src}, {@code src/<set>}, or {@code src/<set>/<language>} for the {@code main} and {@code test}
+     * sets and any set named {@code *Test}. Case-insensitive: Windows and macOS file systems resolve
+     * {@code SRC/Main/Java} to {@code src/main/java}.
+     */
+    public static boolean coversSourceRoot(List<String> segments) {
+        if (segments.isEmpty() || !segments.get(0).equalsIgnoreCase("src")) {
+            return false;
+        }
+        if (segments.size() < 3) {
+            return true;
+        }
+        String set = segments.get(1).toLowerCase(Locale.ROOT);
+        boolean maintainedSet = set.equals("main") || set.endsWith("test");
+        return segments.size() == 3 && maintainedSet
+                && SOURCE_LANGUAGES.contains(segments.get(2).toLowerCase(Locale.ROOT));
     }
 
     /** {@code String.strip()} leaves it: {@code Character.isWhitespace('\uFEFF')} is false. */
@@ -190,9 +264,10 @@ public record SettingsFile(Map<String, String> values, String source, List<Strin
                 until it is fixed. A file that is not understood must not be trusted to remove or \
                 configure a rule.
                 %s
-                Corral defines %s, %s, %s and %s<rule-id>; keys outside corral. belong to your own rules.\
+                Corral defines %s, %s, %s, %s and %s<rule-id>; keys outside corral. belong to your own \
+                rules.\
                 """.formatted(source, String.join(System.lineSeparator(), problems),
-                        BASE_PACKAGE, PROPERTY_PREFIX, IGNORE_PATTERNS_FAIL, EXCLUDE_PREFIX);
+                        BASE_PACKAGE, PROPERTY_PREFIX, IGNORE_PATTERNS_FAIL, GENERATED_SOURCES, EXCLUDE_PREFIX);
     }
 
     private static String listed(List<String> lines) {
