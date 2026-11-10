@@ -57,7 +57,7 @@ To fail with your own message, let the build write and then check that it did no
 above still apply.
 
 ```yaml
-- name: Freeze stores unchanged by the build
+- name: Check the build left the freeze stores unchanged
   run: |
     changed=$(git status --porcelain -- ':(glob)**/src/test/resources/archunit/frozen/**')
     if [ -n "$changed" ]; then
