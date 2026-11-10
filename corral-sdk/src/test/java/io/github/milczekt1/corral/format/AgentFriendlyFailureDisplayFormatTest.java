@@ -1,5 +1,8 @@
 package io.github.milczekt1.corral.format;
 
+import static io.github.milczekt1.corral.settings.CorralSettings.BASE_PACKAGE;
+import static io.github.milczekt1.corral.settings.CorralSettings.GENERATED_SOURCES;
+import static io.github.milczekt1.corral.settings.CorralSettings.PROPERTY_PREFIX;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -12,9 +15,11 @@ import com.tngtech.archunit.lang.Priority;
 import com.tngtech.archunit.lang.SimpleConditionEvent;
 import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
+import io.github.milczekt1.corral.settings.SettingsFile;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -40,6 +45,16 @@ class AgentFriendlyFailureDisplayFormatTest {
             .why("Because invariant W matters.")
             .howToFix("Fix it by doing V.")
             .build();
+
+    private static final RuleDoc CONFIGURED = RuleDoc.builder()
+            .id("test.configured-rule-fixture")
+            .why("Because the project prefix matters.")
+            .howToFix("Use the project prefix.")
+            .requiredSetting(PROPERTY_PREFIX)
+            .requiredSetting("acme.service-package")
+            .build();
+
+    private static final String SOURCE = "file:/work/billing/target/test-classes/corral.properties";
 
     @Test
     void rendersEverySectionForADocumentedRule() {
@@ -77,7 +92,7 @@ class AgentFriendlyFailureDisplayFormatTest {
                 "spring.no-transactional-on-final :: AspectJ load-time weaving. ADR-021.",
                 "logging.no-log4j-api-directly :: the Log4j 2 API is our facade by decision.");
 
-        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, census);
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, SettingsFile.none(), census);
 
         assertTrue(out.contains("EXCLUDED IN THIS BUILD"), out);
         census.forEach(line -> assertTrue(out.contains(line), () -> "missing " + line + " in:\n" + out));
@@ -85,7 +100,7 @@ class AgentFriendlyFailureDisplayFormatTest {
 
     @Test
     void theCensusSitsBetweenTheAntiFixPolicyAndTheOffendingLocations() {
-        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM,
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, SettingsFile.none(),
                 List.of("logging.no-system-out :: stdout is our transport."));
 
         int policy = out.indexOf("HOW NOT TO FIX (always):");
@@ -98,7 +113,8 @@ class AgentFriendlyFailureDisplayFormatTest {
     @Test
     void listsEveryGeneratedSourceDirectoryAfterTheExclusions() {
         String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM,
-                List.of("corral.exclude.x.no-y=reason"), List.of("src/main/generated", "gen/openapi"));
+                settings(Map.of(GENERATED_SOURCES, "src/main/generated, gen/openapi")),
+                List.of("corral.exclude.x.no-y=reason"));
 
         int exclusions = out.indexOf("EXCLUDED IN THIS BUILD");
         int generated = out.indexOf("SKIPPED AS GENERATED IN THIS BUILD");
@@ -111,7 +127,7 @@ class AgentFriendlyFailureDisplayFormatTest {
 
     @Test
     void omitsTheGeneratedSourcesSectionWhenNoneAreConfigured() {
-        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, List.of(), List.of());
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, SettingsFile.none(), List.of());
 
         assertFalse(out.contains("SKIPPED AS GENERATED"), out);
     }
@@ -119,9 +135,43 @@ class AgentFriendlyFailureDisplayFormatTest {
     /** No file is the common case; an empty header would be noise on every failure. */
     @Test
     void omitsTheCensusEntirelyWhenNothingIsExcluded() {
-        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, List.of());
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM, SettingsFile.none(), List.of());
 
         assertFalse(out.contains("EXCLUDED IN THIS BUILD"), out);
+    }
+
+    @Test
+    void listsEachSettingTheRuleDeclaresWithItsValueAndTheFileInEffect() {
+        SettingsFile settings = settings(Map.of(
+                PROPERTY_PREFIX, "acme", "acme.service-package", "service", BASE_PACKAGE, "com.acme"));
+
+        String out = FORMAT.render(CONFIGURED, VIOLATIONS, Priority.MEDIUM, settings, List.of());
+
+        assertTrue(out.contains("SETTINGS USED BY THIS RULE (" + SOURCE + "):"), out);
+        assertTrue(out.contains("  - corral.property-prefix=acme"), out);
+        assertTrue(out.contains("  - acme.service-package=service"), out);
+        assertFalse(out.contains(BASE_PACKAGE), "printed a setting the rule does not declare:\n" + out);
+    }
+
+    @Test
+    void theRuleSettingsSitBetweenTheAntiFixPolicyAndTheExclusions() {
+        String out = FORMAT.render(CONFIGURED, VIOLATIONS, Priority.MEDIUM,
+                settings(Map.of(PROPERTY_PREFIX, "acme", "acme.service-package", "service")),
+                List.of("corral.exclude.x.no-y=reason"));
+
+        int policy = out.indexOf("HOW NOT TO FIX (always):");
+        int settings = out.indexOf("SETTINGS USED BY THIS RULE");
+        int exclusions = out.indexOf("EXCLUDED IN THIS BUILD");
+
+        assertTrue(policy < settings && settings < exclusions, "sections out of order:\n" + out);
+    }
+
+    @Test
+    void omitsTheRuleSettingsSectionWhenTheRuleDeclaresNone() {
+        String out = FORMAT.render(DOCUMENTED, VIOLATIONS, Priority.MEDIUM,
+                settings(Map.of(PROPERTY_PREFIX, "acme")), List.of());
+
+        assertFalse(out.contains("SETTINGS USED BY THIS RULE"), out);
     }
 
     @Test
@@ -180,6 +230,7 @@ class AgentFriendlyFailureDisplayFormatTest {
         assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, null, Priority.MEDIUM));
         assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, VIOLATIONS, null));
         assertDoesNotThrow(() -> FORMAT.render(DOCUMENTED, withNullElement, Priority.MEDIUM));
+        assertDoesNotThrow(() -> FORMAT.render(CONFIGURED, VIOLATIONS, Priority.MEDIUM, null, null));
 
         assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", null, "2 times", Priority.HIGH));
         assertDoesNotThrow(() -> FORMAT.defaultFormat("some.rule", VIOLATIONS, "2 times", null));
@@ -275,5 +326,9 @@ class AgentFriendlyFailureDisplayFormatTest {
 
         assertTrue(out.contains("some.foreign.rule"), out);
         assertTrue(out.contains("default rendering threw"), out);
+    }
+
+    private static SettingsFile settings(Map<String, String> values) {
+        return new SettingsFile(values, SOURCE, List.of(), null);
     }
 }

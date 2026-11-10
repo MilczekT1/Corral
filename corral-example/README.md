@@ -13,6 +13,7 @@ would have both writing the same entry.
 | `wiring/ProjectArchitectureTest` | Running that root — the whole point of the dependency. |
 | `custom/NoStdoutInServicesRule` | Writing **your own** rule with the library's machinery, with its own anti-fix guidance. Wired from `ProjectRulesGroup`, alongside the library's. |
 | `custom/ServicesMustLiveInServicePackageRule` | Your own rule reading a **project setting**: `corral.base-package` from `corral.properties` instead of a hard-coded `com.example.consumer`. |
+| `custom/ReadmeExpectedOutputTest` | Keeps the failure under [Expected output](#expected-output) identical to what the formatter prints. |
 | `exclusions/ExcludedRuleTest` | Wiring `LoggingRulesGroup`, the group holding the excluded rule. |
 | `retirement/DateRulesGroup` | **Withdrawing an id** without renaming it: the group publishes the live rule *and* `acme.no-java-util-date`, the id it replaced, as an always-passing signpost. |
 | `retirement/NoLegacyDateApiRule`, `retirement/RetirementTest` | The rule the retired id points at, and the node that runs both. |
@@ -116,20 +117,22 @@ specific to one rule belongs in that rule's `howNotToFix`.
 
 ## Expected output
 
-Adding a second stdout-writing service and running `mvn test` produces this — captured
-verbatim, not illustrative:
+`InvoiceService` breaks `acme.services-must-live-in-service-package`: it is a service outside
+`..service..`. The build stays green only because that violation is frozen debt; were it new, this
+is the failure. `custom/ReadmeExpectedOutputTest` renders it and fails when this block drifts from
+what the formatter prints:
 
 ```text
-Architecture Violation [acme.no-stdout-in-services] [Priority: MEDIUM]
+Architecture Violation [acme.services-must-live-in-service-package] [Priority: MEDIUM]
 
 WHY:
-  Writing to stdout from a service bypasses the logging setup entirely: no level, no correlation id, no way to turn it off in production or capture it in tests.
+  Services are found by package, not by name: wiring, transaction boundaries and the stdout rule all assume a service lives under the project's service package.
 
 HOW TO FIX:
-  Inject a logger and log at the level the message deserves, or return the value and let the caller decide how to present it.
+  Move the class into the service package under the project's base package, or rename it if it is not a service.
 
 HOW NOT TO FIX (this rule):
-  Do NOT move the call into a helper class outside ..service.. to dodge the package matcher — the output still lands on stdout. Do NOT swap System.out for a logger you then silence in test configuration.
+  Do NOT change corral.base-package to cover the misplaced class — the setting names the project's root for every rule that reads it.
 
 HOW NOT TO FIX (always):
   - Do NOT edit, hand-write, or delete files under archunit/frozen/ to make a NEW violation disappear. The store records pre-existing debt only; new violations must be fixed in code.
@@ -144,21 +147,28 @@ HOW NOT TO FIX (always):
   - A corral.exclude.<rule-id> entry in corral.properties removes a rule from your build permanently, because it does not apply to this codebase. It is not a way to pass a failing build. Adding one in the same change that made that rule fail is silencing, not excluding, and reads that way in the diff.
   - The ONLY acceptable resolution is changing the production/test code so the rule genuinely passes — then follow this rule's HOW TO FIX.
 
+SETTINGS USED BY THIS RULE (file:/…/corral-example/target/test-classes/corral.properties):
+  - corral.base-package=com.example.consumer
+
 EXCLUDED IN THIS BUILD (corral.properties — these rules are not enforced here):
   - corral.exclude.corral.logging.no-system-err=Demonstrating exclusion is this module's job; StderrWriterAllowedByExclusion is the demo.
 
 Offending locations:
-  Method <com.example.consumer.service.ChattyService.shout(java.lang.String)> calls method <java.io.PrintStream.println(java.lang.String)> in (ChattyService.java:4)
+  Class <com.example.consumer.billing.InvoiceService> does not reside in the service package under the configured base package
 ```
 
-Three things to read off it:
+Four things to read off it:
 
 - This rule's own guidance sits under "(this rule)". The "(always)" clauses are the immutable
   baseline, identical in every failure — a rule cannot add to them or drop one.
-- Only `ChattyService` is reported. `NoisyService` violates the same rule but is frozen, so it stays
-  silent — that is freezing working.
+- `SETTINGS USED BY THIS RULE` prints each setting the rule declares, with its value and the copy of
+  `corral.properties` it came from — shortened here, a full URL in a real build. It sits outside the
+  offending line, which is the text the freeze store records, so changing the setting rewrites
+  nothing in the store.
 - The `EXCLUDED IN THIS BUILD` block appears on *this* rule's failure, though this rule is not the
   excluded one. That is deliberate: an excluded rule never fails, so it can never report itself.
+- In the real build `InvoiceService` stays silent, because the store records it; only a misplaced
+  service added after the store was seeded is reported. That is freezing working.
 
 ## Excluding a rule
 

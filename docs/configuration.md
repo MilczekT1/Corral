@@ -103,6 +103,9 @@ corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interfa
 - When several copies are on the classpath, the first one wins and a warning names them all. Maven,
   Gradle and IntelliJ put the module's own test resources first. A copy read from inside a jar
   always produces a warning.
+- A failing rule prints every key it declares, with its value, under `SETTINGS USED BY THIS RULE`,
+  headed by the URL of the copy in effect — so in a multi-module build it names the module the value
+  came from.
 
 ## The freeze store
 

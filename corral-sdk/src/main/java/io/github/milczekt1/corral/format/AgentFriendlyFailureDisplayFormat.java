@@ -8,6 +8,7 @@ import io.github.milczekt1.corral.doc.RuleDoc;
 import io.github.milczekt1.corral.doc.RuleRegistry;
 import io.github.milczekt1.corral.exclude.RuleExclusions;
 import io.github.milczekt1.corral.settings.CorralSettings;
+import io.github.milczekt1.corral.settings.SettingsFile;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -82,18 +83,15 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
     }
 
     String render(RuleDoc doc, List<String> violationLines, Priority priority) {
-        return render(doc, violationLines, priority, censusSafely(), generatedSourcesSafely());
+        return render(doc, violationLines, priority, settingsSafely(), censusSafely());
     }
 
-    String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census) {
-        return render(doc, violationLines, priority, census, List.of());
-    }
-
-    String render(RuleDoc doc, List<String> violationLines, Priority priority, List<String> census,
-            List<String> generatedSources) {
+    String render(RuleDoc doc, List<String> violationLines, Priority priority, SettingsFile settings,
+            List<String> census) {
         try {
             String nl = System.lineSeparator();
             List<String> lines = violationLines == null ? List.of() : violationLines;
+            SettingsFile inEffect = settings == null ? SettingsFile.none() : settings;
             String priorityLabel = priority == null ? "UNKNOWN" : priority.asString();
             StringBuilder out = new StringBuilder();
 
@@ -114,6 +112,17 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             }
             out.append(nl);
 
+            List<String> ruleSettings = doc.requiredSettings().stream()
+                    .flatMap(key -> inEffect.value(key).map(value -> key + "=" + value).stream())
+                    .toList();
+            if (!ruleSettings.isEmpty()) {
+                out.append("SETTINGS USED BY THIS RULE (").append(inEffect.source()).append("):").append(nl);
+                for (String setting : ruleSettings) {
+                    out.append(INDENT).append("- ").append(setting).append(nl);
+                }
+                out.append(nl);
+            }
+
             // An excluded rule never fails, so the census rides on every other rule's failure.
             List<String> exclusions = census == null ? List.of() : census;
             if (!exclusions.isEmpty()) {
@@ -125,7 +134,7 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
                 out.append(nl);
             }
 
-            List<String> generated = generatedSources == null ? List.of() : generatedSources;
+            List<String> generated = inEffect.generatedSources();
             if (!generated.isEmpty()) {
                 out.append("SKIPPED AS GENERATED IN THIS BUILD (").append(CorralSettings.GENERATED_SOURCES)
                         .append(" — classes compiled from these directories are not checked):").append(nl);
@@ -155,12 +164,12 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
         }
     }
 
-    private static List<String> generatedSourcesSafely() {
+    private static SettingsFile settingsSafely() {
         try {
-            return CorralSettings.current().generatedSources();
+            return CorralSettings.current();
         } catch (RuntimeException e) {
-            debug("Reading the generated-sources setting threw; omitting it from this failure", e);
-            return List.of();
+            debug("Reading " + CorralSettings.FILE + " threw; omitting its settings from this failure", e);
+            return SettingsFile.none();
         }
     }
 

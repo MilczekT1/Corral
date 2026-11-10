@@ -125,6 +125,9 @@ static final ArchRule DEFINITION = noClasses()
 - **Never put the value in a description or a violation message.** Both are freeze-store matching
   keys: a consumer who changes the setting would see every frozen violation resurface as new.
   `BasePackage.resideIn` describes itself as "the configured base package" for this reason.
+- **The failure prints it for you.** Every declared key and its value appear under
+  `SETTINGS USED BY THIS RULE` on the rule's failure, outside the stored text, so HOW TO FIX can name
+  the key without repeating its value. Do not declare a key whose value must stay out of build logs.
 - **Values are read when the rule runs, not when its class loads.** Use the supplier from
   `CorralSettings.setting` inside a predicate or condition; calling `get()` in a static initialiser
   turns a missing key into an `ExceptionInInitializerError`.
