@@ -35,6 +35,15 @@ corral.exclude.corral.logging.no-system-err=We ship a CLI; stderr is the interfa
 
 That rule now passes without evaluating; everything else is untouched. No file, no change.
 
+Each module reads its own `corral.properties`, so in a multi-module build an exclusion removes the
+rule from that module only. That is the case for a test-support module when every module runs one
+shared rule set: test libraries on its main classpath are its purpose, so the rule's premise is false
+there and nowhere else.
+
+```properties
+corral.exclude.corral.layering.no-test-libraries-in-production=This module is a test-utilities library; JUnit, AssertJ and Mockito on its main classpath are its purpose.
+```
+
 | | |
 |---|---|
 | A reason is **mandatory** | The SDK can't judge if it's a good one, but it can make its absence fatal |

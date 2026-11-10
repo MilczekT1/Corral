@@ -20,7 +20,8 @@ import lombok.NoArgsConstructor;
  *
  * <p>Stands alone, in no group: wire it with {@code ArchTests.in(NoTestLibrariesInProductionRule.class)}.
  * A module whose product is test support — a JUnit extension, a Testcontainers module, a rule catalog
- * — depends on these libraries from its main sources by design and should not wire it.
+ * — depends on these libraries from its main sources by design: leave the rule unwired there or, where
+ * every module runs one shared rule set, exclude it in that module's {@code corral.properties}.
  *
  * <p>Test code is decided by output location alone, unlike {@code TestScope}: Gradle
  * {@code testFixtures} output and any source set named {@code *test} or {@code *Test} count as test
@@ -85,7 +86,7 @@ public final class NoTestLibrariesInProductionRule implements DocumentedRule {
             .howToFix("""
                     Decide which side the class belongs on. Test support — a builder, a fixture \
                     factory, a custom assertion — moves to src/test/java, a Gradle testFixtures source \
-                    set, or a test-support module that does not wire this rule; a test class compiled \
+                    set, or a test-support module that does not run this rule; a test class compiled \
                     into production output is checked like any other class, @Test methods or not. \
                     Production code that reached for a test library for convenience calls a \
                     production API instead: \
@@ -100,7 +101,11 @@ public final class NoTestLibrariesInProductionRule implements DocumentedRule {
                     Then set the dependency back to test scope; if it arrives through another \
                     dependency, exclude it there or fix that module's scope. A module whose product is \
                     test support — a JUnit extension, a Testcontainers module, a shared assertion \
-                    library — should not wire this rule at all.""")
+                    library — should not run this rule: leave it unwired or, where every module runs \
+                    one shared rule set, add \
+                    corral.exclude.corral.layering.no-test-libraries-in-production=<reason> to that \
+                    module's corral.properties. That is the module owner's call about what the module \
+                    is, not a way to pass this build.""")
             .howNotToFix("""
                     Do NOT leave the dependency at compile scope once the class is fixed: the framework \
                     still ships. This rule cannot see dependency scope, so it passes either way. Do NOT \
@@ -110,7 +115,10 @@ public final class NoTestLibrariesInProductionRule implements DocumentedRule {
                     test library's assertions or mocks: this rule flags only the libraries it lists, \
                     so an unlisted one passes but ships the same way. Do NOT move the class into a \
                     package the ArchUnit import excludes, or into a Gradle source set named like a \
-                    test set when it is shipped code: this rule does not catch either.""")
+                    test set when it is shipped code: this rule does not catch either. Do NOT exclude \
+                    this rule in a module that ships production code, or because one class there \
+                    needs a test library: the exclusion removes it for the whole module, and every \
+                    test library that reaches the module later ships unreported.""")
             .build();
 
     static final ArchRule DEFINITION = noClasses().that(PRODUCTION_SCOPE)
