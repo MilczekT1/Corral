@@ -115,34 +115,14 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             List<String> ruleSettings = doc.requiredSettings().stream()
                     .flatMap(key -> inEffect.value(key).map(value -> key + "=" + value).stream())
                     .toList();
-            if (!ruleSettings.isEmpty()) {
-                out.append("SETTINGS USED BY THIS RULE (").append(inEffect.source()).append("):").append(nl);
-                for (String setting : ruleSettings) {
-                    out.append(INDENT).append("- ").append(setting).append(nl);
-                }
-                out.append(nl);
-            }
+            appendListSection(out, "SETTINGS USED BY THIS RULE (" + inEffect.source() + "):", ruleSettings);
 
             // An excluded rule never fails, so the census rides on every other rule's failure.
-            List<String> exclusions = census == null ? List.of() : census;
-            if (!exclusions.isEmpty()) {
-                out.append("EXCLUDED IN THIS BUILD (").append(CorralSettings.FILE)
-                        .append(" — these rules are not enforced here):").append(nl);
-                for (String exclusion : exclusions) {
-                    out.append(INDENT).append("- ").append(exclusion).append(nl);
-                }
-                out.append(nl);
-            }
+            appendListSection(out, "EXCLUDED IN THIS BUILD (" + CorralSettings.FILE
+                    + " — these rules are not enforced here):", census == null ? List.of() : census);
 
-            List<String> generated = inEffect.generatedSources();
-            if (!generated.isEmpty()) {
-                out.append("SKIPPED AS GENERATED IN THIS BUILD (").append(CorralSettings.GENERATED_SOURCES)
-                        .append(" — classes compiled from these directories are not checked):").append(nl);
-                for (String directory : generated) {
-                    out.append(INDENT).append("- ").append(directory).append(nl);
-                }
-                out.append(nl);
-            }
+            appendListSection(out, "SKIPPED AS GENERATED IN THIS BUILD (" + CorralSettings.GENERATED_SOURCES
+                    + " — classes compiled from these directories are not checked):", inEffect.generatedSources());
 
             out.append("Offending locations:").append(nl);
             for (String line : lines) {
@@ -153,6 +133,19 @@ public class AgentFriendlyFailureDisplayFormat implements FailureDisplayFormat {
             debug("Rich rendering of a documented rule failed; using the last-resort format", e);
             return lastResortFormat(idOf(doc), priority, "rich rendering threw");
         }
+    }
+
+    /** Omitted entirely when {@code items} is empty: an empty header would be noise on every failure. */
+    private static void appendListSection(StringBuilder out, String header, List<String> items) {
+        if (items.isEmpty()) {
+            return;
+        }
+        String nl = System.lineSeparator();
+        out.append(header).append(nl);
+        for (String item : items) {
+            out.append(INDENT).append("- ").append(item).append(nl);
+        }
+        out.append(nl);
     }
 
     private static List<String> censusSafely() {
