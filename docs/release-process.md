@@ -15,9 +15,10 @@ PR's commits land on `main`, publishes to **Maven Central**, and tags. Only allo
 4. The merge pushes both commits to `main`, and the push runs **Publish release**. It finds the `Release Corral <version>` commit **as it
    landed on `main`**, checks its project version, runs `./mvnw clean verify` on it, then signs and
    publishes `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
-   resolve the managed dependency versions. It waits until Central reports the deployment
-   *PUBLISHED*, up to 30 minutes, then tags that commit `v<version>` and creates the GitHub Release
-   with [generated notes](#release-notes). Search indexes lag behind `repo1.maven.org`.
+   resolve the managed dependency versions. Once Central validates the deployment, it tags that
+   commit `v<version>` and creates the GitHub Release with [generated notes](#release-notes).
+   Central publishes the validated deployment on its own; it reaches `repo1.maven.org` within about
+   30 minutes, and search indexes lag further.
 
 Tagging and uploading wait for the merge because GitHub's rebase merge re-creates every commit with
 a new hash: a tag made on the release branch would point at a commit that is not on `main`. `v0.1.0`
@@ -30,9 +31,10 @@ release version.
 **If Publish release fails**, fix the cause and re-run its failed job, or dispatch **Actions →
 Publish release** from `main` with the version. Every step skips what is already done — the tag if it is
 on the release commit, the upload if `repo1.maven.org` already serves the version, the GitHub
-Release if it exists — and it refuses to continue if `v<version>` points anywhere else. If the upload
-step timed out while Central was still publishing, wait until `repo1.maven.org` serves the version
-before retrying: Central rejects a second upload of a version it already holds.
+Release if it exists — and it refuses to continue if `v<version>` points anywhere else. Once a
+deployment validates, Central publishes it even if a later step fails, so wait until
+`repo1.maven.org` serves the version before retrying: Central rejects a second upload of a version it
+already holds.
 
 The release tree is built on its own before uploading: the release PR's checks ran on the snapshot
 bump above it, and a version published to Central can never be deleted or replaced. The `deploy`
