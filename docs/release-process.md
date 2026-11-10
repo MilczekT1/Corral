@@ -1,7 +1,7 @@
 # Release process
 
 A release is two workflows. **Release** (manual) prepares a PR; **Publish release** runs when that
-PR's commits land on `main`, uploads to **Maven Central**, and tags. Only allowlisted users may trigger either by hand.
+PR's commits land on `main`, publishes to **Maven Central**, and tags. Only allowlisted users may trigger either by hand.
 
 1. Go to **Actions → Release → Run workflow**.
 2. Enter:
@@ -14,14 +14,10 @@ PR's commits land on `main`, uploads to **Maven Central**, and tags. Only allowl
    `<nextVersion>-SNAPSHOT` — opens a PR to `main` and enables **auto-merge**. The PR rebase-merges once the required checks pass.
 4. The merge pushes both commits to `main`, and the push runs **Publish release**. It finds the `Release Corral <version>` commit **as it
    landed on `main`**, checks its project version, runs `./mvnw clean verify` on it, then signs and
-   uploads `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
-   resolve the managed dependency versions — tags that commit `v<version>`, and creates the GitHub
-   Release with [generated notes](#release-notes).
-5. **Press Publish.** The upload stops at *VALIDATED*. Open
-   [central.sonatype.com/publishing/deployments](https://central.sonatype.com/publishing/deployments),
-   inspect the deployment, and press **Publish**. It reaches `repo1.maven.org` within about
-   30 minutes; search indexes lag further. Pressing **Drop** instead discards it; re-upload by
-   dispatching **Publish release** with the version (below).
+   publishes `corral-sdk`, `corral-rules` and `corral-parent` — consumers need the parent pom to
+   resolve the managed dependency versions. It waits until Central reports the deployment
+   *PUBLISHED*, up to 30 minutes, then tags that commit `v<version>` and creates the GitHub Release
+   with [generated notes](#release-notes). Search indexes lag behind `repo1.maven.org`.
 
 Tagging and uploading wait for the merge because GitHub's rebase merge re-creates every commit with
 a new hash: a tag made on the release branch would point at a commit that is not on `main`. `v0.1.0`
@@ -34,7 +30,9 @@ release version.
 **If Publish release fails**, fix the cause and re-run its failed job, or dispatch **Actions →
 Publish release** from `main` with the version. Every step skips what is already done — the tag if it is
 on the release commit, the upload if `repo1.maven.org` already serves the version, the GitHub
-Release if it exists — and it refuses to continue if `v<version>` points anywhere else.
+Release if it exists — and it refuses to continue if `v<version>` points anywhere else. If the upload
+step timed out while Central was still publishing, wait until `repo1.maven.org` serves the version
+before retrying: Central rejects a second upload of a version it already holds.
 
 The release tree is built on its own before uploading: the release PR's checks ran on the snapshot
 bump above it, and a version published to Central can never be deleted or replaced. The `deploy`
