@@ -113,7 +113,7 @@ it, use 1.5 or later.
 <dependency>
   <groupId>io.github.milczekt1</groupId>
   <artifactId>corral-rules</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <scope>test</scope>
 </dependency>
 ```
@@ -204,7 +204,7 @@ that, depend on the SDK alone:
 <dependency>
   <groupId>io.github.milczekt1</groupId>
   <artifactId>corral-sdk</artifactId>
-  <version>0.4.0</version>
+  <version>0.5.0</version>
   <scope>compile</scope>
   <!-- <scope>test</scope> when the rules live in this project's tests, not in an artifact of rules -->
 </dependency>
