@@ -166,10 +166,11 @@ git add src/test/resources/archunit/frozen && git commit -m "chore: freeze exist
 ```
 
 Existing violations are now debt; only new ones fail. Two ways to end up green and enforcing nothing:
-**not committing the store** (CI sees no entry, re-seeds, and absorbs the first real violation
-silently), and **pinning `allowStoreCreation` in `archunit.properties`** instead of passing it once (a
-lost store then silently re-freezes everything). Both are covered in
-[Configuration](docs/configuration.md).
+**not committing a rule's `stored.rules` entry** (CI sees no entry, re-seeds, and absorbs the first
+real violation silently), and **pinning `allowStoreCreation` in `archunit.properties`** instead of
+passing it once (a lost store then silently re-freezes everything). Both are covered in
+[Configuration](docs/configuration.md); its [CI](docs/configuration.md#ci) section makes the first fail
+the build.
 
 ## Break it yourself
 

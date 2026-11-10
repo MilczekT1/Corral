@@ -32,6 +32,14 @@ jobs:
           cache: maven
       - name: Build with Maven
         run: ./mvnw clean install ${{ env.MVN_CONFIG }}
+      - name: Freeze stores unchanged by the build
+        run: |
+          changed=$(git status --porcelain -- ':(glob)**/src/test/resources/archunit/frozen/**')
+          if [ -n "$changed" ]; then
+            echo "::error::The build changed the freeze store. Run ./mvnw clean install locally and commit the store changes:"
+            echo "$changed"
+            exit 1
+          fi
 
   sonar_scan:
     if: >-

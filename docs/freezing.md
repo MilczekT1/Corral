@@ -20,9 +20,10 @@ Two consequences follow, and they are the questions people actually ask:
 - **A rule added today, violated in three months, fails.** The first run records an index entry (with
   zero violations). Three months later that violation is new, so the build fails. It is *not*
   accepted as debt.
-- **Commit the `stored.rules` change** produced by that first run. Uncommitted, CI sees no entry,
-  takes the left branch above, and absorbs the first violation silently — a rule that looks armed and
-  is not.
+- **Commit the `stored.rules` change** produced by that first run. Uncommitted, CI sees no entry on
+  any run, takes the left branch above, and absorbs violations silently — a rule that looks armed and
+  is not. A Corral upgrade that adds a rule to a group you wire lands there too.
+  [CI](configuration.md#ci) makes it fail instead.
 
 > **Changing a rule's predicate invalidates frozen entries for it.** ArchUnit matches known
 > violations by their rendered *text*, so widening a rule from `Test`/`IT` to `Test`/`Tests`/`IT`
