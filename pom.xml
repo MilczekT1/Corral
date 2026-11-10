@@ -655,9 +655,7 @@
             <extensions>true</extensions>
             <configuration>
               <publishingServerId>central</publishingServerId>
-              <!-- Stops at VALIDATED: a maintainer presses Publish in the Central Portal.
-                   A published version can never be deleted or replaced. -->
-              <autoPublish>false</autoPublish>
+              <autoPublish>true</autoPublish>
               <waitUntil>validated</waitUntil>
             </configuration>
           </plugin>

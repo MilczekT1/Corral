@@ -1,8 +1,7 @@
-# Uploads a release to Maven Central and tags it, from the "Release Corral <version>" commit as it
+# Publishes a release to Maven Central and tags it, from the "Release Corral <version>" commit as it
 # landed on main. Runs when a release/v* PR opened by release.yml is rebase-merged, which pushes that
 # commit with the snapshot bump on top; dispatch it by hand from main with the version to retry a
-# failed run or re-upload a release dropped in the Portal. Every step is skipped or idempotent when
-# already done.
+# failed run. Every step is skipped or idempotent when already done.
 #
 # Triggered by push, not pull_request: a pull_request run's ref is refs/pull/N/merge, which the
 # main-only maven-central environment rejects.
@@ -143,8 +142,7 @@ jobs:
             artifactId=$(xmllint --xpath "string(/*[local-name()='project']/*[local-name()='artifactId'])" "$pom" 2>/dev/null)
             groupPath=${groupId//./\/}
 
-            # Only a version the maintainer pressed Publish on appears here; one left at
-            # VALIDATED in the Central Portal does not.
+            # A version Central is still publishing does not appear here yet.
             url="https://repo1.maven.org/maven2/${groupPath}/${artifactId}/${RELEASE_VERSION}/${artifactId}-${RELEASE_VERSION}.pom"
             status=$(curl -s -o /dev/null -w '%{http_code}' "$url")
 
@@ -202,9 +200,7 @@ jobs:
           CENTRAL_TOKEN_PASSWORD: ${{ secrets.CENTRAL_TOKEN_PASSWORD }}
           MAVEN_GPG_KEY: ${{ secrets.GPG_PRIVATE_KEY }}
           MAVEN_GPG_PASSPHRASE: ${{ secrets.GPG_PASSPHRASE }}
-        run: |
-          ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
-          echo "Corral $RELEASE_VERSION is VALIDATED, not published. Press **Publish** at https://central.sonatype.com/publishing/deployments" >> "$GITHUB_STEP_SUMMARY"
+        run: ./mvnw deploy -Pcentral -DskipTests=true ${{ env.MVN_CONFIG }}
 
       - name: Tag release commit
         if: steps.tag.outputs.exists != 'true'
