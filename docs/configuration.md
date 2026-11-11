@@ -31,14 +31,10 @@ The two lines the [quick start](../README.md#quick-start) asks for are the first
 every CI run records whatever violations its checkout holds, including those the change under build
 introduced. An upgrade that adds a rule to a group you wire reaches CI that way.
 
-Forbid store writes in CI:
-
-```bash
-mvn verify -Darchunit.freeze.store.default.allowStoreUpdate=false
-```
-
-Under Gradle, `-D` on the command line does not reach the test JVM: set it with `systemProperty` in
-the `test` task, or the flag is ignored and the gap stays open.
+Forbid store writes in CI by setting the system property
+`archunit.freeze.store.default.allowStoreUpdate=false` on the CI build's test JVM. Maven passes it
+with `-D` on the command line. Under Gradle, `-D` on the command line does not reach the test JVM:
+set it with `systemProperty` in the `test` task, or the flag is ignored and the gap stays open.
 
 Any store write then fails the build. Run the build locally and commit the store change. Do not
 follow ArchUnit's message, `Updating frozen violations is disabled (enable by configuration
@@ -138,9 +134,9 @@ a commit. This store keeps the entry and drops the file. Three things to know:
   stay exactly as enforced.
 - **Not retroactive.** Switching it on leaves already-committed empty files in place —
   `FreezingArchRule` only writes when it has something to change, and a rule that is clean and stays
-  clean never triggers a write. Clear them once with `mvn test -Darchunit.freeze.refreeze=true` (or
-  delete them by hand) and review the diff: `refreeze` re-records *every* rule, so anything currently
-  failing gets absorbed as debt too.
+  clean never triggers a write. Clear them once with a test run that sets `freeze.refreeze=true` in
+  `archunit.properties`, then remove it (or delete the files by hand), and review the diff: `refreeze`
+  re-records *every* rule, so anything currently failing gets absorbed as debt too.
 
 ## Multi-module builds
 

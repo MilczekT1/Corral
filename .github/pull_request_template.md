@@ -18,7 +18,7 @@
 
 ## Upgrade notes
 
-<!-- Required when the title has "!". What a consumer must change on upgrade. Delete this section otherwise. -->
+<!-- Required when the title has "!". What a consumer must change on upgrade, printed verbatim in the release notes. Consumers build with Maven or Gradle: name ArchUnit properties, not `mvn`/`gradle` commands. Delete this section otherwise. -->
 
 ## Checks
 

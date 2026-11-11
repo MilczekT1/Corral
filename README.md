@@ -158,10 +158,12 @@ freeze.store.default.path=src/test/resources/archunit/frozen
 failureDisplayFormat=io.github.milczekt1.corral.format.AgentFriendlyFailureDisplayFormat
 ```
 
-**4. Seed the freeze store once, then commit it.**
+**4. Seed the freeze store once, then commit it.** Run the tests once with the system property
+`archunit.freeze.store.default.allowStoreCreation=true` on the test JVM — `-D` on the command line
+under Maven; under Gradle, which does not pass `-D` through to the test JVM, `systemProperty` in the
+`test` task for that one run — then commit the store:
 
 ```bash
-mvn test -Darchunit.freeze.store.default.allowStoreCreation=true
 git add src/test/resources/archunit/frozen && git commit -m "chore: freeze existing violations"
 ```
 
