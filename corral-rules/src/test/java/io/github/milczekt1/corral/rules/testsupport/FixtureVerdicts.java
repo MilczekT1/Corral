@@ -52,10 +52,12 @@ public class FixtureVerdicts {
             Pattern.MULTILINE);
     private static final Pattern JAVADOC = Pattern.compile("/\\*\\*(.*?)\\*/", Pattern.DOTALL);
     private static final Pattern PACKAGE = Pattern.compile("^package ([\\w.]+);", Pattern.MULTILINE);
+    private static final Pattern LOCATION = Pattern.compile(" in \\([\\w$]+\\.java:\\d+\\)$");
 
     /**
      * Asserts that every {@code MUST FLAG} and {@code MUST IGNORE} fixture under {@code ruleTest}'s
-     * {@code fixtures} package is among {@code examples} and is reported, or not, as it says.
+     * {@code fixtures} package is among {@code examples} and is reported, or not, as it says, and that
+     * every reported line ends with its {@code in (File.java:N)} location.
      *
      * @param definition the raw rule: the published field is frozen, so it would report nothing
      */
@@ -73,6 +75,9 @@ public class FixtureVerdicts {
                         Collectors.mapping(Map.Entry::getValue, Collectors.toList())));
 
         List<String> mismatches = new ArrayList<>();
+        violations.stream()
+                .filter(violation -> !LOCATION.matcher(violation).find())
+                .forEach(violation -> mismatches.add("does not end with in (File.java:N): " + violation));
         verdicts.forEach((fixture, verdict) -> {
             List<String> lines = reported.getOrDefault(fixture, List.of());
             if (verdict == Verdict.SUPPORT) {

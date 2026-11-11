@@ -1,5 +1,5 @@
-Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.PendingFix is @Disabled with no reason
-Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ReceiptWriting is @Disabled with no reason
-Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.OrderPlacement.placesTheOrder() is @Disabled with no reason
-Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking.notifiesTheCustomer() is @Disabled with no reason
-Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking.tracksTheParcel() is @Disabled with no reason
+Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.PendingFix is @Disabled with no reason in (PendingFix.java:0)
+Class io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ReceiptWriting is @Disabled with no reason in (ReceiptWriting.java:0)
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.OrderPlacement.placesTheOrder() is @Disabled with no reason in (OrderPlacement.java:15)
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking.notifiesTheCustomer() is @Disabled with no reason in (ShipmentTracking.java:17)
+Method io.github.milczekt1.corral.rules.testing.nodisabledwithoutreason.fixtures.ShipmentTracking.tracksTheParcel() is @Disabled with no reason in (ShipmentTracking.java:12)

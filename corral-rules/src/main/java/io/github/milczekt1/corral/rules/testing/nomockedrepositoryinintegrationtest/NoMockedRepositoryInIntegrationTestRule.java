@@ -82,7 +82,7 @@ public final class NoMockedRepositoryInIntegrationTestRule implements Documented
                     if (mocked && persistenceType) {
                         events.add(SimpleConditionEvent.satisfied(field,
                                 "Field " + field.getFullName() + " mocks persistence type " + typeName
-                                        + inheritedBy(testClass, field)));
+                                        + inheritedBy(testClass, field) + " in " + field.getSourceCodeLocation()));
                     }
                 }
             }

@@ -47,6 +47,7 @@ they are on the reviewer and on you:
 |---|---|---|
 | Renaming or removing a rule **id** | The id is the freeze-store key. Consumers' recorded violations are filed under the old id, so the rule silently stops enforcing — a green build with zero enforcement. It also silences any consumer excluding that id: the exclusion now names nothing, which logs a warning rather than failing the build. | the catalog test's expected id set — the change shows as a diff in review |
 | Changing a rule's **predicate text** | Predicate text is also a freeze-store matching key. On upgrade, old violations resurface and the consumer's build fails on code they did not touch. | nothing |
+| Changing a rule's **violation text** | Each violation line is matched verbatim against the store, except line numbers and `$N` indices. Rewording it, or adding or dropping a clause, resurfaces that rule's recorded violations on upgrade. | nothing |
 | Raising the **Java baseline** | It is the minimum JVM that can load the published classes. | nothing |
 | Testing against the published frozen field instead of the raw `DEFINITION` | The frozen field seeds and passes, so the test is vacuous. | partially |
 | Letting the **[rules catalog](docs/rules.md)** drift from the published groups | The most visible form of catalog rot. | `RulesCatalogDocTest` — ids and groups in the table must match what `EveryPublishedGroup` publishes |
