@@ -202,6 +202,7 @@ Two things to know, both learned the hard way:
   `File.java:N` is compared as text, so moving code rewords the line. For the same reason a
   violation's text holds one fixed shape and only what identifies it — no optional clause, count,
   sibling member or hash-ordered list — so editing the file around it does not resurface it.
+  Every line ends with `in ` plus that location; `FixtureVerdicts.assertMatch` fails one that does not.
 
 ## 5. Wire it into a group
 

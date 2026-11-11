@@ -108,19 +108,19 @@ class NoTransactionalInControllerRuleTest {
     @Test
     void flagsAClassLevelAnnotationOnABaseClass() {
         assertReportedOnce("AuditController", " inherits @Transactional from <");
-        assertTrue(violationsOn("AuditController").get(0).endsWith(".TransactionalAuditBase>"));
+        assertTrue(violationsOn("AuditController").get(0).contains(".TransactionalAuditBase> in ("));
     }
 
     @Test
     void flagsAClassLevelAnnotationTwoSuperclassesUp() {
         assertReportedOnce("JournalController", " inherits @Transactional from <");
-        assertTrue(violationsOn("JournalController").get(0).endsWith(".TransactionalAuditBase>"));
+        assertTrue(violationsOn("JournalController").get(0).contains(".TransactionalAuditBase> in ("));
     }
 
     @Test
     void flagsATypeLevelAnnotationOnASuperinterface() {
         assertReportedOnce("DigestController", " inherits @Transactional from <");
-        assertTrue(violationsOn("DigestController").get(0).endsWith(".ExportOperations>"));
+        assertTrue(violationsOn("DigestController").get(0).contains(".ExportOperations> in ("));
     }
 
     @Test
@@ -131,7 +131,7 @@ class NoTransactionalInControllerRuleTest {
     @Test
     void flagsATypeLevelAnnotationOnAnInterface() {
         assertReportedOnce("ExportController", " inherits @Transactional from <");
-        assertTrue(violationsOn("ExportController").get(0).endsWith(".ExportOperations>"));
+        assertTrue(violationsOn("ExportController").get(0).contains(".ExportOperations> in ("));
     }
 
     @Test

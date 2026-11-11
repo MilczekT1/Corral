@@ -108,12 +108,14 @@ public final class NoTransactionalInControllerRule implements DocumentedRule {
             public void check(JavaClass controller, ConditionEvents events) {
                 String name = controller.getDescription();
                 if (isTransactional(controller)) {
-                    events.add(SimpleConditionEvent.satisfied(controller, name + " is @Transactional"));
+                    events.add(SimpleConditionEvent.satisfied(controller,
+                            name + " is @Transactional in " + controller.getSourceCodeLocation()));
                 }
                 Stream.concat(controller.getAllRawSuperclasses().stream(), controller.getAllRawInterfaces().stream())
                         .filter(NoTransactionalInControllerRule::isTransactional)
                         .forEach(type -> events.add(SimpleConditionEvent.satisfied(controller,
-                                name + " inherits @Transactional from <" + type.getName() + ">")));
+                                name + " inherits @Transactional from <" + type.getName() + "> in "
+                                        + controller.getSourceCodeLocation())));
                 // javac copies a method's annotations onto its bridge methods.
                 controller.getAllMethods().stream()
                         .filter(method -> !method.getModifiers().contains(JavaModifier.SYNTHETIC))

@@ -1,3 +1,3 @@
-Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.DaoMockingIT.mockedOrderDao mocks persistence type OrderDao
-Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.RepositoryMockingIT.mockedOrderRepository mocks persistence type OrderRepository
-Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.SharedMockBase.inheritedOrderRepository mocks persistence type OrderRepository, inherited by InheritedMockingIT
+Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.DaoMockingIT.mockedOrderDao mocks persistence type OrderDao in (DaoMockingIT.java:0)
+Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.RepositoryMockingIT.mockedOrderRepository mocks persistence type OrderRepository in (RepositoryMockingIT.java:0)
+Field io.github.milczekt1.corral.rules.testing.nomockedrepositoryinintegrationtest.fixtures.SharedMockBase.inheritedOrderRepository mocks persistence type OrderRepository, inherited by InheritedMockingIT in (SharedMockBase.java:0)

@@ -112,12 +112,14 @@ public final class NoDisabledWithoutReasonRule implements DocumentedRule {
             public void check(JavaClass javaClass, ConditionEvents events) {
                 if (isDisabledWithoutAReason(javaClass)) {
                     events.add(SimpleConditionEvent.satisfied(javaClass,
-                            "Class " + javaClass.getFullName() + " is @Disabled with no reason"));
+                            "Class " + javaClass.getFullName() + " is @Disabled with no reason in "
+                                    + javaClass.getSourceCodeLocation()));
                 }
                 for (JavaMethod method : javaClass.getMethods()) {
                     if (isDisabledWithoutAReason(method)) {
                         events.add(SimpleConditionEvent.satisfied(method,
-                                "Method " + method.getFullName() + " is @Disabled with no reason"));
+                                "Method " + method.getFullName() + " is @Disabled with no reason in "
+                                        + method.getSourceCodeLocation()));
                     }
                 }
             }
