@@ -6,12 +6,14 @@ on:
       - main
     paths:
       - .github/scripts/**
+      - .claude/hooks/**
       - .github/workflows/scripts-test.yml
   pull_request:
     branches:
       - main
     paths:
       - .github/scripts/**
+      - .claude/hooks/**
       - .github/workflows/scripts-test.yml
 
 permissions:
@@ -28,5 +30,5 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Test release scripts
-        run: node --test .github/scripts/*.test.js
+      - name: Test release scripts and Claude Code hooks
+        run: node --test .github/scripts/*.test.js .claude/hooks/*.test.js
