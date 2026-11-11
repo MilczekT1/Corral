@@ -19,7 +19,7 @@ test('reads a title after a cd', () => assert.equal(titleOf('cd repo && gh pr cr
 test('reads a title after an env assignment', () => assert.equal(titleOf('GH_HOST=x gh pr create --title "a: b"'), 'a: b'));
 test('cannot read a title built from a variable', () => assert.equal(titleOf('gh pr create --title "$T"'), null));
 test('cannot read a --fill title', () => assert.equal(titleOf('gh pr create --fill'), null));
-test('ignores an edit that keeps the title', () => assert.equal(titleOf('gh pr edit 5 --body-file b.md'), undefined));
+test('ignores a retitle', () => assert.equal(titleOf('gh pr edit 5 --title "fix: Fix bug"'), undefined));
 test('ignores gh pr create inside a grep', () => assert.equal(titleOf('grep -rn "gh pr create --title" .'), undefined));
 test('ignores gh pr create inside a commit message', () => assert.equal(
   titleOf('git commit -m "docs: Explain gh pr create --title usage"'), undefined));

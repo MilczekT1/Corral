@@ -1,6 +1,6 @@
 #!/usr/bin/env node
-// Blocks `gh pr create` / `gh pr edit --title` when the title is not a Conventional Commit or would
-// read badly as a release-notes line. The notes print only the subject, without the type, so the
+// Blocks `gh pr create` when the title is not a Conventional Commit or would read badly as a
+// release-notes line. The notes print only the subject, without the type, so the
 // subject alone must say what was delivered or fixed.
 const fs = require('node:fs');
 const path = require('node:path');
@@ -76,20 +76,19 @@ function unquote(token) {
 
 const TOKEN = String.raw`("(?:[^"\\]|\\.)*"|'[^']*'|[^\s;&|]+)`;
 
-// Only `gh` in command position counts, so a grep, echo or commit message mentioning `gh pr create`
-// is not mistaken for one.
+// The `if` filter in settings.json is best-effort: Claude Code still runs the hook when it cannot tell
+// which commands a Bash input runs. Only `gh` in command position counts, so a grep, echo or commit
+// message mentioning `gh pr create` is not mistaken for one.
 const COMMAND_START = String.raw`(?:^|[;&|(\n]|\b(?:then|do|else)\s)\s*(?:\w+=\S*\s+)*`;
 
-// Returns undefined when the command opens or retitles no PR, null when it does but the title cannot
-// be read literally, and the title otherwise.
+// Returns undefined when the command opens no PR, null when it does but the title cannot be read
+// literally, and the title otherwise.
 function titleOf(command) {
-  const create = new RegExp(COMMAND_START + String.raw`gh\s+pr\s+create\b`).exec(command);
-  const edit = new RegExp(COMMAND_START + String.raw`gh\s+pr\s+edit\b`).exec(command);
-  const start = create ?? edit;
+  const start = new RegExp(COMMAND_START + String.raw`gh\s+pr\s+create\b`).exec(command);
   if (!start) return undefined;
   const rest = command.slice(start.index);
   const m = new RegExp(String.raw`\s--title(?:=|\s+)` + TOKEN).exec(rest) ?? new RegExp(String.raw`\s-t\s+` + TOKEN).exec(rest);
-  if (!m) return create ? null : undefined;
+  if (!m) return null;
   return unquote(m[1]);
 }
 
