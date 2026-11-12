@@ -15,10 +15,6 @@ runs, and tell it how to fix them.**
 
 </div>
 
-A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
-fails deterministically, the failure explains why the rule exists and how to fix it, and violations
-that predate the rule are frozen as debt, so you can adopt it on any codebase today.
-
 ```mermaid
 ---
 title: Introducing a new rule
@@ -40,10 +36,15 @@ flowchart LR
         L -->|yes| M["Fix instructions<br/>provided automatically"]
         M --> N
     end
-    style F fill:#c62828,stroke:#7f0000,color:#ffffff
+    ctx ~~~ cor
+    style F fill:#a4373a,stroke:#6e2326,color:#ffffff
     style E fill:#2e7d32,stroke:#1b5e20,color:#ffffff
     style N fill:#2e7d32,stroke:#1b5e20,color:#ffffff
 ```
+
+A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
+fails deterministically, the failure explains why the rule exists and how to fix it, and violations
+that predate the rule are frozen as debt, so you can adopt it on any codebase today.
 
 Corral verifies concrete statements, not vague descriptions. *No field injection* is something a
 build can decide; *prefer boring solutions* is not, and stays in `CLAUDE.md`.
