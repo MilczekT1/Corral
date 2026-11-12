@@ -15,35 +15,26 @@ runs, and tell it how to fix them.**
 
 </div>
 
+```mermaid
+flowchart TB
+    subgraph md["Rule from context, skills etc"]
+        direction LR
+        A["Loaded every session"] --> B["Obeyed when recalled"] --> C(["❌ Violations slip through"])
+    end
+    subgraph cor["Rule written as a Corral test"]
+        direction LR
+        D["In context only on failure"] --> E["Checked on every build"] --> F(["✅ Failure says how to fix"])
+    end
+    md ~~~ cor
+    style md fill:transparent,stroke:#a4373a,stroke-dasharray:6 4,color:#a4373a
+    style cor fill:transparent,stroke:#1a7f37,color:#1a7f37
+    style C fill:#a4373a,stroke:#6e2326,color:#ffffff
+    style F fill:#1a7f37,stroke:#116329,color:#ffffff
+```
+
 A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
 fails deterministically, the failure explains why the rule exists and how to fix it, and violations
 that predate the rule are frozen as debt, so you can adopt it on any codebase today.
-
-```mermaid
----
-title: Introducing a new rule
----
-flowchart LR
-    subgraph ctx["Without: context engineering"]
-        direction TB
-        A["New rule"] --> B["Add to CLAUDE.md /<br/>AGENTS.md"]
-        B --> C["Pollutes context"]
-        C --> D{"Model recalls it<br/>this time?"}
-        D -->|yes| E["Followed"]
-        D -->|no| F["Silently violated"]
-    end
-    subgraph cor["With: Corral"]
-        direction TB
-        G["New rule"] --> J["Deterministic verification <br/>without context pollution"]
-        J --> L{"Rule violated?"}
-        L -->|no| N["Rule enforced"]
-        L -->|yes| M["Fix instructions<br/>provided automatically"]
-        M --> N
-    end
-    style F fill:#c62828,stroke:#7f0000,color:#ffffff
-    style E fill:#2e7d32,stroke:#1b5e20,color:#ffffff
-    style N fill:#2e7d32,stroke:#1b5e20,color:#ffffff
-```
 
 Corral verifies concrete statements, not vague descriptions. *No field injection* is something a
 build can decide; *prefer boring solutions* is not, and stays in `CLAUDE.md`.
