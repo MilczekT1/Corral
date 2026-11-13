@@ -22,7 +22,7 @@ title: Introducing a new rule
 flowchart LR
     subgraph ctx["Without: context engineering"]
         direction TB
-        A["New rule"] --> B["Add to CLAUDE.md /<br/>AGENTS.md"]
+        A["New rule"] --> B["Add to the agent's<br/>instructions"]
         B --> C["Pollutes context"]
         C --> D{"Model recalls it<br/>this time?"}
         D -->|yes| E["Followed"]
@@ -42,12 +42,13 @@ flowchart LR
     style N fill:#2e7d32,stroke:#1b5e20,color:#ffffff
 ```
 
-A rule in `CLAUDE.md` is followed when the model happens to recall it. A rule in Corral is a test: it
-fails deterministically, the failure explains why the rule exists and how to fix it, and violations
-that predate the rule are frozen as debt, so you can adopt it on any codebase today.
+A rule in an agent's instructions — `AGENTS.md`, a rules file, a system prompt — is followed when the
+model happens to recall it. A rule in Corral is a test: it fails deterministically, the failure
+explains why the rule exists and how to fix it, and violations that predate the rule are frozen as
+debt, so you can adopt it on any codebase today.
 
 Corral verifies concrete statements, not vague descriptions. *No field injection* is something a
-build can decide; *prefer boring solutions* is not, and stays in `CLAUDE.md`.
+build can decide; *prefer boring solutions* is not, and stays in the agent's instructions.
 
 This is what a failure looks like. The agent reads it in the same test output it was already going
 to read, and nothing about the rule occupies its context until then:
